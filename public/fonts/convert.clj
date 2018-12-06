@@ -12,6 +12,6 @@
          (partition 16))))
 
 (defn ->js [글꼴]
-  (str "[" (join "," 글꼴) "]"))
+  (str "[" (join ", " 글꼴) "]"))
 
 (println (str "const dgm =\n  [" (join ",\n   " (map ->js (글꼴들 *in*))) "];"))
