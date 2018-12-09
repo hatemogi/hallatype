@@ -1,4 +1,4 @@
-import { hangulToBitmap, latinToBitmap } from './hangul';
+import { charToBitmap } from './hangul';
 
 export default class Graphic {
     private ctx!: CanvasRenderingContext2D;
@@ -17,13 +17,21 @@ export default class Graphic {
         this.drawChar(20, 20, '한'.charCodeAt(0), 검정);
         this.drawChar(20 + 16, 20, '글'.charCodeAt(0), 검정);
         this.drawChar(20 + 32, 20, '!'.charCodeAt(0), 검정);
+        this.drawText(20, 40, '안녕하세요? Hello, World!!!', 검정);
     }
 
-    private drawChar(x: number, y: number, char: number, rgba: number[]) {
-        const bitmap = char < 128 ? latinToBitmap(char) : hangulToBitmap(char);
-        const width = char < 128 ? 8 : 16;
+    private drawChar(x: number, y: number, char: number, rgba: number[]): number {
+        const [width, bitmap] = charToBitmap(char);
         const image = this.bitmapToImageData(width, bitmap, rgba);
         this.ctx.putImageData(image, x, y);
+        return width;
+    }
+
+    private drawText(x: number, y: number, text: string, rgba: number[]) {
+        let px = x;
+        for (let i of text) {
+            px += this.drawChar(px, y, i.charCodeAt(0), rgba);
+        }
     }
 
     private bitmapToImageData(width: number, bitmap: number[], rgba: number[]): ImageData {

@@ -81,6 +81,15 @@ function 종벌(중성: number) {
     }
 }
 
+/** 한음절 입력받아, 비트맵 너비 (8|16)와 비트맵을 반환 */
+export function charToBitmap(음절: number): [number, number[]] {
+    if (음절 < 128) {
+        return [8, latinToBitmap(음절)];
+    } else {
+        return [16, hangulToBitmap(음절)];
+    }
+}
+
 /** 한글 한 음절을 받아, 기본 글꼴 16x16 비트맵을 반환  */
 export function hangulToBitmap(음절: number): number[] {
     const [초, 중, 종] = decompose(음절);
