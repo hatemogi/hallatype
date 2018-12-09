@@ -1,3 +1,5 @@
+import { hangul, latin } from './fonts';
+
 /*
             00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27
  ----------------------------------------------------------------------------------------------
@@ -77,4 +79,22 @@ function 종벌(중성: number) {
         default:
             return 3;
     }
+}
+
+/** 한글 한 음절을 받아, 기본 글꼴 16x16 비트맵을 반환  */
+export function hangulToBitmap(음절: number): number[] {
+    const [초, 중, 종] = decompose(음절);
+    const 벌 = packs([초, 중, 종]);
+    const 비트맵 = [hangul[벌[0] * 19 + 초],
+                    hangul[벌[1] * 21 + 중 + 19 * 8],
+                    hangul[벌[2] * 28 + 종 + 21 * 4 + 19 * 8]];
+    let bitmap = 비트맵[0].map((line: number, i: number) => line | 비트맵[1][i]);
+    if (종 > 0) {
+        bitmap = bitmap.map((line: number, i: number) => line | 비트맵[2][i]);
+    }
+    return bitmap;
+}
+
+export function latinToBitmap(char: number): number[] {
+    return latin[char];
 }

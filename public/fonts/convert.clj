@@ -14,4 +14,4 @@
 (defn ->js [글꼴]
   (str "[" (join ", " 글꼴) "]"))
 
-(println (str "const dgm =\n  [" (join ",\n   " (map ->js (글꼴들 *in*))) "];"))
+(println (str "const bitmaps =\n  [" (join ",\n   " (map ->js (글꼴들 *in*))) "];"))
