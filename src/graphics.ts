@@ -11,17 +11,19 @@ export default class Graphic {
         const ctx = this.ctx;
         ctx.fillStyle = 'rgb(0, 0, 150)';
         ctx.strokeStyle = '1px rgb(0, 0, 0)';
-        ctx.strokeRect(0, 0, 639, 479);
-        // 19*8 21*4 28*4
-        // ctx.transform(2, 0, 0, 2, 0, 0);
+        ctx.strokeRect(0, 0, 639, 350);
         // ctx.fillRect(0, 0, 50, 50);
-        const bitmap = hangulToBitmap('한'.charCodeAt(0));
-        const image = this.bitmapToImageData(16, bitmap, [0, 0, 0, 255]);
-        ctx.putImageData(image, 20, 20);
-        ctx.putImageData(image, 20 + 16, 20);
-        const latinBitmap = latinToBitmap('!'.charCodeAt(0));
-        const latinImage = this.bitmapToImageData(8, latinBitmap, [0, 0, 0, 255]);
-        ctx.putImageData(latinImage, 20 + 32, 20);
+        const 검정 = [0, 0, 0, 255];
+        this.drawChar(20, 20, '한'.charCodeAt(0), 검정);
+        this.drawChar(20 + 16, 20, '글'.charCodeAt(0), 검정);
+        this.drawChar(20 + 32, 20, '!'.charCodeAt(0), 검정);
+    }
+
+    private drawChar(x: number, y: number, char: number, rgba: number[]) {
+        const bitmap = char < 128 ? latinToBitmap(char) : hangulToBitmap(char);
+        const width = char < 128 ? 8 : 16;
+        const image = this.bitmapToImageData(width, bitmap, rgba);
+        this.ctx.putImageData(image, x, y);
     }
 
     private bitmapToImageData(width: number, bitmap: number[], rgba: number[]): ImageData {
