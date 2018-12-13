@@ -69,16 +69,8 @@ function 중벌(받침없음: boolean, 초성: number) {
 }
 
 function 종벌(중성: number) {
-    switch (중성) {
-        case 0: case 2: case 9:
-            return 0;
-        case 4: case 6: case 11: case 14: case 16: case 19: case 20:
-            return 1;
-        case 1: case 3: case 5: case 7: case 10: case 15:
-            return 2;
-        default:
-            return 3;
-    }
+    const table = [0, 2, 0, 2, 1, 2, 1, 2, 3, 0, 2, 1, 3, 3, 1, 2, 1, 3, 3, 1, 1, 3];
+    return table[중성] || 0;
 }
 
 /** 한음절 입력받아, 비트맵 너비 (8|16)와 비트맵을 반환 */
