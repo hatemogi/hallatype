@@ -22,6 +22,9 @@ export default class Home extends Vue {
     const canvas = document.getElementById('캔버스') as HTMLCanvasElement;
     const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
     new Graphics(ctx).draw();
+    window.onkeydown = (e: KeyboardEvent) => {
+      console.log(`key=${e.key}, code=${e.code}`);
+    };
   }
 }
 </script>
