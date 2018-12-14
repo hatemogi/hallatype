@@ -1,3 +1,49 @@
+/**
+ * 문서 본문, 그리고 이용자가 타이핑한 상태 모델
+ *
+ * 문서 -> 섹션 -> 글자
+ * 글자 = 한글 | 라틴(숫자, 기호 포함) | 모름
+ * 한글 -> 음소
+ *
+ * 각 글자별 타이핑 상태 = 정타 | 일부 오타 | 완전 오타
+ *
+ * 오타도 1) 여전히 틀린 상태와 2) 수정해서 지금은 맞지만, 틀린 적이 있는 상태 두가지.
+ */
+
+type RGBA = number[];
+
+type Charactor = HangulCharactor | LatinCharactor;
+
+interface HangulCharactor {
+    code: number;
+    음소: number[];
+}
+
+interface LatinCharactor {
+    code: number;
+}
+
+interface TextAttribute {
+    color: RGBA;
+    backgroundColor: RGBA;
+}
+
+interface TextPosition {
+    column: number;
+    line: number;
+}
+
+interface TextCharactor {
+    charCode: number;
+    cols: number;               // 한글은 2컬럼, 라틴문자는 1컬럼
+    attribute: TextAttribute;
+}
+
+interface TextModel {
+    cursor: TextPosition;
+    color: RGBA;
+    backgroundColor: RGBA;
+}
 
 /**
  * 특정 단어 수 만큼씩 이상의 문단들을 묶어 섹션들로 나눈다.
