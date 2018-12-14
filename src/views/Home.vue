@@ -23,7 +23,7 @@ export default class Home extends Vue {
     const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
     new Graphics(ctx).draw();
     window.onkeydown = (e: KeyboardEvent) => {
-      console.log(`key=${e.key}, code=${e.code}`);
+      console.log(`key=${e.key}, code=${e.code}, shift=${e.getModifierState("Shift")}`);
     };
   }
 }
