@@ -40,16 +40,12 @@ export default class Graphic {
         for (let py = 0; py < height; py++) {
             let bit = 1 << width;
             for (let px = 0; px < width; px++) {
-                bit = bit >>> 1;
-                const i = (py * width + px) * 4;
+                bit >>>= 1;
                 if ((bitmap[py] & bit) > 0) {
-                    for (let t = 0; t < 4; t++) {
-                        image.data[i + t] = rgba[t];
-                    }
+                    image.data.set(rgba, (py * width + px) * 4);
                 }
             }
         }
         return image;
     }
 }
-
