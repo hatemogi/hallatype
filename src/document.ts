@@ -10,39 +10,77 @@
  * 오타도 1) 여전히 틀린 상태와 2) 수정해서 지금은 맞지만, 틀린 적이 있는 상태 두가지.
  */
 
-type RGBA = number[];
+import * as color from './color';
 
-type Charactor = HangulCharactor | LatinCharactor;
-
-interface HangulCharactor {
-    code: number;
-    음소: number[];
+enum 글자종류 {
+    한글, 라틴,
 }
 
-interface LatinCharactor {
-    code: number;
+class 글자 {
+    public readonly type: 글자종류;
+    public readonly code: number;
+    constructor(type: 글자종류, code: number) {
+        this.type = type;
+        this.code = code;
+    }
 }
 
-interface TextAttribute {
-    color: RGBA;
-    backgroundColor: RGBA;
+function 한글(code: number) {
+    return new 글자(글자종류.한글, code);
 }
 
-interface TextPosition {
-    column: number;
-    line: number;
+function 라틴(code: number) {
+    return new 글자(글자종류.라틴, code);
 }
 
-interface TextCharactor {
-    charCode: number;
-    cols: number;               // 한글은 2컬럼, 라틴문자는 1컬럼
-    attribute: TextAttribute;
+class TextAttribute {
+    public readonly 글자색: color.RGBA;
+    public readonly 배경색: color.RGBA;
+    constructor(글자색: color.RGBA = color.흰색, 배경색: color.RGBA = color.검정) {
+        this.글자색 = 글자색;
+        this.배경색 = 배경색;
+    }
 }
 
-interface TextModel {
-    cursor: TextPosition;
-    color: RGBA;
-    backgroundColor: RGBA;
+class TextPosition {
+    public column: number;
+    public line: number;
+    constructor(column: number, line: number) {
+        this.column = column;
+        this.line = line;
+    }
+}
+
+class TextCharactor {
+    public readonly char: 글자;
+    public attr: TextAttribute;
+    constructor(char: 글자, attr: TextAttribute) {
+        this.char = char;
+        this.attr = attr;
+    }
+}
+
+export type TextModelListener =
+    (column: number, line: number, charactor: TextCharactor) => void;
+
+export class TextModel {
+    private cursor: TextPosition = new TextPosition(0, 0);
+    private 기본속성 = new TextAttribute();
+    private lines: TextCharactor[][] = [];
+    private currentLine: TextCharactor[] = this.lines[0];
+    private listeners: TextModelListener[];
+    constructor(listener: TextModelListener) {
+        this.listeners = [listener];
+    }
+
+    public write(text: string): void {
+        // noop yet;
+        // this.listeners.forEach
+    }
+
+    public refresh(lines: [number, number]): void {
+        // 특정 영역 다시 그리기
+    }
 }
 
 /**
@@ -55,7 +93,7 @@ export function splitSections(text: string, wordsToSplit: number): string[] {
     const words = lines.map(wordCount);
     let w = 0;
     let si = 0;
-    lines.forEach((line: string, i: number) =>  {
+    lines.forEach((line: string, i: number) => {
         sections[si] = sections[si] || [];
         sections[si].push(line);
         w += words[i];
