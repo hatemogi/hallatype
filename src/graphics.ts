@@ -1,8 +1,8 @@
 import { charToBitmap } from './hangul';
-import { TextModel, TextModelListener } from './document';
+import { TextModel, TextModelDrawer, TextCharactor, TextPosition } from './document';
 import * as color from './color';
 
-export default class Graphic {
+export default class Graphic implements TextModelDrawer {
     private ctx!: CanvasRenderingContext2D;
 
     // TextModel의 어느 부분을 보일 것인가?
@@ -13,15 +13,30 @@ export default class Graphic {
     }
 
     public draw() {
-        const ctx = this.ctx;
-        ctx.fillStyle = 'rgb(180, 180, 255)';
-        ctx.strokeStyle = '1px rgb(0, 0, 0)';
-        ctx.strokeRect(0, 0, 639, 350);
-        ctx.fillRect(0, 0, 150, 48);
-        this.drawChar(20, 20, '한'.charCodeAt(0), color.검정);
-        this.drawChar(20 + 16, 20, '글'.charCodeAt(0), color.파랑);
-        this.drawChar(20 + 32, 20, '!'.charCodeAt(0), color.검정);
-        this.drawText(20, 40, '안녕하세요? Hello, World!!!', color.검정);
+        this.onTextFill(new TextPosition(6, 3), true, color.빨강);
+        this.drawChar(16, 32, '한'.charCodeAt(0), color.검정);
+        this.drawChar(16 + 16, 32, '글'.charCodeAt(0), color.파랑);
+        this.drawChar(16 + 32, 32, '!'.charCodeAt(0), color.검정);
+        this.drawText(16, 32 + 16, '안녕하세요? Hello, World!!!', color.검정);
+    }
+
+    public onTextWrite(pos: TextPosition, char: TextCharactor) {
+        // noop yet
+        const [x, y] = this.textToGraphic(pos);
+        const [w, h] = [char.char.double ? 16 : 8, 16];
+    }
+
+    public onTextFill(pos: TextPosition, double: boolean, fill: color.RGBA) {
+        const [x, y] = this.textToGraphic(pos);
+        const [w, h] = [double ? 16 : 8, 16];
+        const [r, g, b, _] = fill;
+        this.ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+        this.ctx.fillRect(x, y, w, h);
+    }
+
+    // 좌표 변환
+    private textToGraphic(pos: TextPosition): [number, number] {
+        return [pos.column * 8, pos.line * 16];
     }
 
     private drawChar(x: number, y: number, char: number, rgba: color.RGBA): number {

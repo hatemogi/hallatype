@@ -1,22 +1,15 @@
 <template>
   <div class="home">
-    <img alt="Vue logo" src="../assets/logo.png">
-    <canvas id="캔버스" width="640" height="480"></canvas>
-    <HelloWorld msg="Welcome to Your Vue.js + TypeScript App"/>
+    <canvas id="캔버스" width="640" height="400"></canvas>
+    <h2>한 달짜리 개인 프로젝트 이야기</h2>
   </div>
 </template>
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
-import HelloWorld from '@/components/HelloWorld.vue'; // @ is an alias to /src
 import Graphics from '@/graphics';
 
-@Component({
-  components: {
-    HelloWorld,
-  },
-})
-
+@Component
 export default class Home extends Vue {
   public mounted() {
     const canvas = document.getElementById('캔버스') as HTMLCanvasElement;
@@ -28,3 +21,10 @@ export default class Home extends Vue {
   }
 }
 </script>
+
+<style lang="scss">
+#캔버스 {
+  border: 1px solid black;
+  zoom: 120%;
+}
+</style>

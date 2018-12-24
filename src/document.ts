@@ -16,12 +16,24 @@ enum 글자종류 {
     한글, 라틴,
 }
 
+enum 글자상태 {
+    지문,
+    정타,
+    오타,
+    조립중,
+}
+
 class 글자 {
     public readonly type: 글자종류;
     public readonly code: number;
     constructor(type: 글자종류, code: number) {
         this.type = type;
         this.code = code;
+    }
+
+    // 반각 or 전각 글자 구분
+    get double(): boolean {
+        return this.type === 글자종류.한글;
     }
 }
 
@@ -42,7 +54,7 @@ class TextAttribute {
     }
 }
 
-class TextPosition {
+export class TextPosition {
     public column: number;
     public line: number;
     constructor(column: number, line: number) {
@@ -51,26 +63,32 @@ class TextPosition {
     }
 }
 
-class TextCharactor {
+export class TextCharactor {
     public readonly char: 글자;
-    public attr: TextAttribute;
-    constructor(char: 글자, attr: TextAttribute) {
+    public colors: color.RGBA[];
+    constructor(char: 글자, colors: color.RGBA[]) {
         this.char = char;
-        this.attr = attr;
+        this.colors = colors;
     }
 }
 
-export type TextModelListener =
-    (column: number, line: number, charactor: TextCharactor) => void;
+export interface TextModelDrawer {
+    onTextWrite: (pos: TextPosition, charactor: TextCharactor) => void;
+    onTextFill: (pos: TextPosition, double: boolean, fill: color.RGBA) => void;
+}
 
 export class TextModel {
     private cursor: TextPosition = new TextPosition(0, 0);
     private 기본속성 = new TextAttribute();
     private lines: TextCharactor[][] = [];
     private currentLine: TextCharactor[] = this.lines[0];
-    private listeners: TextModelListener[];
-    constructor(listener: TextModelListener) {
-        this.listeners = [listener];
+    private drawer?: TextModelDrawer;
+    constructor(drawer?: TextModelDrawer) {
+        this.drawer = drawer;
+    }
+
+    public moveCursor(pos: TextPosition): void {
+        this.cursor = pos;
     }
 
     public write(text: string): void {
