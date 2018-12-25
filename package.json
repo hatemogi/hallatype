@@ -11,7 +11,7 @@
   "dependencies": {
     "axios": "^0.18.0",
     "register-service-worker": "^1.5.2",
-    "vue": "^2.5.17",
+    "vue": "^2.5.21",
     "vue-class-component": "^6.0.0",
     "vue-property-decorator": "^7.0.0",
     "vue-router": "^3.0.1",
@@ -24,13 +24,13 @@
     "@vue/cli-plugin-typescript": "^3.2.0",
     "@vue/cli-plugin-unit-jest": "^3.2.0",
     "@vue/cli-service": "^3.2.0",
-    "@vue/test-utils": "^1.0.0-beta.20",
+    "@vue/test-utils": "^1.0.0-beta.27",
     "babel-core": "7.0.0-bridge.0",
-    "node-sass": "^4.9.0",
+    "node-sass": "^4.11.0",
     "sass-loader": "^7.0.1",
     "ts-jest": "^23.0.0",
-    "typescript": "^3.0.0",
-    "vue-template-compiler": "^2.5.17"
+    "typescript": "^3.2.2",
+    "vue-template-compiler": "^2.5.21"
   },
   "postcss": {
     "plugins": {
