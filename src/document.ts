@@ -45,7 +45,7 @@ function 글자종류판단(code: number): 글자종류 {
     }
 }
 
-class 글자 {
+export class 글자 {
     public static 생성(code: number): 글자 {
         const 종류 = 글자종류판단(code);
         switch (종류) {
@@ -59,15 +59,19 @@ class 글자 {
     }
 
     public readonly 종류: 글자종류;
-    public readonly codes: number[];
-    constructor(종류: 글자종류, codes: number[]) {
+    public readonly 코드: number[];
+    constructor(종류: 글자종류, 코드: number[]) {
         this.종류 = 종류;
-        this.codes = codes;
+        this.코드 = 코드;
     }
 
     // 반각 or 전각 글자 구분
     get 전각(): boolean {
         return this.종류 === 글자종류.한글;
+    }
+
+    get 다음행(): boolean {
+        return this.종류 === 글자종류.라틴 && this.코드[0] === 10;
     }
 
 }
@@ -129,11 +133,11 @@ export class 글자위치 {
  * 지문 한 자와 현재 그 자리의 쓴글 입력 상태.
  */
 export class 글자판 {
-    public readonly 지문: 글자;
-    public readonly 쓴글?: 글자;
+    public readonly 바탕글자: 글자;
+    public readonly 쓴글자?: 글자;
     public readonly 상태: 글자상태[];
-    constructor(지문: 글자) {
-        this.지문 = 지문;
+    constructor(바탕글자: 글자) {
+        this.바탕글자 = 바탕글자;
         this.상태 = [];
     }
 }
@@ -148,7 +152,6 @@ export class 색칠할글자 {
         this.자 = 자;
         this.색 = 색;
     }
-
 }
 
 export interface 본문그림판 {
@@ -156,6 +159,53 @@ export interface 본문그림판 {
     배경칠하기: (위치: 글자위치, 전각: boolean, 배경색: color.RGBA) => void;
 }
 
+/**
+ * 지문: 타자연습할 장문의 바탕글.
+ * 미리 준비해 두는 글이고, 편집이 필요 없다.
+ * 한번 입력해 두고, 본문이 읽는 용도.
+ */
+export class 지문 {
+    private 열수: number;
+    private 위치: 글자위치;
+    private 행렬: 글자[][] = [];
+
+    constructor(열수 = 80) {
+        this.열수 = 열수;
+        this.위치 = new 글자위치(0, 0, 열수);
+    }
+
+    public 쓰기(글: string) {
+        for (let i = 0; i <= 글.length; i++) {
+            if (글.codePointAt(i)) {
+                this.글자쓰기(글.codePointAt(i)!);
+            }
+        }
+    }
+
+    public 바탕글자(위치: 글자위치): 글자 {
+        return this.행렬[위치.행][위치.열];
+    }
+
+    private 글자쓰기(code: number) {
+        const 자 = 글자.생성(code)
+        const [행, 열] = [this.위치.행, this.위치.열];
+        if (!this.행렬[행]) {
+            this.행렬[행] = [];
+        }
+        this.행렬[행][열] = 자;
+        this.위치 = this.다음위치(자);
+    }
+
+    private 다음위치(자: 글자): 글자위치 {
+        if (자.다음행) {
+            return this.위치.다음행;
+        } else if (자.전각) {
+            return this.위치.다음.다음;
+        } else {
+            return this.위치.다음;
+        }
+    }
+}
 /**
  * 특징: 지문과 입력문이 있다. 지문은 한번에 다 쓰고 바꾸지 않고,
  * 입력문은 순차적으로 쓰되 앞뒤로 한글자 단위로만 이동한다.
@@ -167,39 +217,22 @@ export interface 본문그림판 {
  */
 export class 본문 {
     private 열수: number;
-    private 지문위치: 글자위치;
-    private 쓴글위치: 글자위치;
+    private 지문: 지문;
+    private 위치: 글자위치;
     private 기본속성 = new 글자꾸밈();
     private 행렬: 글자판[][] = [];
     private 그림판?: 본문그림판;
-    constructor(그림판?: 본문그림판, 열수 = 80) {
+    constructor(지문: 지문, 그림판?: 본문그림판, 열수 = 80) {
+        this.지문 = 지문;
         this.그림판 = 그림판;
         this.열수 = 열수;
-        this.지문위치 = new 글자위치(0, 0, 열수);
-        this.쓴글위치 = new 글자위치(0, 0, 열수);
-    }
-
-    public 지문입력(text: string) {
-        // no yet
-    }
-
-    public 지문쓰기(text: string): void {
-        // noop yet;
-        // this.listeners.forEach
-        for (let i = 0; i <= text.length; i++) {
-            if (text.codePointAt(i)) {
-                this.지문글자쓰기(text.codePointAt(i)!);
-            }
-        }
+        this.위치 = new 글자위치(0, 0, 열수);
     }
 
     public refresh(lines: [number, number]): void {
         // 특정 영역 다시 그리기
     }
 
-    private 지문글자쓰기(code: number): void {
-        const 자 = 글자.생성(code);
-    }
 }
 
 /**
