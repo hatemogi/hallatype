@@ -2,6 +2,8 @@
  * 한글 두벌식 오토마타 구현
  */
 
+import { 글자 } from './charactor';
+
 enum 상태 {
     S0, // 시작상태
     S1, // 초성 단자음
@@ -19,8 +21,8 @@ enum 이동 {
 }
 
 export class 입력머신 {
-    public readonly 조립글자: number[] = [];
-    public readonly 완성글자: number[] = [];
+    public readonly 조립글자 = 글자.없음;
+    public readonly 완성글자 = 글자.없음;
     private readonly state = 상태.S0;
     public 입력(code: number): 이동 {
         return 이동.유지;

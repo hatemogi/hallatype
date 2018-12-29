@@ -1,5 +1,6 @@
 import { charToBitmap } from './hangul';
-import { 본문, 본문그림판, 색칠할글자, 글자판, 글자위치 } from './document';
+import { 글자위치, 색칠할글자 } from './charactor';
+import { 본문그림판 } from './document';
 import * as color from './color';
 
 export default class Graphic implements 본문그림판 {
@@ -13,7 +14,7 @@ export default class Graphic implements 본문그림판 {
     }
 
     public draw() {
-        this.onTextFill(new 글자위치(6, 3), true, color.빨강);
+        this.바탕칠하기(new 글자위치(6, 3), true, color.빨강);
         this.drawChar(16, 32, '한'.charCodeAt(0), color.검정);
         this.drawChar(16 + 16, 32, '글'.charCodeAt(0), color.파랑);
         this.drawChar(16 + 32, 32, '!'.charCodeAt(0), color.검정);
@@ -26,10 +27,10 @@ export default class Graphic implements 본문그림판 {
         const [w, h] = [글자.자.전각 ? 16 : 8, 16];
     }
 
-    public 바탕칠하기(위치: 글자위치, double: boolean, fill: color.RGBA) {
+    public 바탕칠하기(위치: 글자위치, 전각: boolean, 배경색: color.RGBA) {
         const [x, y] = this.textToGraphic(위치);
-        const [w, h] = [double ? 16 : 8, 16];
-        const [r, g, b, _] = fill;
+        const [w, h] = [전각 ? 16 : 8, 16];
+        const [r, g, b, _] = 배경색;
         this.ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
         this.ctx.fillRect(x, y, w, h);
     }
