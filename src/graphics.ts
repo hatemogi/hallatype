@@ -25,6 +25,7 @@ export default class Graphic implements 본문그림판 {
         // noop yet
         const [x, y] = this.textToGraphic(위치);
         const [w, h] = [글자.자.전각 ? 16 : 8, 16];
+
     }
 
     public 바탕칠하기(위치: 글자위치, 전각: boolean, 배경색: color.RGBA) {

@@ -1,5 +1,5 @@
 import * as color from './color';
-import { decompose } from './hangul';
+import { 분리 } from './hangul';
 
 export enum 글자종류 {
     한글, 라틴, 모름, 없음,
@@ -23,7 +23,7 @@ export class 글자 {
         const 종류 = 글자종류판단(code);
         switch (종류) {
             case 글자종류.한글:
-                return new 글자(종류, decompose(code));
+                return new 글자(종류, 분리(code));
             case 글자종류.라틴:
                 return new 글자(종류, [code]);
             default:

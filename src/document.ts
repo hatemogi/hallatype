@@ -50,8 +50,12 @@ export class 지문 {
         }
     }
 
-    public 바탕글자(위치: 글자위치): 글자 {
+    public 바닥글자(위치: 글자위치): 글자 {
         return this.행렬[위치.행][위치.열];
+    }
+
+    public 바닥줄(행: number): 글자[] {
+        return this.행렬[행];
     }
 
     private 글자쓰기(code: number) {
@@ -98,8 +102,8 @@ export class 글자판 {
 }
 
 /**
- * 특징: 지문과 입력문이 있다. 지문은 한번에 다 쓰고 바꾸지 않고,
- * 입력문은 순차적으로 쓰되 앞뒤로 한글자 단위로만 이동한다.
+ * 특징: 지문과 쓴글이 있다. 지문은 한번에 다 쓰고 바꾸지 않고,
+ * 쓴글은 순차적으로 쓰되 앞뒤로 한글자 단위로만 이동한다.
  * 지문은 특정 영역을 한꺼번에 화면에 보이고,
  * 입력문은 지문을 쫓아가며 상태를 바꾼다.
  * 입력문과 지문의 차이가 나는 범위는 한계가 있다. (예. 최대 5글자)
@@ -112,16 +116,26 @@ export class 본문 {
     private 위치: 글자위치;
     private 기본속성 = new 글자꾸밈();
     private 행렬: 글자판[][] = [];
-    private 그림판?: 본문그림판;
-    constructor(지문: 지문, 그림판?: 본문그림판, 열수 = 80) {
-        this.지문 = 지문;
+    private 그림판: 본문그림판;
+    constructor(바닥글: 지문, 그림판: 본문그림판, 열수 = 80) {
+        this.지문 = 바닥글;
         this.그림판 = 그림판;
         this.열수 = 열수;
         this.위치 = new 글자위치(0, 0, 열수);
     }
 
-    public refresh(lines: [number, number]): void {
+    public 영역그리기([시작행, 끝행]: [number, number] = [0, 30]): void {
         // 특정 영역 다시 그리기
+        for (let 행 = 시작행; 행 < 끝행; 행++) {
+            const 현재줄 = this.지문.바닥줄(행);
+            if (현재줄) {
+                현재줄.forEach((자: 글자, i: number) => {
+                    const 위치 = new 글자위치(행, i);
+                    const 색칠 = new 색칠할글자(자, [color.검정, color.검정, color.검정]);
+                    this.그림판.글자그리기(위치, 색칠);
+                });
+            }
+        }
     }
 
 }

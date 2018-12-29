@@ -12,7 +12,7 @@ import { hangul, latin } from './fonts';
 const div = (v: number, q: number) => Math.floor(v / q);
 
 // 유니코드 한글 한자 초중종성 분리
-export function decompose(code: number): number[] {
+export function 분리(code: number): number[] {
     const 코드 = code - 0xAC00;
     const 종성 = 코드 % 28;
     const 중성 = div(코드 - 종성, 28) % 21;
@@ -26,7 +26,7 @@ export function decompose(code: number): number[] {
  2) 중성은 받침유무와 ㄱㅋ과 결합했는지 그외 자음과 결합했는지에 따라 4가지로 나눈다.
  3) 종성은 어떤 중성과 결합했는지에 따라 4가지로 나눈다.
  */
-export function packs([초성, 중성, 종성]: number[]): number[] {
+export function 벌식([초성, 중성, 종성]: number[]): number[] {
     const 받침없음 = 종성 === 0;
     return [초벌(받침없음, 중성), 중벌(받침없음, 초성), 종벌(중성)];
 }
@@ -84,8 +84,8 @@ export function charToBitmap(음절: number): [number, number[]] {
 
 /** 한글 한 음절을 받아, 기본 글꼴 16x16 비트맵을 반환  */
 export function hangulToBitmap(음절: number): number[] {
-    const [초, 중, 종] = decompose(음절);
-    const 벌 = packs([초, 중, 종]);
+    const [초, 중, 종] = 분리(음절);
+    const 벌 = 벌식([초, 중, 종]);
     const 비트맵 = [hangul[벌[0] * 19 + 초],
                     hangul[벌[1] * 21 + 중 + 19 * 8],
                     hangul[벌[2] * 28 + 종 + 21 * 4 + 19 * 8]];
