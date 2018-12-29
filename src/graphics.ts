@@ -1,11 +1,11 @@
 import { charToBitmap } from './hangul';
-import { TextModel, TextModelDrawer, TextCharactor, TextPosition } from './document';
+import { 본문, 본문그림판, 색칠할글자, 글자판, 글자위치 } from './document';
 import * as color from './color';
 
-export default class Graphic implements TextModelDrawer {
+export default class Graphic implements 본문그림판 {
     private ctx!: CanvasRenderingContext2D;
 
-    // TextModel의 어느 부분을 보일 것인가?
+    // 본문의 어느 부분을 보일 것인가?
     private viewPort: [number, number, number, number] = [0, 0, 0, 0];
 
     constructor(ctx: CanvasRenderingContext2D) {
@@ -13,21 +13,21 @@ export default class Graphic implements TextModelDrawer {
     }
 
     public draw() {
-        this.onTextFill(new TextPosition(6, 3), true, color.빨강);
+        this.onTextFill(new 글자위치(6, 3), true, color.빨강);
         this.drawChar(16, 32, '한'.charCodeAt(0), color.검정);
         this.drawChar(16 + 16, 32, '글'.charCodeAt(0), color.파랑);
         this.drawChar(16 + 32, 32, '!'.charCodeAt(0), color.검정);
         this.drawText(16, 32 + 16, '안녕하세요? Hello, World!!!', color.검정);
     }
 
-    public onTextWrite(pos: TextPosition, char: TextCharactor) {
+    public 글자그리기(위치: 글자위치, 글자: 색칠할글자) {
         // noop yet
-        const [x, y] = this.textToGraphic(pos);
-        const [w, h] = [char.char.double ? 16 : 8, 16];
+        const [x, y] = this.textToGraphic(위치);
+        const [w, h] = [글자.자.전각 ? 16 : 8, 16];
     }
 
-    public onTextFill(pos: TextPosition, double: boolean, fill: color.RGBA) {
-        const [x, y] = this.textToGraphic(pos);
+    public 바탕칠하기(위치: 글자위치, double: boolean, fill: color.RGBA) {
+        const [x, y] = this.textToGraphic(위치);
         const [w, h] = [double ? 16 : 8, 16];
         const [r, g, b, _] = fill;
         this.ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
@@ -35,8 +35,8 @@ export default class Graphic implements TextModelDrawer {
     }
 
     // 좌표 변환
-    private textToGraphic(pos: TextPosition): [number, number] {
-        return [pos.column * 8, pos.line * 16];
+    private textToGraphic(위치: 글자위치): [number, number] {
+        return [위치.열 * 8, 위치.행 * 16];
     }
 
     private drawChar(x: number, y: number, char: number, rgba: color.RGBA): number {

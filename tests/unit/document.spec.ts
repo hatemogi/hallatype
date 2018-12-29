@@ -1,4 +1,4 @@
-import { splitSections } from '@/document';
+import { splitSections, 글자위치 } from '@/document';
 
 describe('문서', () => {
     it('섹션 분리', () => {
@@ -9,5 +9,13 @@ describe('문서', () => {
         expect(medium.length).toEqual(3);
         const long = splitSections(문서, 5);
         expect(long.length).toEqual(1);
+    });
+
+    it('글자위치이동', () => {
+        const 위치 = new 글자위치(0, 0, 8);
+        expect(위치.행).toEqual(0);
+        expect(위치.열).toEqual(0);
+        expect(위치.다음.행).toEqual(0);
+        expect(위치.다음.열).toEqual(1);
     });
 });
