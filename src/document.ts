@@ -83,6 +83,10 @@ class 글자꾸밈 {
 
 /**
  * 특정 글자 위치. 커서.
+ * (x, y)의 순서와 달리 행이 먼저고 열이 나중 표기.
+ * # 기본 기능
+ *     글자 단위 이전/다음 이동.
+ *     엔터를 누르면 다음행, 맨 앞 열에서 백스페이스 누르면 전줄 끝으로 이동.
  */
 export class 글자위치 {
     public readonly 행: number;
@@ -99,22 +103,34 @@ export class 글자위치 {
     }
 
     public get 다음(): 글자위치 {
-        // TODO: 열경계 처리
-        return this.이동(this.행, this.열);
+        if (this.열 + 1 >= this.열경계) {
+            return this.이동(this.행 + 1, 0);
+        } else {
+            return this.이동(this.행, this.열 + 1);
+        }
     }
 
-    public get 이전(): 글자위치 {
-        // TODO: 열경계 처리
-        return this.이동(this.행, this.열);
+    public 이전(전행마지막열 = this.열경계 - 1): 글자위치 {
+        if (this.열 === 0 && this.행 === 0) {
+                return this;
+        } else if (this.열 === 0) {
+            return this.이동(this.행 - 1, 전행마지막열);
+        } else {
+            return this.이동(this.행, this.열 - 1);
+        }
+    }
+
+    public get 다음행(): 글자위치 {
+        return this.이동(this.행 + 1, 0);
     }
 }
 
 /**
- * 지문 한 자와 현재 그 자리의 입력 상태
+ * 지문 한 자와 현재 그 자리의 쓴글 입력 상태.
  */
 export class 글자판 {
     public readonly 지문: 글자;
-    public readonly 입력?: 글자;
+    public readonly 쓴글?: 글자;
     public readonly 상태: 글자상태[];
     constructor(지문: 글자) {
         this.지문 = 지문;
