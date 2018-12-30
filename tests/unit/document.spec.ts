@@ -16,7 +16,7 @@ describe('문서', () => {
         const 바닥글 = new 지문(10);
         const 위치 = new 글자위치(0, 0);
         바닥글.쓰기('안녕하세요?');
-        expect(바닥글.바닥글자(위치)).toEqual(글자.생성('안'.codePointAt(0)!));
-        expect(바닥글.바닥글자(위치.다음)).toBeUndefined();
+        expect(바닥글.글자(위치)).toEqual(글자.생성('안'.codePointAt(0)!));
+        expect(바닥글.글자(위치.다음)).toBeUndefined();
     });
 });

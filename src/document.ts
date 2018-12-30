@@ -50,16 +50,16 @@ export class 지문 {
         }
     }
 
-    public 바닥글자(위치: 글자위치): 글자 {
+    public 글자(위치: 글자위치): 글자 {
         return this.행렬[위치.행][위치.열];
     }
 
-    public 바닥줄(행: number): 글자[] {
+    public 줄(행: number): 글자[] {
         return this.행렬[행];
     }
 
     private 글자쓰기(code: number) {
-        const 자 = 글자.생성(code)
+        const 자 = 글자.생성(code);
         const [행, 열] = [this.위치.행, this.위치.열];
         if (!this.행렬[행]) {
             this.행렬[행] = [];
@@ -112,13 +112,13 @@ export class 글자판 {
  */
 export class 본문 {
     private 열수: number;
-    private 지문: 지문;
+    private 바닥글: 지문;
     private 위치: 글자위치;
     private 기본속성 = new 글자꾸밈();
     private 행렬: 글자판[][] = [];
     private 그림판: 본문그림판;
     constructor(바닥글: 지문, 그림판: 본문그림판, 열수 = 80) {
-        this.지문 = 바닥글;
+        this.바닥글 = 바닥글;
         this.그림판 = 그림판;
         this.열수 = 열수;
         this.위치 = new 글자위치(0, 0, 열수);
@@ -127,10 +127,10 @@ export class 본문 {
     public 영역그리기([시작행, 끝행]: [number, number] = [0, 30]): void {
         // 특정 영역 다시 그리기
         for (let 행 = 시작행; 행 < 끝행; 행++) {
-            const 현재줄 = this.지문.바닥줄(행);
+            const 현재줄 = this.바닥글.줄(행);
             if (현재줄) {
-                현재줄.forEach((자: 글자, i: number) => {
-                    const 위치 = new 글자위치(행, i);
+                현재줄.forEach((자: 글자, 열: number) => {
+                    const 위치 = new 글자위치(행, 열);
                     const 색칠 = new 색칠할글자(자, [color.검정, color.검정, color.검정]);
                     this.그림판.글자그리기(위치, 색칠);
                 });

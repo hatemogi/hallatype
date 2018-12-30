@@ -1,9 +1,12 @@
-import { charToBitmap } from './hangul';
-import { 글자위치, 색칠할글자 } from './charactor';
+import { 분리, 벌식 } from './hangul';
+import { 글자종류, 글자위치, 색칠할글자 } from './charactor';
 import { 본문그림판 } from './document';
 import * as color from './color';
+import { 한글글꼴, 라틴글꼴 } from './fonts';
 
-export default class Graphic implements 본문그림판 {
+type 비트맵 = number[];
+
+export default class 그림판 implements 본문그림판 {
     private ctx!: CanvasRenderingContext2D;
 
     // 본문의 어느 부분을 보일 것인가?
@@ -15,17 +18,27 @@ export default class Graphic implements 본문그림판 {
 
     public draw() {
         this.바탕칠하기(new 글자위치(6, 3), true, color.빨강);
-        this.drawChar(16, 32, '한'.charCodeAt(0), color.검정);
-        this.drawChar(16 + 16, 32, '글'.charCodeAt(0), color.파랑);
-        this.drawChar(16 + 32, 32, '!'.charCodeAt(0), color.검정);
-        this.drawText(16, 32 + 16, '안녕하세요? Hello, World!!!', color.검정);
     }
 
     public 글자그리기(위치: 글자위치, 글자: 색칠할글자) {
-        // noop yet
         const [x, y] = this.textToGraphic(위치);
         const [w, h] = [글자.자.전각 ? 16 : 8, 16];
-
+        const 종 = 글자.자.종류;
+        let 빗맵들: 비트맵[] = [];
+        switch (글자.자.종류) {
+            case 글자종류.한글:
+                빗맵들 = 한글비트맵(글자);
+                break;
+            case 글자종류.라틴:
+                빗맵들 = 라틴비트맵(글자);
+                break;
+            case 글자종류.모름:
+                break;
+        }
+        빗맵들.forEach((빗맵: 비트맵, i: number) => {
+            const 이미지 = this.비트맵을이미지로(x, y, w, 빗맵, 글자.색[i]);
+            this.ctx.putImageData(이미지, x, y);
+        });
     }
 
     public 바탕칠하기(위치: 글자위치, 전각: boolean, 배경색: color.RGBA) {
@@ -38,35 +51,36 @@ export default class Graphic implements 본문그림판 {
 
     // 좌표 변환
     private textToGraphic(위치: 글자위치): [number, number] {
-        return [위치.열 * 8, 위치.행 * 16];
+        return [위치.열 * 8, 위치.행 * 20];
     }
 
-    private drawChar(x: number, y: number, char: number, rgba: color.RGBA): number {
-        const [width, bitmap] = charToBitmap(char);
-        const image = this.bitmapToImageData(x, y, width, bitmap, rgba);
-        this.ctx.putImageData(image, x, y);
-        return width;
-    }
-
-    private drawText(x: number, y: number, text: string, rgba: color.RGBA) {
-        let px = x;
-        for (const i of text) {
-            px += this.drawChar(px, y, i.charCodeAt(0), rgba);
-        }
-    }
-
-    private bitmapToImageData(x: number, y: number, width: number, bitmap: number[], rgba: color.RGBA): ImageData {
-        const height = bitmap.length;
-        const image = this.ctx.getImageData(x, y, width, height);
-        for (let py = 0; py < height; py++) {
-            let bit = 1 << width;
-            for (let px = 0; px < width; px++) {
+    private 비트맵을이미지로(x: number, y: number, 너비: number, 빗맵: 비트맵, 색: color.RGBA): ImageData {
+        const 높이 = 빗맵.length;
+        const 이미지 = this.ctx.getImageData(x, y, 너비, 높이);
+        for (let py = 0; py < 높이; py++) {
+            let bit = 1 << 너비;
+            for (let px = 0; px < 너비; px++) {
                 bit >>>= 1;
-                if ((bitmap[py] & bit) > 0) {
-                    image.data.set(rgba, (py * width + px) * 4);
+                if ((빗맵[py] & bit) > 0) {
+                    이미지.data.set(색, (py * 너비 + px) * 4);
                 }
             }
         }
-        return image;
+        return 이미지;
     }
+}
+
+// 한글 한 음절을 받아, 기본 글꼴 16x16 비트맵을 반환.
+// 초성, 중성, 종성 배열로 반환
+function 한글비트맵(글자: 색칠할글자): 비트맵[] {
+    const [초, 중, 종] = 글자.자.코드;
+    const 벌 = 벌식([초, 중, 종]);
+    return [한글글꼴[벌[0] * 19 + 초],
+            한글글꼴[벌[1] * 21 + 중 + 19 * 8],
+            한글글꼴[벌[2] * 28 + 종 + 21 * 4 + 19 * 8]];
+}
+
+// 라틴문자는 비트맵 한 개만 배열에 담아 반환
+export function 라틴비트맵(글자: 색칠할글자): 비트맵[] {
+    return [라틴글꼴[글자.자.코드[0]]];
 }

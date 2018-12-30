@@ -14,17 +14,31 @@ enum 상태 {
     S6, // 종성 조합자음 (자음 키 두 번 눌러서 입력하는 받침)
 }
 
-enum 이동 {
+export enum 위치이동 {
     이전,
     유지,
     다음,
 }
 
+type 입력 = [boolean, string];
+
+function 자음(키: 입력): boolean {
+    return false;
+}
+
+function 모음(키: 입력): boolean {
+    return false;
+}
+
+function 쌍자음(키: 입력): boolean {
+    return false;
+}
+
 export class 입력머신 {
-    public readonly 조립글자 = 글자.없음;
-    public readonly 완성글자 = 글자.없음;
+    private 조립글자 = 글자.없음;
+    private readonly 완성글자 = 글자.없음;
     private readonly state = 상태.S0;
-    public 입력(code: number): 이동 {
-        return 이동.유지;
+    public 입력(shift: boolean, code: string): [위치이동, 글자, 글자] {
+        return [위치이동.유지, this.완성글자, this.조립글자];
     }
 }
