@@ -6,7 +6,7 @@ import { 한글글꼴, 라틴글꼴 } from './fonts';
 
 type 비트맵 = number[];
 
-export default class 그림판 implements 본문그림판 {
+export default class 그림판틀 implements 본문그림판 {
     private ctx!: CanvasRenderingContext2D;
 
     // 본문의 어느 부분을 보일 것인가?

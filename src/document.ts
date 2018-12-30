@@ -32,7 +32,7 @@ export interface 본문그림판 {
  * 미리 준비해 두는 글이고, 편집이 필요 없다.
  * 한번 입력해 두고, 본문이 읽는 용도.
  */
-export class 지문 {
+export class 지문틀 {
     private 열수: number;
     private 위치: 글자위치;
     private 행렬: 글자[][] = [];
@@ -110,15 +110,15 @@ export class 글자판 {
  *
  * 지문은 미리 준비해 놓는다. (별도 클래스가 적합할까?)
  */
-export class 본문 {
+export class 본문틀 {
     private 열수: number;
-    private 바닥글: 지문;
+    private 지문: 지문틀;
     private 위치: 글자위치;
     private 기본속성 = new 글자꾸밈();
     private 행렬: 글자판[][] = [];
     private 그림판: 본문그림판;
-    constructor(바닥글: 지문, 그림판: 본문그림판, 열수 = 80) {
-        this.바닥글 = 바닥글;
+    constructor(지문: 지문틀, 그림판: 본문그림판, 열수 = 80) {
+        this.지문 = 지문;
         this.그림판 = 그림판;
         this.열수 = 열수;
         this.위치 = new 글자위치(0, 0, 열수);
@@ -127,7 +127,7 @@ export class 본문 {
     public 영역그리기([시작행, 끝행]: [number, number] = [0, 30]): void {
         // 특정 영역 다시 그리기
         for (let 행 = 시작행; 행 < 끝행; 행++) {
-            const 현재줄 = this.바닥글.줄(행);
+            const 현재줄 = this.지문.줄(행);
             if (현재줄) {
                 현재줄.forEach((자: 글자, 열: number) => {
                     const 위치 = new 글자위치(행, 열);
@@ -137,7 +137,6 @@ export class 본문 {
             }
         }
     }
-
 }
 
 /**

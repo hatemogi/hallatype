@@ -1,5 +1,5 @@
 import { 글자, 글자위치 } from '@/charactor';
-import { splitSections, 지문 } from '@/document';
+import { splitSections, 지문틀 } from '@/document';
 
 describe('문서', () => {
     it('섹션 분리', () => {
@@ -13,10 +13,10 @@ describe('문서', () => {
     });
 
     it('지문쓰기', () => {
-        const 바닥글 = new 지문(10);
+        const 지문 = new 지문틀(10);
         const 위치 = new 글자위치(0, 0);
-        바닥글.쓰기('안녕하세요?');
-        expect(바닥글.글자(위치)).toEqual(글자.생성('안'.codePointAt(0)!));
-        expect(바닥글.글자(위치.다음)).toBeUndefined();
+        지문.쓰기('안녕하세요?');
+        expect(지문.글자(위치)).toEqual(글자.생성('안'.codePointAt(0)!));
+        expect(지문.글자(위치.다음)).toBeUndefined();
     });
 });
