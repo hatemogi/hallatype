@@ -36,8 +36,10 @@ export default class 그림판틀 implements 본문그림판 {
                 break;
         }
         빗맵들.forEach((빗맵: 비트맵, i: number) => {
-            const 이미지 = this.비트맵을이미지로(x, y, w, 빗맵, 글자.색[i]);
-            this.ctx.putImageData(이미지, x, y);
+            if (빗맵 && 빗맵.length > 0) {
+                const 이미지 = this.비트맵을이미지로(x, y, w, 빗맵, 글자.색[i]);
+                this.ctx.putImageData(이미지, x, y);
+            }
         });
     }
 
@@ -75,9 +77,11 @@ export default class 그림판틀 implements 본문그림판 {
 function 한글비트맵(글자: 색칠할글자): 비트맵[] {
     const [초, 중, 종] = 글자.자.코드;
     const 벌 = 벌식([초, 중, 종]);
-    return [한글글꼴[벌[0] * 19 + 초],
-            한글글꼴[벌[1] * 21 + 중 + 19 * 8],
-            한글글꼴[벌[2] * 28 + 종 + 21 * 4 + 19 * 8]];
+    const 글꼴 = (초중종: number, 기준점: number) =>
+        (초중종 === 0) ? [] : 한글글꼴[기준점 + 초중종 - 1];
+    return [글꼴(초, 벌[0] * 19),
+            글꼴(중, 벌[1] * 21 + 19 * 8),
+            글꼴(종, 벌[2] * 28 + 21 * 4 + 19 * 8 + 1)];
 }
 
 // 라틴문자는 비트맵 한 개만 배열에 담아 반환

@@ -4,7 +4,7 @@
 
 import { 글자 } from './charactor';
 
-enum 상태 {
+export enum 상태코드 {
     S0, // 시작상태
     S1, // 초성 단자음
     S2, // 초성 복자음
@@ -34,11 +34,18 @@ function 쌍자음(키: 입력): boolean {
     return false;
 }
 
+export type 머신상태 = [상태코드, 글자, 글자];
+export type 키입력 = [boolean, string];
+
+export function 상태전이([현재상태, 완성글자, 조립글자]: 머신상태, 키: 키입력): 머신상태 {
+    return [상태코드.S0, 글자.없음, 글자.없음];
+}
+
 export class 입력머신 {
     private 조립글자 = 글자.없음;
-    private readonly 완성글자 = 글자.없음;
-    private readonly state = 상태.S0;
-    public 입력(shift: boolean, code: string): [위치이동, 글자, 글자] {
+    private 완성글자 = 글자.없음;
+    private 상태 = 상태코드.S0;
+    public 입력(키: 키입력): [위치이동, 글자, 글자] {
         return [위치이동.유지, this.완성글자, this.조립글자];
     }
 }

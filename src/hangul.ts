@@ -1,8 +1,8 @@
 /*
             00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27
  ----------------------------------------------------------------------------------------------
- 초성 19자  ㄱ ㄲ ㄴ ㄷ ㄸ ㄹ ㅁ ㅂ ㅃ ㅅ ㅆ ㅇ ㅈ ㅉ ㅊ ㅋ ㅌ ㅍ ㅎ
- 중성 21자  ㅏ ㅐ ㅑ ㅒ ㅓ ㅔ ㅕ ㅖ ㅗ ㅘ ㅙ ㅚ ㅛ ㅜ ㅝ ㅞ ㅟ ㅠ ㅡ ㅢ ㅣ
+ 초성 19자     ㄱ ㄲ ㄴ ㄷ ㄸ ㄹ ㅁ ㅂ ㅃ ㅅ ㅆ ㅇ ㅈ ㅉ ㅊ ㅋ ㅌ ㅍ ㅎ
+ 중성 21자     ㅏ ㅐ ㅑ ㅒ ㅓ ㅔ ㅕ ㅖ ㅗ ㅘ ㅙ ㅚ ㅛ ㅜ ㅝ ㅞ ㅟ ㅠ ㅡ ㅢ ㅣ
  종성 27자     ㄱ ㄲ 앇 ㄴ 앉 않 ㄷ ㄹ 앍 앎 앏 앐 앑 앒 앓 ㅁ ㅂ ㅃ ㅅ ㅆ ㅇ ㅈ ㅊ ㅋ ㅌ ㅍ ㅎ
 
  한글유니코드 = ((초성 * 21) + 중성) * 28 + 종성 + 0xAC00
@@ -13,8 +13,8 @@ const div = (v: number, q: number) => Math.floor(v / q);
 export function 분리(code: number): number[] {
     const 코드 = code - 0xAC00;
     const 종성 = 코드 % 28;
-    const 중성 = div(코드 - 종성, 28) % 21;
-    const 초성 = div(div(코드 - 종성, 28), 21);
+    const 중성 = div(코드 - 종성, 28) % 21 + 1;
+    const 초성 = div(div(코드 - 종성, 28), 21) + 1;
     return [초성, 중성, 종성];
 }
 
@@ -31,25 +31,25 @@ export function 벌식([초성, 중성, 종성]: number[]): number[] {
 
 function 초벌(받침없음: boolean, 중성: number) {
     if (받침없음) {
-        if (중성 <= 7 || 중성 === 20) {
+        if (중성 <= 8 || 중성 === 21) {
             return 0;
         }
         switch (중성) {
-            case 8: case 12: case 18:
+            case 9: case 13: case 19:
                 return 1;
-            case 13: case 17:
+            case 14: case 18:
                 return 2;
-            case 9: case 10: case 11: case 19:
+            case 10: case 11: case 12: case 20:
                 return 3;
             default:
                 return 4;
         }
     } else {
-        if (중성 <= 7 || 중성 === 20) {
+        if (중성 <= 8 || 중성 === 21) {
             return 5;
         }
         switch (중성) {
-            case 8: case 12: case 13: case 17: case 18:
+            case 9: case 13: case 14: case 18: case 19:
                 return 6;
             default:
                 return 7;
@@ -58,7 +58,7 @@ function 초벌(받침없음: boolean, 중성: number) {
 }
 
 function 중벌(받침없음: boolean, 초성: number) {
-    const ㄱㅋ = 초성 === 0 || 초성 === 15;
+    const ㄱㅋ = 초성 === 1 || 초성 === 16;
     if (받침없음) {
         return ㄱㅋ ? 0 : 1;
     } else {
@@ -67,6 +67,6 @@ function 중벌(받침없음: boolean, 초성: number) {
 }
 
 function 종벌(중성: number) {
-    const table = [0, 2, 0, 2, 1, 2, 1, 2, 3, 0, 2, 1, 3, 3, 1, 2, 1, 3, 3, 1, 1, 3];
+    const table = [0, 0, 2, 0, 2, 1, 2, 1, 2, 3, 0, 2, 1, 3, 3, 1, 2, 1, 3, 3, 1, 1, 3];
     return table[중성] || 0;
 }
