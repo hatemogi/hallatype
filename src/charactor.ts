@@ -48,6 +48,35 @@ export class 글자 {
     }
 }
 
+export class 한글 extends 글자 {
+    public static 없음 = new 한글(0, 0, 0);
+    constructor(초성: number, 중성: number, 종성: number) {
+        super(글자종류.한글, [초성, 중성, 종성]);
+    }
+
+    public get 초성() {
+        return this.코드[0];
+    }
+    public get 중성() {
+        return this.코드[1];
+    }
+    public get 종성() {
+        return this.코드[2];
+    }
+
+    public 새초성(초성: number): 한글 {
+        return new 한글(초성, this.중성, this.종성);
+    }
+
+    public 새중성(중성: number): 한글 {
+        return new 한글(this.초성, 중성, this.종성);
+    }
+
+    public 새종성(종성: number): 한글 {
+        return new 한글(this.초성, this.중성, 종성);
+    }
+}
+
 export class 글자꾸밈 {
     public readonly 글자색: color.RGBA;
     public readonly 배경색: color.RGBA;
