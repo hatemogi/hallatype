@@ -26,6 +26,7 @@ const 자음키맵 = new Map<string, number>([
     ['KeyZ', 16], ['KeyX', 17], ['KeyC', 15], ['KeyV', 18]]);
 const 쌍자음키맵 = new Map<string, number>([
     ['KeyQ', 9], ['KeyW', 14], ['KeyE', 5], ['KeyR', 2], ['KeyT', 11]]);
+const 쌍자음코드 = new Set<number>(쌍자음키맵.values());
 const 모음키맵 = new Map<string, number>([
     ['KeyY', 13], ['KeyU', 7], ['KeyI', 3], ['KeyO', 2], ['KeyP', 6],
     ['KeyH', 9], ['KeyJ', 5], ['KeyK', 1], ['KeyL', 21], ['KeyB', 18],
@@ -160,11 +161,16 @@ function 전이S20([현재상태, 완성, 조립]: 머신상태, 입력: 키입�
         return [위치이동.유지, 상태.S30, 완성, 조립.새종성(자음(입력))];
     } else if (모음(입력)) {
         // TODO: 두번입력 모음 처리.
+        if (조립.초성 === 9) { // ㅗ
+
+        }
         return [위치이동.다음, 상태.S20, 조립, new 한글(0, 모음(입력), 0)];
     } else if (라틴([쉬프트, 키])) {
         return [위치이동.다음, 상태.S0, 완성, 조립];
     } else if (키 === 'Backspace') {
-        return [위치이동.유지, 상태.S10, 완성, 조립.새중성(0)];
+        return [위치이동.유지,
+                쌍자음코드.has(조립.초성) ? 상태.S11 : 상태.S10,
+                완성, 조립.새중성(0)];
     } else if (키 === 'Enter') {
         return [위치이동.다음, 상태.S0, 완성, 조립];
     } else if (키 === 'Space') {
