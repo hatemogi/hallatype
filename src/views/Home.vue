@@ -7,8 +7,8 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
-import { 지문틀, 본문틀 } from '@/document';
-import 그림판틀 from '@/graphics';
+import { 지문틀, 본문틀 } from '@/본문';
+import 그림판틀 from '@/그림판';
 
 @Component
 export default class Home extends Vue {
