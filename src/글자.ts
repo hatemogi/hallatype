@@ -22,12 +22,14 @@ export interface 글자꼴 {
     코드: number[];
     초성: number;
     중성: number;
+    종성: number;
     종류: 글자종류;
     전각: boolean;
     다음행: boolean;
     새초성: (초성: number) => 글자꼴;
     새중성: (중성: number) => 글자꼴;
     새종성: (종성: number) => 글자꼴;
+    라틴: (코드: number) => 글자꼴;
 }
 
 export abstract class 글자틀 implements 글자꼴 {
@@ -61,6 +63,10 @@ export abstract class 글자틀 implements 글자꼴 {
 
     public 새종성(종성: number): 글자꼴 {
         return new 한글([this.초성, this.중성, 종성]);
+    }
+
+    public 라틴(코드: number): 글자꼴 {
+        return new 라틴(코드);
     }
 }
 
@@ -103,25 +109,21 @@ class 한글 extends 글자틀 {
     public readonly 전각 = true;
     public readonly 다음행 = false;
 
-    private 초중종 = [0, 0, 0];
+    public readonly 코드: number[];
 
-    constructor(초중종: [number, number, number]) {
+    constructor(코드: [number, number, number]) {
         super();
-        this.초중종 = 초중종;
+        this.코드 = 코드;
     }
 
     public get 초성() {
-        return this.초중종[0];
+        return this.코드[0];
     }
     public get 중성() {
-        return this.초중종[1];
+        return this.코드[1];
     }
     public get 종성() {
-        return this.초중종[2];
-    }
-
-    public get 코드() {
-        return this.초중종;
+        return this.코드[2];
     }
 }
 

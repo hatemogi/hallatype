@@ -92,10 +92,10 @@ enum 글자상태 {
  * 지문 한 자와 현재 그 자리의 쓴글 입력 상태.
  */
 export class 글자판 {
-    public readonly 바탕글자: 글자;
-    public readonly 쓴글자?: 글자;
+    public readonly 바탕글자: 글자꼴;
+    public readonly 쓴글자?: 글자꼴;
     public readonly 상태: 글자상태[];
-    constructor(바탕글자: 글자) {
+    constructor(바탕글자: 글자꼴) {
         this.바탕글자 = 바탕글자;
         this.상태 = [];
     }
@@ -129,13 +129,18 @@ export class 본문틀 {
         for (let 행 = 시작행; 행 < 끝행; 행++) {
             const 현재줄 = this.지문.줄(행);
             if (현재줄) {
-                현재줄.forEach((자: 글자, 열: number) => {
+                현재줄.forEach((자: 글자꼴, 열: number) => {
                     const 위치 = new 글자위치(행, 열);
-                    const 색칠 = new 색칠할글자(자, [color.검정, color.검정, color.검정]);
-                    this.그림판.글자그리기(위치, 색칠);
+                    this.글자그리기(위치);
                 });
             }
         }
+    }
+
+    private 글자그리기(위치: 글자위치) {
+        const 지문글자 = this.지문.글자(위치);
+        const 자 = new 색칠할글자(지문글자, [color.검정, color.빨강, color.파랑]);
+        this.그림판.글자그리기(위치, 자);
     }
 }
 
@@ -143,32 +148,32 @@ export class 본문틀 {
  * 특정 단어 수 만큼씩 이상의 문단들을 묶어 섹션들로 나눈다.
  * 마지막 섹션이 너무 조금이라면 그 전 섹션에 묶어서 반환.
  */
-export function splitSections(text: string, wordsToSplit: number): string[] {
-    const lines = text.split('\n');
-    const sections: string[][] = [];
-    const words = lines.map(wordCount);
+export function 섹션나누기(텍스트: string, 최소단어수: number): string[] {
+    const 줄 = 텍스트.split('\n');
+    const 섹션: string[][] = [];
+    const words = 줄.map(단어수);
     let w = 0;
     let si = 0;
-    lines.forEach((line: string, i: number) => {
-        sections[si] = sections[si] || [];
-        sections[si].push(line);
+    줄.forEach((행: string, i: number) => {
+        섹션[si] = 섹션[si] || [];
+        섹션[si].push(행);
         w += words[i];
-        if (w >= wordsToSplit) {
+        if (w >= 최소단어수) {
             w = 0;
             si++;
         }
     });
-    if (sections.length > 1 &&
-        sections[sections.length - 1].length < wordsToSplit / 4) {
-        const lastStrings = sections.pop();
+    if (섹션.length > 1 &&
+        섹션[섹션.length - 1].length < 최소단어수 / 4) {
+        const lastStrings = 섹션.pop();
         if (lastStrings) {
-            lastStrings.forEach((s: string) => sections[sections.length - 1].push(s));
+            lastStrings.forEach((s: string) => 섹션[섹션.length - 1].push(s));
         }
     }
-    return sections.map((strings: string[]) => strings.join('\n'));
+    return 섹션.map((strings: string[]) => strings.join('\n'));
 }
 
-function wordCount(text: string): number {
+function 단어수(text: string): number {
     return text.split(/[ ,\?\.\/:'"\[\]{}|~`!@#$%^&*()\-_=\+]/)
                .filter((w: string) => w.length >= 1)
                .length;

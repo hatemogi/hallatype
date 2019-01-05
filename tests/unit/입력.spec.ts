@@ -1,5 +1,5 @@
-import { 글자, 글자없음 } from '@/글자';
-import { 상태코드, 머신상태, 상태전이, 입력머신, 위치이동 } from '@/입력';
+import { 글자꼴, 글자없음 } from '@/글자';
+import { 상태코드, 머신상태, 상태전이, 입력머신틀, 위치이동 } from '@/입력';
 import { 글자종류 } from '@/글자';
 
 describe('오토마타', () => {
@@ -8,7 +8,7 @@ describe('오토마타', () => {
     const 위치 = 위치이동;
     const 한 = (초성: number, 중성: number, 종성: number) =>  없음.새초성(초성).새중성(중성).새종성(종성);
     const 예상결과 =
-        ([시작상태, 쉬프트, 키]: [머신상태, boolean, string], 결과: [위치이동, 상태코드, 글자, 글자]) =>
+        ([시작상태, 쉬프트, 키]: [머신상태, boolean, string], 결과: [위치이동, 상태코드, 글자꼴, 글자꼴]) =>
          expect(상태전이(시작상태, [쉬프트, 키])).toEqual(결과);
     it('상태.S0에서', () => {
         const S0: 머신상태 = [상태.S0, 없음, 없음];
@@ -67,7 +67,7 @@ describe('오토마타', () => {
     });
 
     it('입력머신', () => {
-        const 머신 = new 입력머신();
+        const 머신 = new 입력머신틀();
         expect(머신.입력([false, 'KeyR'])).toEqual([위치.유지, 없음, 한(1, 0, 0)]);
         expect(머신.입력([false, 'KeyK'])).toEqual([위치.유지, 없음, 한(1, 1, 0)]);
         expect(머신.입력([false, 'KeyA'])).toEqual([위치.유지, 없음, 한(1, 1, 7)]);
