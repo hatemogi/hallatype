@@ -1,4 +1,4 @@
-import { 글자위치 } from '@/charactor';
+import { 글자위치 } from '@/글자';
 
 describe('글자', () => {
     it('글자위치.다음', () => {

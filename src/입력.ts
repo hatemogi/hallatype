@@ -2,7 +2,7 @@
  * 한글 두벌식 오토마타 구현
  */
 
-import { 글자, 글자없음 } from './charactor';
+import { 글자, 글자없음 } from './글자';
 
 export enum 상태코드 {
     S0  = '시작상태',

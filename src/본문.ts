@@ -19,8 +19,8 @@
  *
  */
 
-import * as color from './color';
-import {글자위치, 글자, 글자꾸밈, 색칠할글자} from './charactor';
+import * as color from './색상';
+import {글자위치, 글자, 글자꾸밈, 색칠할글자} from './글자';
 
 export interface 본문그림판 {
     글자그리기: (위치: 글자위치, 글자: 색칠할글자) => void;

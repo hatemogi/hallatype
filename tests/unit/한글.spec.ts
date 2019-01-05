@@ -1,4 +1,4 @@
-import { 분리, 벌식 } from '@/hangul';
+import { 분리, 벌식 } from '@/한글';
 
 describe('한글', () => {
   it('초중종성 분리', () => {

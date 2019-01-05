@@ -1,5 +1,5 @@
-import { 글자, 글자위치 } from '@/charactor';
-import { splitSections, 지문틀 } from '@/document';
+import { 글자, 글자위치 } from '@/글자';
+import { splitSections, 지문틀 } from '@/본문';
 
 describe('문서', () => {
     it('섹션 분리', () => {

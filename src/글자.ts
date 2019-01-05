@@ -1,5 +1,5 @@
-import * as color from './color';
-import { 분리 } from './hangul';
+import * as color from './색상';
+import { 분리 } from './한글';
 
 export enum 글자종류 {
     한글, 라틴, 모름, 없음,

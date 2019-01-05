@@ -1,6 +1,6 @@
-import { 글자, 글자없음 } from '@/charactor';
-import { 상태코드, 머신상태, 상태전이, 입력머신, 위치이동 } from '@/input';
-import { 글자종류 } from '@/charactor';
+import { 글자, 글자없음 } from '@/글자';
+import { 상태코드, 머신상태, 상태전이, 입력머신, 위치이동 } from '@/입력';
+import { 글자종류 } from '@/글자';
 
 describe('오토마타', () => {
     const 상태 = 상태코드;

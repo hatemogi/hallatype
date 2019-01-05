@@ -1,7 +1,7 @@
-import { 분리, 벌식 } from './hangul';
-import { 글자종류, 글자위치, 색칠할글자 } from './charactor';
-import { 본문그림판 } from './document';
-import * as color from './color';
+import { 분리, 벌식 } from './한글';
+import { 글자종류, 글자위치, 색칠할글자 } from './글자';
+import { 본문그림판 } from './본문';
+import * as color from './색상';
 import { 한글글꼴, 라틴글꼴 } from './fonts';
 
 type 비트맵 = number[];
