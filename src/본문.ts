@@ -20,7 +20,7 @@
  */
 
 import * as color from './색상';
-import {글자위치, 글자, 글자꾸밈, 색칠할글자} from './글자';
+import {글자위치, 글자꼴, 글자틀, 글자꾸밈, 색칠할글자} from './글자';
 
 export interface 본문그림판 {
     글자그리기: (위치: 글자위치, 글자: 색칠할글자) => void;
@@ -35,7 +35,7 @@ export interface 본문그림판 {
 export class 지문틀 {
     private 열수: number;
     private 위치: 글자위치;
-    private 행렬: 글자[][] = [];
+    private 행렬: 글자꼴[][] = [];
 
     constructor(열수 = 80) {
         this.열수 = 열수;
@@ -50,16 +50,16 @@ export class 지문틀 {
         }
     }
 
-    public 글자(위치: 글자위치): 글자 {
+    public 글자(위치: 글자위치): 글자꼴 {
         return this.행렬[위치.행][위치.열];
     }
 
-    public 줄(행: number): 글자[] {
+    public 줄(행: number): 글자꼴[] {
         return this.행렬[행];
     }
 
     private 글자쓰기(code: number) {
-        const 자 = 글자.생성(code);
+        const 자 = 글자틀.생성(code);
         const [행, 열] = [this.위치.행, this.위치.열];
         if (!this.행렬[행]) {
             this.행렬[행] = [];
@@ -68,7 +68,7 @@ export class 지문틀 {
         this.위치 = this.다음위치(자);
     }
 
-    private 다음위치(자: 글자): 글자위치 {
+    private 다음위치(자: 글자꼴): 글자위치 {
         if (자.다음행) {
             return this.위치.다음행;
         } else if (자.전각) {
