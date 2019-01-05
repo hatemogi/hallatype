@@ -1,14 +1,14 @@
-import { 한글 } from '@/charactor';
+import { 글자, 글자없음 } from '@/charactor';
 import { 상태코드, 머신상태, 상태전이, 입력머신, 위치이동 } from '@/input';
 import { 글자종류 } from '@/charactor';
 
 describe('오토마타', () => {
     const 상태 = 상태코드;
-    const 없음 = 한글.없음;
+    const 없음 = 글자없음;
     const 위치 = 위치이동;
-    const 한 = (초성: number, 중성: number, 종성: number) =>  new 한글(초성, 중성, 종성);
+    const 한 = (초성: number, 중성: number, 종성: number) =>  없음.새초성(초성).새중성(중성).새종성(종성);
     const 예상결과 =
-        ([시작상태, 쉬프트, 키]: [머신상태, boolean, string], 결과: [위치이동, 상태코드, 한글, 한글]) =>
+        ([시작상태, 쉬프트, 키]: [머신상태, boolean, string], 결과: [위치이동, 상태코드, 글자, 글자]) =>
          expect(상태전이(시작상태, [쉬프트, 키])).toEqual(결과);
     it('상태.S0에서', () => {
         const S0: 머신상태 = [상태.S0, 없음, 없음];

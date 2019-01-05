@@ -10,7 +10,7 @@
 const div = (v: number, q: number) => Math.floor(v / q);
 
 // 유니코드 한글 한자 초중종성 분리
-export function 분리(code: number): number[] {
+export function 분리(code: number): [number, number, number] {
     const 코드 = code - 0xAC00;
     const 종성 = 코드 % 28;
     const 중성 = div(코드 - 종성, 28) % 21 + 1;
@@ -24,7 +24,7 @@ export function 분리(code: number): number[] {
  2) 중성은 받침유무와 ㄱㅋ과 결합했는지 그외 자음과 결합했는지에 따라 4가지로 나눈다.
  3) 종성은 어떤 중성과 결합했는지에 따라 4가지로 나눈다.
  */
-export function 벌식([초성, 중성, 종성]: number[]): number[] {
+export function 벌식([초성, 중성, 종성]: [number, number, number]): [number, number, number] {
     const 받침없음 = 종성 === 0;
     return [초벌(받침없음, 중성), 중벌(받침없음, 초성), 종벌(중성)];
 }

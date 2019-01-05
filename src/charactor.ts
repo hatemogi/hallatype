@@ -17,63 +17,96 @@ function 글자종류판단(code: number): 글자종류 {
     }
 }
 
-export class 글자 {
-    public static readonly 없음 = new 글자(글자종류.없음, []);
+
+export abstract class 글자 {
     public static 생성(code: number): 글자 {
         const 종류 = 글자종류판단(code);
         switch (종류) {
             case 글자종류.한글:
-                return new 글자(종류, 분리(code));
+                return new 한글(분리(code));
             case 글자종류.라틴:
-                return new 글자(종류, [code]);
+                return new 라틴(code);
             default:
-                return new 글자(종류, []);
+                return 글자없음;
         }
     }
+    public abstract get 코드(): number;
+    public abstract get 초성(): number;
+    public abstract get 중성(): number;
+    public abstract get 종성(): number;
 
-    public readonly 종류: 글자종류;
-    public readonly 코드: number[];
-    constructor(종류: 글자종류, 코드: number[]) {
-        this.종류 = 종류;
-        this.코드 = 코드;
+    public 새초성(초성: number): 글자 {
+        return new 한글([초성, this.중성, this.종성]);
+    }
+
+    public 새중성(중성: number): 글자 {
+        return new 한글([this.초성, 중성, this.종성]);
+    }
+
+    public 새종성(종성: number): 글자 {
+        return new 한글([this.초성, this.중성, 종성]);
     }
 
     // 반각 or 전각 글자 구분
-    get 전각(): boolean {
-        return this.종류 === 글자종류.한글;
+    public abstract get 전각(): boolean;
+    public abstract get 다음행(): boolean;
+}
+
+class 글자없음틀 extends 글자 {
+    public readonly 전각 = false;
+    public readonly 초성 = 0;
+    public readonly 중성 = 0;
+    public readonly 종성 = 0;
+    public readonly 코드 = 0;
+    public readonly 다음행 = false;
+}
+
+export const 글자없음 = new 글자없음틀();
+
+class 라틴 extends 글자 {
+    public readonly 전각 = false;
+    public readonly 초성 = 0;
+    public readonly 중성 = 0;
+    public readonly 종성 = 0;
+    private _코드: number;
+
+    constructor(코드: number) {
+        super();
+        this._코드 = 코드;
     }
 
-    get 다음행(): boolean {
-        return this.종류 === 글자종류.라틴 && this.코드[0] === 10;
+    public get 코드() {
+        return this._코드;
+    }
+
+    public get 다음행() {
+        return this.코드 === 10;
     }
 }
 
-export class 한글 extends 글자 {
-    public static 없음 = new 한글(0, 0, 0);
-    constructor(초성: number, 중성: number, 종성: number) {
-        super(글자종류.한글, [초성, 중성, 종성]);
+class 한글 extends 글자 {
+    public readonly 전각 = true;
+    public readonly 다음행 = false;
+
+    private 초중종 = [0, 0, 0];
+
+    constructor(초중종: [number, number, number]) {
+        super();
+        this.초중종 = 초중종;
     }
 
     public get 초성() {
-        return this.코드[0];
+        return this.초중종[0];
     }
     public get 중성() {
-        return this.코드[1];
+        return this.초중종[1];
     }
     public get 종성() {
-        return this.코드[2];
+        return this.초중종[2];
     }
 
-    public 새초성(초성: number): 한글 {
-        return new 한글(초성, this.중성, this.종성);
-    }
-
-    public 새중성(중성: number): 한글 {
-        return new 한글(this.초성, 중성, this.종성);
-    }
-
-    public 새종성(종성: number): 한글 {
-        return new 한글(this.초성, this.중성, 종성);
+    public get 코드() {
+        return 0; // TODO: 유니코드로 반환하기
     }
 }
 
