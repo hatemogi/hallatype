@@ -68,7 +68,9 @@ describe('오토마타', () => {
 
     it('입력머신', () => {
         const 머신 = new 입력머신();
-        const [이동, 완성, 조립] = 머신.입력([false, 'a']);
-        expect(이동).toEqual(위치이동.유지);
+        expect(머신.입력([false, 'KeyR'])).toEqual([위치.유지, 없음, 한(1, 0, 0)]);
+        expect(머신.입력([false, 'KeyK'])).toEqual([위치.유지, 없음, 한(1, 1, 0)]);
+        expect(머신.입력([false, 'KeyA'])).toEqual([위치.유지, 없음, 한(1, 1, 7)]);
+        expect(머신.입력([false, 'KeyE'])).toEqual([위치.다음, 한(1, 1, 7), 한(4, 0, 0)]);
     });
 });

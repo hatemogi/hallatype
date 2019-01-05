@@ -280,10 +280,10 @@ export function 상태전이([현재상태, 완성글자, 조립글자]: 머신�
 }
 
 export class 입력머신 {
-    private 조립글자 = 글자없음;
-    private 완성글자 = 글자없음;
-    private 상태 = 상태코드.S0;
+    private 상태: 머신상태 = [상태코드.S0, 글자없음, 글자없음];
     public 입력(키: 키입력): [위치이동, 글자, 글자] {
-        return [위치이동.유지, this.완성글자, this.조립글자];
+        const [위치, 새상태, 완성, 조립] = 상태전이(this.상태, 키);
+        this.상태 = [새상태, 완성, 조립];
+        return [위치, 완성, 조립];
     }
 }
