@@ -7,6 +7,7 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
+import { 글자꼴 } from '@/글자';
 import { 지문틀, 본문틀 } from '@/본문';
 import { 입력머신틀, 위치이동 } from '@/입력';
 import 그림판틀 from '@/그림판';
@@ -28,14 +29,16 @@ export default class Home extends Vue {
       // 컨트롤키 입력은 무시
       if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') return;
       const [이동, 완성, 조립] = 입력머신.입력([e.getModifierState('Shift'), e.code]);
-      console.debug(`[${이동}, [${완성.코드}], [${조립.코드}]]`);
+      console.debug(`[${이동}, [${완성}], [${조립.코드}]]`);
       switch (이동) {
         case 위치이동.유지:
           문서.글자쓰기(조립);
           break;
         case 위치이동.다음:
-          문서.글자쓰기(완성);
-          문서.다음위치();
+          완성.forEach((글자: 글자꼴) => {
+            문서.글자쓰기(글자);
+            문서.다음위치();
+          });
           문서.글자쓰기(조립);
           break;
       }
