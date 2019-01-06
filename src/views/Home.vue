@@ -27,7 +27,10 @@ export default class Home extends Vue {
     문서.영역그리기([0, 5]);
     window.onkeydown = (e: KeyboardEvent) => {
       // 컨트롤키 입력은 무시
-      if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') return;
+      if (e.code === 'ShiftLeft' || e.code === 'ShiftRight' ||
+          e.getModifierState('Control') || e.getModifierState('Alt') || e.getModifierState('Meta')) {
+            return;
+      }
       const [이동, 완성, 조립] = 입력머신.입력([e.getModifierState('Shift'), e.code]);
       console.debug(`[${이동}, [${완성}], [${조립.코드}]]`);
       switch (이동) {
@@ -41,6 +44,8 @@ export default class Home extends Vue {
           });
           문서.글자쓰기(조립);
           break;
+        case 위치이동.이전:
+          문서.지우고이전위치();
       }
     };
   }

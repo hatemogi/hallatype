@@ -23,6 +23,7 @@ export default class 그림판틀 implements 본문그림판 {
     public 글자그리기(위치: 글자위치, 글자: 색칠할글자) {
         const [x, y] = this.textToGraphic(위치);
         const [w, h] = [글자.자.전각 ? 16 : 8, 16];
+        this.바탕칠하기(위치, 글자.자.전각, 글자.배경색);
         const 빗맵들: 비트맵[] = 글자.자.종류 === 글자종류.한글 ? 한글비트맵(글자) : 그외비트맵(글자);
         빗맵들.forEach((빗맵: 비트맵, i: number) => {
             if (빗맵 && 빗맵.length > 0) {
@@ -32,7 +33,7 @@ export default class 그림판틀 implements 본문그림판 {
         });
     }
 
-    public 바탕칠하기(위치: 글자위치, 전각: boolean, 배경색: color.RGBA) {
+    private 바탕칠하기(위치: 글자위치, 전각: boolean, 배경색: color.RGBA) {
         const [x, y] = this.textToGraphic(위치);
         const [w, h] = [전각 ? 16 : 8, 16];
         const [r, g, b, _] = 배경색;

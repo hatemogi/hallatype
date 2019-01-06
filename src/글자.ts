@@ -17,7 +17,6 @@ function 글자종류판단(code: number): 글자종류 {
     }
 }
 
-
 export interface 글자꼴 {
     코드: number[];
     초성: number;
@@ -176,11 +175,11 @@ export class 글자위치 {
         }
     }
 
-    public 이전(전행마지막열 = this.열경계 - 1): 글자위치 {
+    public get 이전(): 글자위치 {
         if (this.열 === 0 && this.행 === 0) {
             return this;
         } else if (this.열 === 0) {
-            return this.이동(this.행 - 1, 전행마지막열);
+            return this.이동(this.행 - 1, this.열경계 - 1);
         } else {
             return this.이동(this.행, this.열 - 1);
         }
@@ -197,8 +196,10 @@ export class 글자위치 {
 export class 색칠할글자 {
     public readonly 자: 글자꼴;
     public readonly 색: color.RGBA[];
-    constructor(자: 글자꼴, 색: color.RGBA[]) {
+    public readonly 배경색: color.RGBA;
+    constructor(자: 글자꼴, 색: color.RGBA[], 배경색: color.RGBA) {
         this.자 = 자;
         this.색 = 색;
+        this.배경색 = 배경색;
     }
 }

@@ -24,7 +24,6 @@ import {글자없음, 글자위치, 글자건너뛰기, 글자꼴, 글자틀, �
 
 export interface 본문그림판 {
     글자그리기: (위치: 글자위치, 글자: 색칠할글자) => void;
-    바탕칠하기: (위치: 글자위치, 전각: boolean, 배경색: color.RGBA) => void;
 }
 
 interface 지문꼴 {
@@ -69,11 +68,7 @@ export class 지문틀 implements 지문꼴 {
             this.글자쓰기(글자건너뛰기);
             this.다음위치();
         }
-        const [행, 열] = [this.위치.행, this.위치.열];
-        if (!this.행렬[행]) {
-            this.행렬[행] = [];
-        }
-        this.행렬[행][열] = 글자;
+        this.글자지정(글자);
     }
 
     public 다음위치(): 글자위치 {
@@ -86,6 +81,24 @@ export class 지문틀 implements 지문꼴 {
             this.위치 = this.위치.다음;
         }
         return this.위치;
+    }
+
+    public 지우고이전위치(): 글자위치 {
+        this.글자지정(undefined);
+        this.위치 = this.위치.이전;
+        return this.위치;
+    }
+
+    private 글자지정(글자: 글자꼴 | undefined) {
+        const [행, 열] = [this.위치.행, this.위치.열];
+        if (!this.행렬[행]) {
+            this.행렬[행] = [];
+        }
+        if (글자) {
+            this.행렬[행][열] = 글자;
+        } else {
+            delete this.행렬[행][열];
+        }
     }
 }
 
@@ -156,15 +169,22 @@ export class 본문틀 implements 지문꼴 {
         return this.쓴글.다음위치();
     }
 
+    /**
+     * 조립중인 글자를 다 지우고, 이전 글자도 지운 상태
+     */
+    public 지우고이전위치(): 글자위치 {
+
+        return this.쓴글.지우고이전위치();
+    }
+
     private 글자그리기(위치: 글자위치) {
         const 지문글자 = this.지문.글자(위치);
         const 쓴글자 = this.쓴글.글자(위치);
-        this.그림판.바탕칠하기(위치, true, color.흰색);
         if (쓴글자 !== 글자없음) {
-            const 자 = new 색칠할글자(쓴글자, [color.검정, color.검정, color.검정]);
+            const 자 = new 색칠할글자(쓴글자, [color.검정, color.검정, color.검정], color.회색);
             this.그림판.글자그리기(위치, 자);
         } else {
-            const 자 = new 색칠할글자(지문글자, [color.검정, color.빨강, color.파랑]);
+            const 자 = new 색칠할글자(지문글자, [color.검정, color.빨강, color.파랑], color.회색);
             this.그림판.글자그리기(위치, 자);
         }
     }
