@@ -37,8 +37,8 @@ interface 지문꼴 {
  * 한번 입력해 두고, 본문이 읽는 용도.
  */
 export class 지문틀 implements 지문꼴 {
+    public 위치: 글자위치;
     private 최대열수: number;
-    private 위치: 글자위치;
     private 행렬: 글자꼴[][] = [];
 
     constructor(최대열수 = 80) {
@@ -124,7 +124,6 @@ export class 본문틀 implements 지문꼴 {
     private 열수: number;
     private 지문: 지문틀;
     private 쓴글: 지문틀;
-    private 위치: 글자위치;
     private 기본속성 = new 글자꾸밈();
     private 행렬: 글자판[][] = [];
     private 그림판: 본문그림판;
@@ -133,7 +132,6 @@ export class 본문틀 implements 지문꼴 {
         this.쓴글 = new 지문틀(열수);
         this.그림판 = 그림판;
         this.열수 = 열수;
-        this.위치 = new 글자위치(0, 0, 열수);
     }
 
     public 영역그리기([시작행, 끝행]: [number, number] = [0, 30]): void {
@@ -151,7 +149,7 @@ export class 본문틀 implements 지문꼴 {
 
     public 글자쓰기(글자: 글자꼴) {
         this.쓴글.글자쓰기(글자);
-        this.글자그리기(this.위치);
+        this.글자그리기(this.쓴글.위치);
     }
 
     public 다음위치(): 글자위치 {

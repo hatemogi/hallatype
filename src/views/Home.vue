@@ -27,7 +27,6 @@ export default class Home extends Vue {
     window.onkeydown = (e: KeyboardEvent) => {
       // 컨트롤키 입력은 무시
       if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') return;
-      console.debug(`key=${e.key}, code=${e.code}, shift=${e.getModifierState('Shift')}`);
       const [이동, 완성, 조립] = 입력머신.입력([e.getModifierState('Shift'), e.code]);
       console.debug(`[${이동}, [${완성.코드}], [${조립.코드}]]`);
       switch (이동) {
