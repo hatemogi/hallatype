@@ -20,19 +20,23 @@
  */
 
 import * as color from './색상';
-import {글자위치, 글자건너뛰기, 글자꼴, 글자틀, 글자꾸밈, 색칠할글자} from './글자';
+import {글자없음, 글자위치, 글자건너뛰기, 글자꼴, 글자틀, 글자꾸밈, 색칠할글자} from './글자';
 
 export interface 본문그림판 {
     글자그리기: (위치: 글자위치, 글자: 색칠할글자) => void;
     바탕칠하기: (위치: 글자위치, 전각: boolean, 배경색: color.RGBA) => void;
 }
 
+interface 지문꼴 {
+    글자쓰기: (글자: 글자꼴) => any;
+    다음위치: (자: 글자꼴) => 글자위치;
+}
 /**
  * 지문: 타자연습할 장문의 바탕글.
  * 미리 준비해 두는 글이고, 편집이 필요 없다.
  * 한번 입력해 두고, 본문이 읽는 용도.
  */
-export class 지문틀 {
+export class 지문틀 implements 지문꼴 {
     private 최대열수: number;
     private 위치: 글자위치;
     private 행렬: 글자꼴[][] = [];
@@ -45,43 +49,43 @@ export class 지문틀 {
     public 쓰기(글: string) {
         for (let i = 0; i <= 글.length; i++) {
             if (글.codePointAt(i)) {
-                this.글자쓰기(글.codePointAt(i)!);
+                const 글자 = 글자틀.생성(글.codePointAt(i)!);
+                this.글자쓰기(글자);
+                this.다음위치();
             }
         }
     }
 
     public 글자(위치: 글자위치): 글자꼴 {
-        return this.행렬[위치.행][위치.열];
+        return this.줄(위치.행)[위치.열] || 글자없음;
     }
 
     public 줄(행: number): 글자꼴[] {
-        return this.행렬[행];
+        return this.행렬[행] || [];
     }
 
-    private 글자쓰기(code: number) {
+    public 글자쓰기(글자: 글자꼴) {
+        if (글자.전각 && this.위치.열 === 79) {
+            this.글자쓰기(글자건너뛰기);
+            this.다음위치();
+        }
         const [행, 열] = [this.위치.행, this.위치.열];
-        const 자 = 글자틀.생성(code);
-        if (자.전각 && 열 === 79) {
-            this.행렬[행][열] = 글자건너뛰기;
-            this.위치 = this.위치.다음행;
-            this.글자쓰기(code);
-        } else {
-            if (!this.행렬[행]) {
-                this.행렬[행] = [];
-            }
-            this.행렬[행][열] = 자;
-            this.위치 = this.다음위치(자);
+        if (!this.행렬[행]) {
+            this.행렬[행] = [];
         }
+        this.행렬[행][열] = 글자;
     }
 
-    private 다음위치(자: 글자꼴): 글자위치 {
+    public 다음위치(): 글자위치 {
+        const 자 = this.글자(this.위치) || 글자없음;
         if (자.다음행) {
-            return this.위치.다음행;
+            this.위치 = this.위치.다음행;
         } else if (자.전각) {
-            return this.위치.다음.다음;
+            this.위치 = this.위치.다음.다음;
         } else {
-            return this.위치.다음;
+            this.위치 = this.위치.다음;
         }
+        return this.위치;
     }
 }
 
@@ -116,15 +120,17 @@ export class 글자판 {
  *
  * 지문은 미리 준비해 놓는다. (별도 클래스가 적합할까?)
  */
-export class 본문틀 {
+export class 본문틀 implements 지문꼴 {
     private 열수: number;
     private 지문: 지문틀;
+    private 쓴글: 지문틀;
     private 위치: 글자위치;
     private 기본속성 = new 글자꾸밈();
     private 행렬: 글자판[][] = [];
     private 그림판: 본문그림판;
     constructor(지문: 지문틀, 그림판: 본문그림판, 열수 = 80) {
         this.지문 = 지문;
+        this.쓴글 = new 지문틀(열수);
         this.그림판 = 그림판;
         this.열수 = 열수;
         this.위치 = new 글자위치(0, 0, 열수);
@@ -143,10 +149,26 @@ export class 본문틀 {
         }
     }
 
+    public 글자쓰기(글자: 글자꼴) {
+        this.쓴글.글자쓰기(글자);
+        this.글자그리기(this.위치);
+    }
+
+    public 다음위치(): 글자위치 {
+        return this.쓴글.다음위치();
+    }
+
     private 글자그리기(위치: 글자위치) {
         const 지문글자 = this.지문.글자(위치);
-        const 자 = new 색칠할글자(지문글자, [color.검정, color.빨강, color.파랑]);
-        this.그림판.글자그리기(위치, 자);
+        const 쓴글자 = this.쓴글.글자(위치);
+        this.그림판.바탕칠하기(위치, true, color.흰색);
+        if (쓴글자 !== 글자없음) {
+            const 자 = new 색칠할글자(쓴글자, [color.검정, color.검정, color.검정]);
+            this.그림판.글자그리기(위치, 자);
+        } else {
+            const 자 = new 색칠할글자(지문글자, [color.검정, color.빨강, color.파랑]);
+            this.그림판.글자그리기(위치, 자);
+        }
     }
 }
 

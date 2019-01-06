@@ -8,7 +8,7 @@
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
 import { 지문틀, 본문틀 } from '@/본문';
-import { 입력머신틀 } from '@/입력';
+import { 입력머신틀, 위치이동 } from '@/입력';
 import 그림판틀 from '@/그림판';
 
 @Component
@@ -20,12 +20,26 @@ export default class Home extends Vue {
     const 지문 = new 지문틀();
     const 문서 = new 본문틀(지문, 그림판);
     const 입력머신 = new 입력머신틀();
-    지문.쓰기('HTML5 캔버스에 비트맵 글꼴을 써서, 한글을 자소별로 다른 색상으로 보이는 데모입니다.\n');
-    지문.쓰기('과연 자소별 색상 출력이 얼마나 중요한 기능일지는 아직 잘 모르겠습니다만...');
+    지문.쓰기('오늘도 또 우리 수탉이 막 쫓기었다. 내가 점심을 먹고 나무를 하러 갈 양으로 나올 때이었다. ');
+    지문.쓰기('산으로 올라서려니까 등뒤에서 푸드득 푸드득 하고 닭의 횃소리가 야단이다. 깜짝 놀라서 ');
+    지문.쓰기('고개를 돌려보니 아니나다르랴 두 놈이 또 얼리었다.');
     문서.영역그리기([0, 5]);
     window.onkeydown = (e: KeyboardEvent) => {
-      console.log(`key=${e.key}, code=${e.code}, shift=${e.getModifierState('Shift')}`);
-
+      // 컨트롤키 입력은 무시
+      if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') return;
+      console.debug(`key=${e.key}, code=${e.code}, shift=${e.getModifierState('Shift')}`);
+      const [이동, 완성, 조립] = 입력머신.입력([e.getModifierState('Shift'), e.code]);
+      console.debug(`[${이동}, [${완성.코드}], [${조립.코드}]]`);
+      switch (이동) {
+        case 위치이동.유지:
+          문서.글자쓰기(조립);
+          break;
+        case 위치이동.다음:
+          문서.글자쓰기(완성);
+          문서.다음위치();
+          문서.글자쓰기(조립);
+          break;
+      }
     };
   }
 }

@@ -1,4 +1,4 @@
-import { 글자틀, 글자위치 } from '@/글자';
+import { 글자틀, 글자위치, 글자없음 } from '@/글자';
 import { 섹션나누기, 지문틀 } from '@/본문';
 
 describe('문서', () => {
@@ -17,6 +17,6 @@ describe('문서', () => {
         const 위치 = new 글자위치(0, 0);
         지문.쓰기('안녕하세요?');
         expect(지문.글자(위치)).toEqual(글자틀.생성('안'.codePointAt(0)!));
-        expect(지문.글자(위치.다음)).toBeUndefined();
+        expect(지문.글자(위치.다음)).toEqual(글자없음);
     });
 });
