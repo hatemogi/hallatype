@@ -32,7 +32,7 @@ export default class Home extends Vue {
             return;
       }
       const [이동, 완성, 조립] = 입력머신.입력([e.getModifierState('Shift'), e.code]);
-      console.debug(`[${이동}, [${완성}], [${조립.코드}]]`);
+      console.debug(`[${이동}, [${완성.map((글자) => 글자.코드)}], [${조립.코드}]]`);
       switch (이동) {
         case 위치이동.유지:
           문서.글자쓰기(조립);
