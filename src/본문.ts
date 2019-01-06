@@ -20,7 +20,7 @@
  */
 
 import * as color from './색상';
-import {글자위치, 글자꼴, 글자틀, 글자꾸밈, 색칠할글자} from './글자';
+import {글자위치, 글자건너뛰기, 글자꼴, 글자틀, 글자꾸밈, 색칠할글자} from './글자';
 
 export interface 본문그림판 {
     글자그리기: (위치: 글자위치, 글자: 색칠할글자) => void;
@@ -33,13 +33,13 @@ export interface 본문그림판 {
  * 한번 입력해 두고, 본문이 읽는 용도.
  */
 export class 지문틀 {
-    private 열수: number;
+    private 최대열수: number;
     private 위치: 글자위치;
     private 행렬: 글자꼴[][] = [];
 
-    constructor(열수 = 80) {
-        this.열수 = 열수;
-        this.위치 = new 글자위치(0, 0, 열수);
+    constructor(최대열수 = 80) {
+        this.최대열수 = 최대열수;
+        this.위치 = new 글자위치(0, 0, 최대열수);
     }
 
     public 쓰기(글: string) {
@@ -59,13 +59,19 @@ export class 지문틀 {
     }
 
     private 글자쓰기(code: number) {
-        const 자 = 글자틀.생성(code);
         const [행, 열] = [this.위치.행, this.위치.열];
-        if (!this.행렬[행]) {
-            this.행렬[행] = [];
+        const 자 = 글자틀.생성(code);
+        if (자.전각 && 열 === 79) {
+            this.행렬[행][열] = 글자건너뛰기;
+            this.위치 = this.위치.다음행;
+            this.글자쓰기(code);
+        } else {
+            if (!this.행렬[행]) {
+                this.행렬[행] = [];
+            }
+            this.행렬[행][열] = 자;
+            this.위치 = this.다음위치(자);
         }
-        this.행렬[행][열] = 자;
-        this.위치 = this.다음위치(자);
     }
 
     private 다음위치(자: 글자꼴): 글자위치 {

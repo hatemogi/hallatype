@@ -26,6 +26,7 @@ export interface 글자꼴 {
     종류: 글자종류;
     전각: boolean;
     다음행: boolean;
+    건너뛰기: boolean;
     새초성: (초성: number) => 글자꼴;
     새중성: (중성: number) => 글자꼴;
     새종성: (종성: number) => 글자꼴;
@@ -52,6 +53,9 @@ export abstract class 글자틀 implements 글자꼴 {
     public abstract get 전각(): boolean;
     public abstract get 다음행(): boolean;
     public abstract get 종류(): 글자종류;
+    public get 건너뛰기() {
+        return false;
+    }
 
     public 새초성(초성: number): 글자꼴 {
         return new 한글([초성, this.중성, this.종성]);
@@ -80,7 +84,14 @@ class 글자없음틀 extends 글자틀 {
     public readonly 다음행 = false;
 }
 
+class 건너뛰기글자틀 extends 글자없음틀 {
+    public get 건너뛰기() {
+        return true;
+    }
+}
+
 export const 글자없음 = new 글자없음틀();
+export const 글자건너뛰기 = new 건너뛰기글자틀();
 
 class 라틴 extends 글자틀 {
     public readonly 종류 = 글자종류.라틴;
