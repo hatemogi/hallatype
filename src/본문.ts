@@ -177,14 +177,40 @@ export class 본문틀 implements 지문꼴 {
         return this.쓴글.지우고이전위치();
     }
 
+    // TODO: 종성 조립상태는 아직 정오판단 미정 상태
     private 글자그리기(위치: 글자위치) {
         const 지문글자 = this.지문.글자(위치);
         const 쓴글자 = this.쓴글.글자(위치);
-        if (쓴글자 !== 글자없음) {
+        const 자소색 = (지문자소: number, 쓴글자소: number) => {
+            if (지문자소 === 쓴글자소) {
+                return color.초록;
+            } else if (쓴글자소 === 0) {
+                return color.회색;
+            } else {
+                return color.빨강;
+            }
+        };
+        if (지문글자.전각 && 쓴글자.전각) {
+            const 초성색 = 자소색(지문글자.초성, 쓴글자.초성);
+            const 중성색 = 자소색(지문글자.중성, 쓴글자.중성);
+            const 종성색 = 자소색(지문글자.종성, 쓴글자.종성);
+            let 자 = 지문글자;
+            if (쓴글자.초성 > 0) {
+                자 = 자.새초성(쓴글자.초성);
+            }
+            if (쓴글자.중성 > 0) {
+                자 = 자.새중성(쓴글자.중성);
+            }
+            if (쓴글자.종성 > 0) {
+                자 = 자.새종성(쓴글자.종성);
+            }
+            const 색자 = new 색칠할글자(자, [초성색, 중성색, 종성색], color.흰색);
+            this.그림판.글자그리기(위치, 색자);
+        } else if (쓴글자 !== 글자없음) {
             const 자 = new 색칠할글자(쓴글자, [color.검정, color.검정, color.검정], color.회색);
             this.그림판.글자그리기(위치, 자);
         } else {
-            const 자 = new 색칠할글자(지문글자, [color.검정, color.빨강, color.파랑], color.회색);
+            const 자 = new 색칠할글자(지문글자, [color.회색, color.회색, color.회색], color.흰색);
             this.그림판.글자그리기(위치, 자);
         }
     }
