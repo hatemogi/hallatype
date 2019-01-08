@@ -19,7 +19,7 @@
  *
  */
 
-import * as color from './색상';
+import * as 색상 from './색상';
 import {글자없음, 글자위치, 글자건너뛰기, 글자꼴, 글자틀, 글자꾸밈, 색칠할글자} from './글자';
 
 export interface 본문그림판 {
@@ -68,7 +68,7 @@ export class 지문틀 implements 지문꼴 {
             this.글자쓰기(글자건너뛰기);
             this.다음위치();
         }
-        this.글자지정(글자);
+        this.글자지정(this.위치, 글자);
     }
 
     public 다음위치(): 글자위치 {
@@ -83,14 +83,21 @@ export class 지문틀 implements 지문꼴 {
         return this.위치;
     }
 
-    public 지우고이전위치(): 글자위치 {
-        this.글자지정(undefined);
+    public 처음위치로() {
+        this.위치 = new 글자위치(0, 0, this.최대열수);
+    }
+
+    public 이전위치(): 글자위치 {
         this.위치 = this.위치.이전;
+        const 자 = this.글자(this.위치) || 글자없음;
+        if (자 === 글자없음) {
+            this.위치 = this.위치.이전;
+        }
         return this.위치;
     }
 
-    private 글자지정(글자: 글자꼴 | undefined) {
-        const [행, 열] = [this.위치.행, this.위치.열];
+    private 글자지정(위치: 글자위치, 글자: 글자꼴) {
+        const [행, 열] = [위치.행, 위치.열];
         if (!this.행렬[행]) {
             this.행렬[행] = [];
         }
@@ -136,13 +143,13 @@ export class 글자판 {
 export class 본문틀 implements 지문꼴 {
     private 열수: number;
     private 지문: 지문틀;
-    private 쓴글: 지문틀;
     private 기본속성 = new 글자꾸밈();
-    private 행렬: 글자판[][] = [];
+    private 쓴글: 글자꼴[][] = [];
+    private 커서: 글자위치;
     private 그림판: 본문그림판;
     constructor(지문: 지문틀, 그림판: 본문그림판, 열수 = 80) {
         this.지문 = 지문;
-        this.쓴글 = new 지문틀(열수);
+        this.커서 = new 글자위치(0, 0, 열수);
         this.그림판 = 그림판;
         this.열수 = 열수;
     }
@@ -161,36 +168,62 @@ export class 본문틀 implements 지문꼴 {
     }
 
     public 글자쓰기(글자: 글자꼴) {
-        this.쓴글.글자쓰기(글자);
-        this.글자그리기(this.쓴글.위치);
+        this.쓴글줄(this.커서.행)[this.커서.열] = 글자;
+        this.글자그리기(this.커서);
+    }
+
+    public get 커서위치(): 글자위치 {
+        return this.커서;
     }
 
     public 다음위치(): 글자위치 {
-        return this.쓴글.다음위치();
+        const 기존위치 = this.커서;
+        this.커서 = this.지문.다음위치();
+        if (this.지문.글자(this.커서).건너뛰기) {
+            this.커서 = this.지문.다음위치();
+        }
+        this.글자그리기(기존위치);
+        return this.커서;
     }
 
     /**
      * 조립중인 글자를 다 지우고, 이전 글자도 지운 상태
      */
     public 지우고이전위치(): 글자위치 {
+        const 기존위치 = this.커서;
+        this.커서 = this.지문.이전위치();
+        delete this.쓴글줄(기존위치.행)[기존위치.열];
+        delete this.쓴글줄(this.커서.행)[this.커서.열];
+        this.글자그리기(기존위치);
+        this.글자그리기(this.커서);
+        return this.커서;
+    }
 
-        return this.쓴글.지우고이전위치();
+    private 쓴글줄(행: number): 글자꼴[] {
+        this.쓴글[행] = this.쓴글[행] || [];
+        return this.쓴글[행];
+    }
+
+    private 쓴글자(위치: 글자위치): 글자꼴 {
+        return this.쓴글줄(위치.행)[위치.열] || 글자없음;
     }
 
     // TODO: 종성 조립상태는 아직 정오판단 미정 상태
     private 글자그리기(위치: 글자위치) {
         const 지문글자 = this.지문.글자(위치);
-        const 쓴글자 = this.쓴글.글자(위치);
+        const 쓴글자   = this.쓴글자(위치);
+        const 커서위치 = this.커서.행 === 위치.행 && this.커서.열 === 위치.열;
         const 자소색 = (지문자소: number, 쓴글자소: number) => {
             if (지문자소 === 쓴글자소) {
-                return color.초록;
+                return 커서위치 ? 색상.흰색 : 색상.초록;
             } else if (쓴글자소 === 0) {
-                return color.회색;
+                return 커서위치 ? 색상.밝은회색 : 색상.회색;
             } else {
-                return color.빨강;
+                return 색상.빨강;
             }
         };
-        if (지문글자.전각 && 쓴글자.전각) {
+        const 배경색 = 커서위치 ? 색상.초록 : 색상.흰색;
+        if (지문글자.전각) {
             const 초성색 = 자소색(지문글자.초성, 쓴글자.초성);
             const 중성색 = 자소색(지문글자.중성, 쓴글자.중성);
             const 종성색 = 자소색(지문글자.종성, 쓴글자.종성);
@@ -204,13 +237,10 @@ export class 본문틀 implements 지문꼴 {
             if (쓴글자.종성 > 0) {
                 자 = 자.새종성(쓴글자.종성);
             }
-            const 색자 = new 색칠할글자(자, [초성색, 중성색, 종성색], color.흰색);
+            const 색자 = new 색칠할글자(자, [초성색, 중성색, 종성색], 배경색);
             this.그림판.글자그리기(위치, 색자);
-        } else if (쓴글자 !== 글자없음) {
-            const 자 = new 색칠할글자(쓴글자, [color.검정, color.검정, color.검정], color.회색);
-            this.그림판.글자그리기(위치, 자);
         } else {
-            const 자 = new 색칠할글자(지문글자, [color.회색, color.회색, color.회색], color.흰색);
+            const 자 = new 색칠할글자(쓴글자 === 글자없음 ? 지문글자 : 쓴글자, [색상.회색, 색상.회색, 색상.회색], 배경색);
             this.그림판.글자그리기(위치, 자);
         }
     }
