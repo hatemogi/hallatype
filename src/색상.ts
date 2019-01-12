@@ -7,3 +7,4 @@ export const 검정: RGBA = [0, 0, 0, 255];
 export const 빨강: RGBA = [255, 0, 0, 255];
 export const 초록: RGBA = [0, 128, 0, 255];
 export const 파랑: RGBA = [0, 0, 255, 255];
+export const 노랑: RGBA = [255, 255, 0, 255];
