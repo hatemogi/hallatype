@@ -33,8 +33,8 @@ export default class Home extends Vue {
             return;
       }
       const 글자 = 지문.글자(문서.커서위치);
-      let 모드 = 글자.전각 ? 입력모드.한글 : 입력모드.영문;
-      if (글자.전각 && 글자.종성 === 0) 모드 = 입력모드.종성없음;
+      let 모드 = 글자.한글 ? 입력모드.한글 : 입력모드.영문;
+      if (글자.한글 && 글자.종성 === 0) 모드 = 입력모드.종성없음;
       const [이동, 완성, 조립] = 입력머신.입력([모드, e.getModifierState('Shift'), e.code]);
       switch (이동) {
         case 위치이동.유지:

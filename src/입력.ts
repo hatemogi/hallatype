@@ -339,3 +339,16 @@ export class 입력머신틀 {
         return [위치, 완성, 조립];
     }
 }
+
+/**
+ * 필요한 것: 필요 타수 + 어느 시점에 틀렸나.
+ * @param 글자
+ */
+export function 필요입력(글자: 글자꼴): string[] {
+    if (글자.한글) {
+        const [초, 중, 종] = 글자.코드;
+        return [];
+    } else {
+        return [];
+    }
+}

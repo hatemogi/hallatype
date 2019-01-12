@@ -6,6 +6,13 @@ import { 한글글꼴, 라틴글꼴 } from './fonts';
 
 type 비트맵 = number[];
 
+/**
+ * 그림판 역할:
+ * 1) 텍스트 보이기
+ * 2) 커서 보이기
+ * 3) 엔터표시 보이기
+ * 4) 오타 위치 지적하기
+ */
 export default class 그림판틀 implements 본문그림판 {
     private ctx!: CanvasRenderingContext2D;
 
