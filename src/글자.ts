@@ -2,7 +2,7 @@ import * as color from './색상';
 import { 분리 } from './한글';
 
 export enum 글자종류 {
-    한글, 라틴, 모름, 없음,
+    한글, 라틴, 모름, 없음, 끝,
 }
 
 function 글자종류판단(code: number): 글자종류 {
@@ -26,7 +26,7 @@ export interface 글자꼴 {
     전각: boolean;
     한글: boolean;
     다음행: boolean;
-    건너뛰기: boolean;
+    끝: boolean;
     새초성: (초성: number) => 글자꼴;
     새중성: (중성: number) => 글자꼴;
     새종성: (종성: number) => 글자꼴;
@@ -54,8 +54,8 @@ export abstract class 글자틀 implements 글자꼴 {
     public abstract get 한글(): boolean;
     public abstract get 다음행(): boolean;
     public abstract get 종류(): 글자종류;
-    public get 건너뛰기() {
-        return false;
+    public get 끝() {
+        return this.종류 === 글자종류.끝;
     }
 
     public 새초성(초성: number): 글자꼴 {
@@ -86,14 +86,19 @@ class 글자없음틀 extends 글자틀 {
     public readonly 다음행 = false;
 }
 
-class 건너뛰기글자틀 extends 글자없음틀 {
-    public get 건너뛰기() {
-        return true;
-    }
+class 끝글자틀 extends 글자틀 {
+    public readonly 종류 = 글자종류.끝;
+    public readonly 전각 = false;
+    public readonly 한글 = false;
+    public readonly 초성 = 0;
+    public readonly 중성 = 0;
+    public readonly 종성 = 0;
+    public readonly 코드 = [0];
+    public readonly 다음행 = false;
 }
 
 export const 글자없음 = new 글자없음틀();
-export const 글자건너뛰기 = new 건너뛰기글자틀();
+export const 끝글자 = new 끝글자틀();
 
 class 라틴 extends 글자틀 {
     public readonly 종류 = 글자종류.라틴;
@@ -148,50 +153,6 @@ export class 글자꾸밈 {
     constructor(글자색: color.RGBA = color.흰색, 배경색: color.RGBA = color.검정) {
         this.글자색 = 글자색;
         this.배경색 = 배경색;
-    }
-}
-
-/**
- * 특정 글자 위치. 커서.
- * (x, y)의 순서와 달리 행이 먼저고 열이 나중 표기.
- * # 기본 기능
- *     글자 단위 이전/다음 이동.
- *     엔터를 누르면 다음행, 맨 앞 열에서 백스페이스 누르면 전줄 끝으로 이동.
- */
-export class 글자위치 {
-    public readonly 행: number;
-    public readonly 열: number;
-    private 열경계: number;
-    constructor(행: number, 열: number, 열경계 = 80) {
-        this.행 = 행;
-        this.열 = 열;
-        this.열경계 = 열경계;
-    }
-
-    public 이동(행: number, 열: number): 글자위치 {
-        return new 글자위치(행, 열, this.열경계);
-    }
-
-    public get 다음(): 글자위치 {
-        if (this.열 + 1 >= this.열경계) {
-            return this.이동(this.행 + 1, 0);
-        } else {
-            return this.이동(this.행, this.열 + 1);
-        }
-    }
-
-    public get 이전(): 글자위치 {
-        if (this.열 === 0 && this.행 === 0) {
-            return this;
-        } else if (this.열 === 0) {
-            return this.이동(this.행 - 1, this.열경계 - 1);
-        } else {
-            return this.이동(this.행, this.열 - 1);
-        }
-    }
-
-    public get 다음행(): 글자위치 {
-        return this.이동(this.행 + 1, 0);
     }
 }
 

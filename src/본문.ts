@@ -20,15 +20,56 @@
  */
 
 import * as 색상 from './색상';
-import {글자없음, 글자위치, 글자건너뛰기, 글자꼴, 글자틀, 글자꾸밈, 색칠할글자} from './글자';
+import {글자없음, 글자꼴, 글자틀, 글자꾸밈, 색칠할글자} from './글자';
+
+export class 위치틀 {
+    public readonly 행: number;
+    public readonly 열: number;
+    constructor(행: number = 0, 열: number = 0) {
+        this.행 = 행;
+        this.열 = 열;
+    }
+
+    public get 행렬(): [number, number] {
+        return [this.행, this.열];
+    }
+
+    public get 다음() {
+        return new 위치틀(this.행, this.열 + 1);
+    }
+
+    public get 다음행() {
+        return new 위치틀(this.행 + 1, 0);
+    }
+
+    public 이전(전줄마지막열: number = 0): 위치틀 {
+        const [행, 열] = this.행렬;
+        if (열 > 0) {
+            return new 위치틀(행, 열 - 1);
+        } else if (열 <= 0 && 행 > 0) {
+            const 이전줄 = this.줄(행 - 1);
+            return new 위치틀(행 - 1, 전줄마지막열);
+        } else {
+            return new 위치틀(0, 0);
+        }
+    }
+}
 
 export interface 본문그림판 {
-    글자그리기: (위치: 글자위치, 글자: 색칠할글자) => void;
+    글자그리기: (위치: 위치틀, 글자: 색칠할글자) => void;
 }
 
 interface 지문꼴 {
-    글자쓰기: (글자: 글자꼴) => any;
-    다음위치: (자: 글자꼴) => 글자위치;
+    글자: (위치: 위치틀) => 글자꼴;
+    쓰기: (위치: 위치틀, 글자: 글자꼴) => any;
+}
+
+class 지문커서 {
+    private 위치: 위치틀 = new 위치틀();
+    private 지문: 지문꼴;
+    constructor(지문: 지문꼴) {
+        this.지문 = 지문;
+    }
 }
 /**
  * 지문: 타자연습할 장문의 바탕글.
@@ -36,76 +77,45 @@ interface 지문꼴 {
  * 한번 입력해 두고, 본문이 읽는 용도.
  */
 export class 지문틀 implements 지문꼴 {
-    public 위치: 글자위치;
-    private 최대열수: number;
-    private 행렬: 글자꼴[][] = [];
+    public 위치: 위치틀;
+    private 행렬: 글자꼴[][];
 
-    constructor(최대열수 = 80) {
-        this.최대열수 = 최대열수;
-        this.위치 = new 글자위치(0, 0, 최대열수);
+    constructor(위치: 위치틀 = new 위치틀(), 행렬: 글자꼴[][] = []) {
+        this.위치 = 위치;
+        this.행렬 = 행렬;
     }
 
-    public 쓰기(글: string) {
+    public 복제(시작위치: 위치틀): 지문틀 {
+        return new 지문틀(시작위치, this.행렬);
+    }
+
+    public 글쓰기(글: string) {
         for (let i = 0; i <= 글.length; i++) {
             if (글.codePointAt(i)) {
                 const 글자 = 글자틀.생성(글.codePointAt(i)!);
-                this.글자쓰기(글자);
-                this.다음위치();
+                this.쓰기(this.위치, 글자);
+                this.위치 = 글자.다음행 ? this.위치.다음행 : this.위치.다음;
             }
         }
     }
 
-    public 글자(위치: 글자위치): 글자꼴 {
+    public 글자(위치: 위치틀): 글자꼴 {
         return this.줄(위치.행)[위치.열] || 글자없음;
+    }
+
+    public 쓰기(위치: 위치틀, 글자: 글자꼴) {
+        this.행렬[위치.행] = this.행렬[위치.행] || [];
+        this.행렬[위치.행][위치.열] = 글자;
     }
 
     public 줄(행: number): 글자꼴[] {
         return this.행렬[행] || [];
     }
 
-    public 글자쓰기(글자: 글자꼴) {
-        if (글자.전각 && this.위치.열 === 79) {
-            this.글자쓰기(글자건너뛰기);
-            this.다음위치();
-        }
-        this.글자지정(this.위치, 글자);
-    }
-
-    public 다음위치(): 글자위치 {
-        const 자 = this.글자(this.위치) || 글자없음;
-        if (자.다음행) {
-            this.위치 = this.위치.다음행;
-        } else if (자.전각) {
-            this.위치 = this.위치.다음.다음;
-        } else {
-            this.위치 = this.위치.다음;
-        }
-        return this.위치;
-    }
-
-    public 처음위치로() {
-        this.위치 = new 글자위치(0, 0, this.최대열수);
-    }
-
-    public 이전위치(): 글자위치 {
-        this.위치 = this.위치.이전;
-        const 자 = this.글자(this.위치) || 글자없음;
-        if (자 === 글자없음) {
-            this.위치 = this.위치.이전;
-        }
-        return this.위치;
-    }
-
-    private 글자지정(위치: 글자위치, 글자: 글자꼴) {
-        const [행, 열] = [위치.행, 위치.열];
-        if (!this.행렬[행]) {
-            this.행렬[행] = [];
-        }
-        if (글자) {
-            this.행렬[행][열] = 글자;
-        } else {
-            delete this.행렬[행][열];
-        }
+    public 이전위치(): 위치틀 {
+        const 행 = this.위치.행;
+        const 전줄마지막 = this.줄(행 - 1).length;
+        return (this.위치 = this.위치.이전(전줄마지막));
     }
 }
 
@@ -117,6 +127,18 @@ enum 정오표 {
     정정,   // 오타를 수정한 정타
 }
 
+export class 글자판 {
+    public readonly 지문글자: 글자꼴;
+    public readonly 쓴글자: 글자꼴;
+    public constructor(지문글자: 글자꼴, 쓴글자: 글자꼴) {
+        this.지문글자 = 지문글자;
+        this.쓴글자 = 쓴글자;
+    }
+
+    public get 정오(): [정오표, 정오표, 정오표] {
+        return [정오표.미정, 정오표.미정, 정오표.미정];
+    }
+}
 /**
  * 특징: 지문과 쓴글이 있다. 지문은 한번에 다 쓰고 바꾸지 않고,
  * 쓴글은 순차적으로 쓰되 앞뒤로 한글자 단위로만 이동한다.
@@ -127,76 +149,46 @@ enum 정오표 {
  * 지문은 미리 준비해 놓는다. (별도 클래스가 적합할까?)
  */
 export class 본문틀 implements 지문꼴 {
-    private 열수: number;
     private 지문: 지문틀;
+    private 쓴글: 지문틀 = new 지문틀();
     private 기본속성 = new 글자꾸밈();
-    private 쓴글: 글자꼴[][] = [];
-    private 커서: 글자위치;
     private 그림판: 본문그림판;
-    constructor(지문: 지문틀, 그림판: 본문그림판, 열수 = 80) {
+    constructor(지문: 지문틀, 그림판: 본문그림판) {
         this.지문 = 지문;
-        this.커서 = new 글자위치(0, 0, 열수);
         this.그림판 = 그림판;
-        this.열수 = 열수;
     }
 
-    public 영역그리기([시작행, 끝행]: [number, number] = [0, 30]): void {
-        // 특정 영역 다시 그리기
-        for (let 행 = 시작행; 행 < 끝행; 행++) {
-            const 현재줄 = this.지문.줄(행);
-            if (현재줄) {
-                현재줄.forEach((자: 글자꼴, 열: number) => {
-                    const 위치 = new 글자위치(행, 열);
-                    this.글자그리기(위치);
-                });
-            }
-        }
+    public 글자스트림(시작위치: 위치틀): Iterator<글자판> {
+        const 지문 = this.지문;
+        const 쓴글 = this.쓴글;
+        let 위치 = 시작위치;
+        return {
+            next: () => {
+                const ㅈ = 지문.글자(위치);
+                const ㅆ = 쓴글.글자(위치);
+                const 판 = new 글자판(ㅈ, ㅆ);
+                위치 = ㅈ.다음행 ? 위치.다음행 : 위치.다음;
+                return {done: ㅈ.끝, value: 판};
+            },
+        };
     }
 
-    public 글자쓰기(글자: 글자꼴) {
-        this.쓴글줄(this.커서.행)[this.커서.열] = 글자;
-        this.글자그리기(this.커서);
+    public 쓰기(위치: 위치틀, 글자: 글자꼴) {
+        this.쓴글.쓰기(위치, 글자);
     }
 
-    public get 커서위치(): 글자위치 {
-        return this.커서;
+    public 글자(위치: 위치틀): 글자꼴 {
+        return this.쓴글.글자(위치);
     }
 
-    public 다음위치(): 글자위치 {
-        const 기존위치 = this.커서;
-        this.커서 = this.지문.다음위치();
-        if (this.지문.글자(this.커서).건너뛰기) {
-            this.커서 = this.지문.다음위치();
-        }
-        this.글자그리기(기존위치);
-        return this.커서;
-    }
-
-    /**
-     * 조립중인 글자를 다 지우고, 이전 글자도 지운 상태
-     */
-    public 지우고이전위치(): 글자위치 {
-        const 기존위치 = this.커서;
-        this.커서 = this.지문.이전위치();
-        this.쓴글줄(기존위치.행)[기존위치.열] = 글자없음;
-        this.글자그리기(기존위치);
-        this.글자그리기(this.커서);
-        return this.커서;
-    }
-
-    private 쓴글줄(행: number): 글자꼴[] {
-        this.쓴글[행] = this.쓴글[행] || [];
-        return this.쓴글[행];
-    }
-
-    private 쓴글자(위치: 글자위치): 글자꼴 {
-        return this.쓴글줄(위치.행)[위치.열] || 글자없음;
+    public get 커서(): 위치틀 {
+        return this.쓴글.위치;
     }
 
     // TODO: 종성 조립상태는 아직 정오판단 미정 상태
-    private 글자그리기(위치: 글자위치) {
+    private 글자그리기(위치: 위치틀) {
         const 지문글자 = this.지문.글자(위치);
-        const 쓴글자   = this.쓴글자(위치);
+        const 쓴글자   = this.쓴글.글자(위치);
         const 커서위치 = this.커서.행 === 위치.행 && this.커서.열 === 위치.열;
         const [배경색, 글자색] = 정오색상(커서위치, 정오판단(커서위치, 지문글자, 쓴글자));
         let 글자 = 지문글자;
