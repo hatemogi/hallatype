@@ -47,7 +47,6 @@ export class 위치틀 {
         if (열 > 0) {
             return new 위치틀(행, 열 - 1);
         } else if (열 <= 0 && 행 > 0) {
-            const 이전줄 = this.줄(행 - 1);
             return new 위치틀(행 - 1, 전줄마지막열);
         } else {
             return new 위치틀(0, 0);
@@ -162,6 +161,9 @@ export class 본문틀 implements 지문꼴 {
         const 지문 = this.지문;
         const 쓴글 = this.쓴글;
         let 위치 = 시작위치;
+        // 현재 위치가 커서 이전인지, 커서 위치인지, 커서 이후 위치인지에 따라, 색상과 정오 판단이 다르다.
+        // -> 커서위치를 고려해서 글자판을 생성하자.
+        // 정오판단은 키 입력 기준으로 해야 정확하다. 예) 완 -> dhks
         return {
             next: () => {
                 const ㅈ = 지문.글자(위치);

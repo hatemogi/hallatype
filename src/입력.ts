@@ -31,9 +31,9 @@ export type 머신상태 = [상태코드, 글자꼴[], 글자꼴];
 type 다음상태 = [위치이동, 상태코드, 글자꼴[], 글자꼴];
 
 const 자음키맵 = new Map<string, number>([
-    ['KeyQ', 8], ['KeyW', 13], ['KeyE', 4], ['KeyR', 1], ['KeyT', 10],
-    ['KeyA', 7], ['KeyS', 3], ['KeyD', 12], ['KeyF', 6], ['KeyG', 19],
-    ['KeyZ', 16], ['KeyX', 17], ['KeyC', 15], ['KeyV', 18]]);
+    ['Q', 8], ['W', 13], ['E', 4], ['R', 1], ['T', 10],
+    ['A', 7], ['S', 3], ['D', 12], ['F', 6], ['G', 19],
+    ['Z', 16], ['X', 17], ['C', 15], ['V', 18]]);
 const 초성to종성: ReadonlyArray<[number, number]> = [
     [0, 0], [1, 1], [2, 2], [3, 4], [4, 7],
     [5, 0], [6, 8], [7, 16], [8, 17], [9, 18],
@@ -44,23 +44,23 @@ const 초성to종성맵 = new Map<number, number>(초성to종성);
 const 종성to초성맵 = new Map<number, number>(
     초성to종성.map((초종) => 초종.reverse() as [number, number]));
 const 쌍자음키맵 = new Map<string, number>([
-    ['KeyQ', 9], ['KeyW', 14], ['KeyE', 5], ['KeyR', 2], ['KeyT', 11]]);
+    ['Q', 9], ['W', 14], ['E', 5], ['R', 2], ['T', 11]]);
 const 쌍자음코드 = new Set<number>(쌍자음키맵.values());
 const 모음키맵 = new Map<string, number>([
-    ['KeyY', 13], ['KeyU', 7], ['KeyI', 3], ['KeyO', 2], ['KeyP', 6],
-    ['KeyH', 9], ['KeyJ', 5], ['KeyK', 1], ['KeyL', 21], ['KeyB', 18],
-    ['KeyN', 14], ['KeyM', 19]]);
+    ['Y', 13], ['U', 7], ['I', 3], ['O', 2], ['P', 6],
+    ['H', 9], ['J', 5], ['K', 1], ['L', 21], ['B', 18],
+    ['N', 14], ['M', 19]]);
 const 라틴키맵 = new Map<string, number>([
-    ['Backquote', 0x60], ['Digit1', 0x31], ['Digit2', 0x32], ['Digit3', 0x33], ['Digit4', 0x34],
-    ['Digit5', 0x35], ['Digit6', 0x36], ['Digit7', 0x37], ['Digit8', 0x38], ['Digit9', 0x39],
-    ['Digit0', 0x30], ['Minus', 0x2D], ['Equal', 0x3D], ['Backspace', 0x08], ['KeyQ', 0x71],
-    ['KeyW', 0x77], ['KeyE', 0x65], ['KeyR', 0x72], ['KeyT', 0x74], ['KeyY', 0x79],
-    ['KeyU', 0x75], ['KeyI', 0x69], ['KeyO', 0x6F], ['KeyP', 0x70], ['BracketLeft', 0x5B],
-    ['BracketRight', 0x5D], ['Backslash', 0x5C], ['KeyA', 0x61], ['KeyS', 0x73], ['KeyD', 0x64],
-    ['KeyF', 0x66], ['KeyG', 0x67], ['KeyH', 0x68], ['KeyJ', 0x6A], ['KeyK', 0x6B],
-    ['KeyL', 0x6C], ['Semicolon', 0x3B], ['Quote', 0x27], ['Enter', 0x0A], ['KeyZ', 0x7A],
-    ['KeyX', 0x78], ['KeyC', 0x63], ['KeyV', 0x76], ['KeyB', 0x62], ['KeyN', 0x6E],
-    ['KeyM', 0x6D], ['Comma', 0x2C], ['Period', 0x2E], ['Slash', 0x2F], ['Space', 0x20],
+    ['Backquote', 0x60], ['1', 0x31], ['2', 0x32], ['3', 0x33], ['4', 0x34],
+    ['5', 0x35], ['6', 0x36], ['7', 0x37], ['8', 0x38], ['9', 0x39],
+    ['0', 0x30], ['Minus', 0x2D], ['Equal', 0x3D], ['Backspace', 0x08], ['Q', 0x71],
+    ['W', 0x77], ['E', 0x65], ['R', 0x72], ['T', 0x74], ['Y', 0x79],
+    ['U', 0x75], ['I', 0x69], ['O', 0x6F], ['P', 0x70], ['BracketLeft', 0x5B],
+    ['BracketRight', 0x5D], ['Backslash', 0x5C], ['A', 0x61], ['S', 0x73], ['D', 0x64],
+    ['F', 0x66], ['G', 0x67], ['H', 0x68], ['J', 0x6A], ['K', 0x6B],
+    ['L', 0x6C], ['Semicolon', 0x3B], ['Quote', 0x27], ['Enter', 0x0A], ['Z', 0x7A],
+    ['X', 0x78], ['C', 0x63], ['V', 0x76], ['B', 0x62], ['N', 0x6E],
+    ['M', 0x6D], ['Comma', 0x2C], ['Period', 0x2E], ['Slash', 0x2F], ['Space', 0x20],
 ]);
 
 function 한글모드(모드: 입력모드) {
