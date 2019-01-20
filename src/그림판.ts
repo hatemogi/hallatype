@@ -1,6 +1,6 @@
 import { 분리, 벌식 } from './한글';
-import { 글자종류, 글자위치, 색칠할글자 } from './글자';
-import { 본문그림판 } from './본문';
+import { 글자종류, 글자틀, 색칠할글자 } from './글자';
+import { 위치틀, 본문틀 } from './본문';
 import * as color from './색상';
 import { 한글글꼴, 라틴글꼴 } from './fonts';
 
@@ -13,21 +13,39 @@ type 비트맵 = number[];
  * 3) 엔터표시 보이기
  * 4) 오타 위치 지적하기
  */
-export default class 그림판틀 implements 본문그림판 {
+export default class 그림판틀 {
     private ctx!: CanvasRenderingContext2D;
-
+    private 본문: 본문틀;
     // 본문의 어느 부분을 보일 것인가?
     private viewPort: [number, number, number, number] = [0, 0, 0, 0];
 
-    constructor(ctx: CanvasRenderingContext2D) {
+    constructor(ctx: CanvasRenderingContext2D, 본문: 본문틀) {
         this.ctx = ctx;
+        this.본문 = 본문;
     }
 
-    public draw() {
-        this.바탕칠하기(new 글자위치(6, 3), true, color.빨강);
+    public 그리기() {
+        let 위치 = new 위치틀(0, 0);
+        const 글자스트림 = this.본문.글자스트림(위치);
+        let i = 0;
+        while (i++ < 200) {
+            const {value, done} = 글자스트림.next();
+            const 색자 = value;
+            if (done) {
+                break;
+            }
+            if (색자.자.전각 && 위치.열 === 79) {
+                this.바탕칠하기(위치, false, color.흰색);
+                // 한글 그릴 공간이 부족한 경우 다음줄로 이동.
+                위치 = 위치.다음행;
+            }
+            this.글자그리기(위치, 색자);
+            위치 = 색자.자.전각 ? 위치.다음.다음 : 위치.다음;
+            위치 = 위치.열 >= 80 ? 위치.다음행 : 위치;
+        }
     }
 
-    public 글자그리기(위치: 글자위치, 글자: 색칠할글자) {
+    public 글자그리기(위치: 위치틀, 글자: 색칠할글자) {
         const [x, y] = this.textToGraphic(위치);
         const [w, h] = [글자.자.전각 ? 16 : 8, 16];
         this.바탕칠하기(위치, 글자.자.전각, 글자.배경색);
@@ -40,7 +58,7 @@ export default class 그림판틀 implements 본문그림판 {
         });
     }
 
-    private 바탕칠하기(위치: 글자위치, 전각: boolean, 배경색: color.RGBA) {
+    private 바탕칠하기(위치: 위치틀, 전각: boolean, 배경색: color.RGBA) {
         const [x, y] = this.textToGraphic(위치);
         const [w, h] = [전각 ? 16 : 8, 16];
         const [r, g, b, _] = 배경색;
@@ -49,7 +67,7 @@ export default class 그림판틀 implements 본문그림판 {
     }
 
     // 좌표 변환
-    private textToGraphic(위치: 글자위치): [number, number] {
+    private textToGraphic(위치: 위치틀): [number, number] {
         return [위치.열 * 8, 위치.행 * 20];
     }
 
@@ -84,5 +102,5 @@ function 한글비트맵(글자: 색칠할글자): 비트맵[] {
 // 그 외 문자는 비트맵 한 개만 배열에 담아 반환
 function 그외비트맵(글자: 색칠할글자): 비트맵[] {
     const 코드 = 글자.자.코드[0] || 0;
-    return (글자.자.다음행 || 글자.자.건너뛰기) ? [] : [라틴글꼴[코드]];
+    return 글자.자.다음행 ? [] : [라틴글꼴[코드]];
 }
