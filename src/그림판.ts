@@ -28,6 +28,7 @@ export default class 그림판틀 {
         let 위치 = new 위치틀(0, 0);
         const 글자스트림 = this.본문.글자스트림(위치);
         let i = 0;
+        this.바탕지우기(color.흰색);
         while (i++ < 200) {
             const {value, done} = 글자스트림.next();
             const 색자 = value;
@@ -35,13 +36,16 @@ export default class 그림판틀 {
                 break;
             }
             if (색자.자.전각 && 위치.열 === 79) {
-                this.바탕칠하기(위치, false, color.흰색);
                 // 한글 그릴 공간이 부족한 경우 다음줄로 이동.
                 위치 = 위치.다음행;
             }
             this.글자그리기(위치, 색자);
-            위치 = 색자.자.전각 ? 위치.다음.다음 : 위치.다음;
-            위치 = 위치.열 >= 80 ? 위치.다음행 : 위치;
+            if (색자.자.다음행) {
+                위치 = 위치.다음행;
+            } else {
+                위치 = 색자.자.전각 ? 위치.다음.다음 : 위치.다음;
+                위치 = 위치.열 >= 80 ? 위치.다음행 : 위치;
+            }
         }
     }
 
@@ -58,12 +62,20 @@ export default class 그림판틀 {
         });
     }
 
+    private 바탕지우기(배경색: color.RGBA) {
+        const [r, g, b, a] = 배경색;
+        this.ctx.fillStyle = `rgb(${r}, ${g}, ${b}, ${a / 255.0})`;
+        this.ctx.fillRect(0, 0, 640, 480);
+    }
+
     private 바탕칠하기(위치: 위치틀, 전각: boolean, 배경색: color.RGBA) {
         const [x, y] = this.textToGraphic(위치);
         const [w, h] = [전각 ? 16 : 8, 16];
-        const [r, g, b, _] = 배경색;
-        this.ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+        const [r, g, b, a] = 배경색;
+        this.ctx.fillStyle = `rgb(${r}, ${g}, ${b}, 0.7)`;
         this.ctx.fillRect(x, y, w, h);
+        this.ctx.fillStyle = `rgb(${r}, ${g}, ${b}, ${a / 255.0})`;
+        this.ctx.fillRect(x + 0.5, y + 0.5, w - 1, h - 1);
     }
 
     // 좌표 변환
