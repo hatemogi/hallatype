@@ -28,7 +28,7 @@ export default class 그림판틀 {
         let 위치 = new 위치틀(0, 0);
         const 글자스트림 = this.본문.글자스트림(위치);
         this.바탕지우기(color.흰색);
-        while (위치.행 < 20) {
+        while (위치.행 < 11) {
             const {value, done} = 글자스트림.next();
             const 색자 = value;
             if (done) {
@@ -40,7 +40,7 @@ export default class 그림판틀 {
             }
             this.글자그리기(위치, 색자);
             if (색자.자.다음행) {
-                위치 = 위치.다음행;
+                위치 = 위치.다음행.다음행;
             } else {
                 위치 = 색자.자.전각 ? 위치.다음.다음 : 위치.다음;
                 위치 = 위치.열 >= 80 ? 위치.다음행 : 위치;
