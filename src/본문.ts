@@ -205,6 +205,10 @@ export class 본문틀 {
     public get 위치(): 위치틀 {
         return this.커서.위치;
     }
+
+    public get 끝() {
+        return this.지문.글자(this.커서.위치).끝;
+    }
 }
 
 // TODO: 종성 조립상태는 아직 정오판단 미정 상태

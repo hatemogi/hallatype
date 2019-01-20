@@ -1,5 +1,5 @@
-import { 분리, 벌식 } from './한글';
-import { 글자종류, 글자틀, 색칠할글자 } from './글자';
+import { 벌식 } from './한글';
+import { 색칠할글자 } from './글자';
 import { 위치틀, 본문틀 } from './본문';
 import * as color from './색상';
 import { 한글글꼴, 라틴글꼴 } from './fonts';
@@ -28,7 +28,7 @@ export default class 그림판틀 {
         let 위치 = new 위치틀(0, 0);
         const 글자스트림 = this.본문.글자스트림(위치);
         this.바탕지우기(color.흰색);
-        while (위치.행 < 25) {
+        while (위치.행 < 20) {
             const {value, done} = 글자스트림.next();
             const 색자 = value;
             if (done) {
