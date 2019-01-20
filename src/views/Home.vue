@@ -1,6 +1,6 @@
 <template>
   <div class="home">
-    <canvas id="캔버스" width="650" height="250"></canvas>
+    <canvas id="캔버스" width="643" height="250"></canvas>
     <h2>한 달짜리 개인 프로젝트 이야기</h2>
   </div>
 </template>
