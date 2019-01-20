@@ -88,7 +88,7 @@ class 글자없음틀 extends 글자틀 {
 
 class 끝글자틀 extends 글자틀 {
     public readonly 종류 = 글자종류.끝;
-    public readonly 전각 = false;
+    public readonly 전각 = true;
     public readonly 한글 = false;
     public readonly 초성 = 0;
     public readonly 중성 = 0;
@@ -102,7 +102,6 @@ export const 끝글자 = new 끝글자틀();
 
 class 라틴 extends 글자틀 {
     public readonly 종류 = 글자종류.라틴;
-    public readonly 전각 = false;
     public readonly 한글 = false;
     public readonly 초성 = 0;
     public readonly 중성 = 0;
@@ -112,6 +111,10 @@ class 라틴 extends 글자틀 {
     constructor(코드: number) {
         super();
         this._코드 = 코드;
+    }
+
+    public get 전각() {
+        return this.다음행;
     }
 
     public get 코드() {

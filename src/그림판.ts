@@ -1,8 +1,8 @@
 import { 벌식 } from './한글';
-import { 색칠할글자 } from './글자';
+import { 끝글자, 색칠할글자 } from './글자';
 import { 위치틀, 본문틀 } from './본문';
 import * as color from './색상';
-import { 한글글꼴, 라틴글꼴 } from './fonts';
+import { 한글글꼴, 라틴글꼴, 특수문자 } from './fonts';
 
 type 비트맵 = number[];
 
@@ -113,5 +113,11 @@ function 한글비트맵(글자: 색칠할글자): 비트맵[] {
 // 그 외 문자는 비트맵 한 개만 배열에 담아 반환
 function 그외비트맵(글자: 색칠할글자): 비트맵[] {
     const 코드 = 글자.자.코드[0] || 0;
-    return 글자.자.다음행 ? [] : [라틴글꼴[코드]];
+    if (글자.자.다음행) {
+        return [특수문자[0]];
+    } else if (글자.자 === 끝글자) {
+        return [특수문자[1]];
+    } else {
+        return [라틴글꼴[코드]];
+    }
 }
