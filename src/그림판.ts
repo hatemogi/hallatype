@@ -27,9 +27,8 @@ export default class 그림판틀 {
     public 그리기() {
         let 위치 = new 위치틀(0, 0);
         const 글자스트림 = this.본문.글자스트림(위치);
-        let i = 0;
         this.바탕지우기(color.흰색);
-        while (i++ < 200) {
+        while (위치.행 < 25) {
             const {value, done} = 글자스트림.next();
             const 색자 = value;
             if (done) {
