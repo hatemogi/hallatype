@@ -63,18 +63,21 @@ export default class 그림판틀 {
 
     private 바탕지우기(배경색: color.RGBA) {
         const [r, g, b, a] = 배경색;
-        this.ctx.fillStyle = `rgb(${r}, ${g}, ${b}, ${a / 255.0})`;
-        this.ctx.fillRect(0, 0, 640, 480);
+        this.ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${a / 255.0})`;
+        this.ctx.fillRect(0, 0, 644, 300);
     }
 
     private 바탕칠하기(위치: 위치틀, 전각: boolean, 배경색: color.RGBA) {
+        if (배경색 === color.흰색) {
+            return;
+        }
         const [x, y] = this.textToGraphic(위치);
         const [w, h] = [전각 ? 16 : 8, 16];
         const [r, g, b, a] = 배경색;
-        this.ctx.fillStyle = `rgb(${r}, ${g}, ${b}, 0.7)`;
+        this.ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${a})`;
         this.ctx.fillRect(x, y, w, h);
-        this.ctx.fillStyle = `rgb(${r}, ${g}, ${b}, ${a / 255.0})`;
-        this.ctx.fillRect(x + 0.5, y + 0.5, w - 1, h - 1);
+        // this.ctx.fillStyle = `rgb(${r}, ${g}, ${b}, ${a / 255.0})`;
+        // this.ctx.fillRect(x + 1, y + 1, w - 2, h - 2);
     }
 
     // 좌표 변환
