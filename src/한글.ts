@@ -35,15 +35,15 @@ export enum 종성 {
     ㅍ, ㅎ,
 }
 
-const div = (v: number, q: number) => Math.floor(v / q);
+const 몫 = (v: number, q: number) => Math.floor(v / q);
 
 // 유니코드 한글 한자 초중종성 분리
 export function 분리(code: number): [number, number, number] {
     const 코드 = code - 0xAC00;
-    const 종성 = 코드 % 28;
-    const 중성 = div(코드 - 종성, 28) % 21 + 1;
-    const 초성 = div(div(코드 - 종성, 28), 21) + 1;
-    return [초성, 중성, 종성];
+    const 종 = 코드 % 28;
+    const 중 = 몫(코드 - 종, 28) % 21 + 1;
+    const 초 = 몫(몫(코드 - 종, 28), 21) + 1;
+    return [초, 중, 종];
 }
 
 /*
@@ -52,17 +52,17 @@ export function 분리(code: number): [number, number, number] {
  2) 중성은 받침유무와 ㄱㅋ과 결합했는지 그외 자음과 결합했는지에 따라 4가지로 나눈다.
  3) 종성은 어떤 중성과 결합했는지에 따라 4가지로 나눈다.
  */
-export function 벌식([초성, 중성, 종성]: [number, number, number]): [number, number, number] {
-    const 받침없음 = 종성 === 0;
-    return [초벌(받침없음, 중성), 중벌(받침없음, 초성), 종벌(중성)];
+export function 벌식([초, 중, 종]: [number, number, number]): [number, number, number] {
+    const 받침없음 = 종 === 0;
+    return [초벌(받침없음, 중), 중벌(받침없음, 초), 종벌(중)];
 }
 
-function 초벌(받침없음: boolean, 중성: number) {
+function 초벌(받침없음: boolean, 중: number) {
     if (받침없음) {
-        if (중성 <= 8 || 중성 === 21) {
+        if (중 <= 8 || 중 === 21) {
             return 0;
         }
-        switch (중성) {
+        switch (중) {
             case 9: case 13: case 19:
                 return 1;
             case 14: case 18:
@@ -73,10 +73,10 @@ function 초벌(받침없음: boolean, 중성: number) {
                 return 4;
         }
     } else {
-        if (중성 <= 8 || 중성 === 21) {
+        if (중 <= 8 || 중 === 21) {
             return 5;
         }
-        switch (중성) {
+        switch (중) {
             case 9: case 13: case 14: case 18: case 19:
                 return 6;
             default:
@@ -85,8 +85,8 @@ function 초벌(받침없음: boolean, 중성: number) {
     }
 }
 
-function 중벌(받침없음: boolean, 초성: number) {
-    const ㄱㅋ = 초성 === 1 || 초성 === 16;
+function 중벌(받침없음: boolean, 초: number) {
+    const ㄱㅋ = 초 === 1 || 초 === 16;
     if (받침없음) {
         return ㄱㅋ ? 0 : 1;
     } else {
@@ -94,7 +94,7 @@ function 중벌(받침없음: boolean, 초성: number) {
     }
 }
 
-function 종벌(중성: number) {
+function 종벌(중: number) {
     const table = [0, 0, 2, 0, 2, 1, 2, 1, 2, 3, 0, 2, 1, 3, 3, 1, 2, 1, 3, 3, 1, 1, 3];
-    return table[중성] || 0;
+    return table[중] || 0;
 }
