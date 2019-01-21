@@ -1,15 +1,25 @@
 <template>
   <div class="연습">
-    <h2>한글 타자 연습 (프로토타입)</h2>
+    <h1>hatemogi의 한글 타자 연습</h1>
     <canvas id="캔버스" width="643" height="250"></canvas>
-    <div>위 지문을 따라 입력하고 나면, 타자 속도와 정확도를 알려드립니다.</div>
-    <div>{{소요시간}}</div>
-    <div>기대타수 = {{기대타수}}</div>
+    <div class="설명" v-if="!결과화면보이기">
+      <h3>위 지문을 따라 입력하고 나면, 타자 속도와 정확도를 알려드립니다.</h3>
+      <div>{{소요시간}}</div>
+    </div>
     <!--div class="안내">
         이 프로그램은, 한글 타자 연습을 웹 애플리케이션으로 하면서, 자소별 진행 상황을 보이면
         좋겠다는 생각으로 출발한 프로토타입입니다. 예를 들어, 중성이 틀리면 중성 부분만 빨간색으로
         보여주는데요,
     </div-->
+    <div class="결과" v-if="결과화면보이기">
+      <h2>타자 연습 결과</h2>
+      <table>
+        <tr><th>시간</th><td>{{소요시간}}</td></tr>
+        <tr><th>유효타수</th><td>{{유효타수}} / {{기대타수}}</td></tr>
+        <tr><th>타속</th><td>분당 <strong>{{타속}}</strong>타</td></tr>
+      </table>
+      <button class="버튼" v-on:click="reset">다시하기</button>
+    </div>
   </div>
 </template>
 
@@ -22,10 +32,17 @@ import 그림판틀 from '@/그림판';
 
 @Component
 export default class Home extends Vue {
-    public 소요시간 = '0:00';
-    private 인터벌핸들 = 0;
+    public 소요초 = 0;
     public 기대타수 = 0;
-    public mounted() {
+    public 유효타수 = 0;
+    public 타속 = 0;
+    public 결과화면보이기 = false;
+    private 인터벌핸들 = 0;
+
+    public reset() {
+        this.결과화면보이기 = false;
+        this.소요초 = 0;
+        console.log('준비하기 눌림');
         const 지문 = new 지문틀();
         const 본문 = new 본문틀(지문);
         const 입력머신 = new 입력머신틀();
@@ -51,7 +68,7 @@ export default class Home extends Vue {
             // 컨트롤키 입력은 무시
             if (e.code === 'ShiftLeft' || e.code === 'ShiftRight' ||
                 e.getModifierState('Control') || e.getModifierState('Alt') || e.getModifierState('Meta')) {
-                //return;
+                return;
             }
             if (!시작함) {
                 시작함 = true;
@@ -74,39 +91,50 @@ export default class Home extends Vue {
             }
             그림판.그리기();
             if (본문.끝) {
-                self.입력끝();
-                console.log('입력 끝');
+                self.입력끝(본문.유효타수);
             }
         };
+    }
+
+    public mounted() {
+        this.reset();
     }
 
     public keydown(e: KeyboardEvent) {
         (e.target as HTMLInputElement).value = '';
     }
 
+    public get 소요시간() {
+        const 분 = Math.floor(this.소요초 / 60);
+        const 초 = this.소요초 % 60;
+        return `${분}:${초 < 10 ? '0' + 초 : 초}`;
+    }
+
     private 타이머시작() {
         const 시작시간 = new Date().getTime() / 1000;
         this.인터벌핸들 = setInterval(() => {
-            const 소요초 = Math.floor((new Date().getTime() / 1000) - 시작시간);
-            const 분 = Math.floor(소요초 / 60);
-            const 초 = 소요초 % 60;
-            this.소요시간 = `${분}:${초 < 10 ? '0' + 초 : 초}`;
+            this.소요초 = Math.floor((new Date().getTime() / 1000) - 시작시간);
         }, 1000);
     }
 
-    private 입력끝() {
+    private 입력끝(유효타수: number) {
         clearInterval(this.인터벌핸들);
+        this.유효타수 = 유효타수;
+        this.타속 = Math.floor(this.유효타수 * 60 / this.소요초);
+        this.결과화면보이기 = true;
     }
+
+
 }
 
 function 타수구하기(글자들: Iterator<색칠할글자>): number {
     let 타수 = 0;
     while (true) {
-        let 다음 = 글자들.next();
+        const 다음 = 글자들.next();
         if (다음.done) {
             break;
         }
-        타수 += 필요타수(다음.value.자);
+        필요타수(다음.value.자).forEach((타) => 타수 += 타);
     }
     return 타수;
 }
@@ -116,7 +144,7 @@ function 타수구하기(글자들: Iterator<색칠할글자>): number {
 <style lang="scss">
 
 .연습 {
-    width: 700px;
+    width: 720px;
     margin: auto;
 }
 
@@ -125,10 +153,33 @@ function 타수구하기(글자들: Iterator<색칠할글자>): number {
     margin-top: 50px;
 }
 
+.결과 {
+    font-size: 1.4rem;
+    text-align: left;
+    background-color: #eee;
+    border-radius: 5px;
+    padding: 20px;
+}
+
 #캔버스 {
   border: 1px solid black;
   padding: 3px;
   zoom: 110%;
 }
 
+.버튼 {
+  text-align: center;
+  color: white;
+  width: 120px;
+  height: 2rem;
+  font-size: 1.5rem;
+  background-color: #268bd2;
+  border: 1px solid white;
+  border-radius: 3px;
+  margin: 30px;
+}
+
+th {
+  width: 100px;
+}
 </style>

@@ -347,17 +347,17 @@ const 두번누르는종성 = new Set<number>([
     종성.ㄳ, 종성.ㄵ, 종성.ㄶ, 종성.ㄺ, 종성.ㄻ,
     종성.ㄼ, 종성.ㄽ, 종성.ㄾ, 종성.ㄿ, 종성.ㅀ]);
 
-export function 필요타수(글자: 글자꼴): number {
+export function 필요타수(글자: 글자꼴): number[] {
     if (글자 === 글자없음) {
-        return 0;
+        return [0];
     } else if (글자.한글) {
         const [초, 중, 종] = 글자.코드;
         const 초타 = 초 > 0 ? 1 : 0;
         const 중타 = 두번누르는중성.has(중) ? 2 : (중 > 0 ? 1 : 0);
         const 종타 = 두번누르는종성.has(종) ? 2 : (종 > 0 ? 1 : 0);
-        return 초타 + 중타 + 종타;
+        return [초타, 중타, 종타];
     } else {
-        return 1;
+        return [1];
     }
 }
 

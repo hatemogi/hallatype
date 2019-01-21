@@ -21,7 +21,7 @@
 
 import * as 색상 from './색상';
 import {글자없음, 글자꼴, 글자틀, 글자꾸밈, 색칠할글자} from './글자';
-import { 입력중 } from './입력';
+import { 입력중, 필요타수 } from './입력';
 
 export class 위치틀 {
     public readonly 행: number;
@@ -209,9 +209,28 @@ export class 본문틀 {
     public get 끝() {
         return this.지문.글자(this.커서.위치).끝;
     }
+
+    public get 유효타수(): number {
+        let 커서 = new 지문커서(this.지문, new 위치틀(0, 0));
+        let 타수 = 0;
+        while (true) {
+            const 지문 = this.지문.글자(커서.위치);
+            const 쓴글 = this.쓴글.글자(커서.위치);
+            if (지문.끝) {
+                return 타수;
+            }
+            커서 = 커서.다음;
+            const 정오 = 정오판단(false, 지문, 쓴글);
+            const 필요 = 필요타수(지문);
+            필요.forEach((타, i) => {
+                if (정오[i] && 정오[i] === 정오표.정타) {
+                    타수 += 타;
+                }
+            });
+        }
+    }
 }
 
-// TODO: 종성 조립상태는 아직 정오판단 미정 상태
 function 색칠글자(커서자리: boolean, 지문글자: 글자틀, 쓴글자: 글자틀): 색칠할글자 {
     const [배경색, 글자색] = 정오색상(커서자리, 정오판단(커서자리, 지문글자, 쓴글자));
     let 글자 = 지문글자;
