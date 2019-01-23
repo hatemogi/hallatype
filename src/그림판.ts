@@ -75,14 +75,14 @@ export default class 그림판틀 {
         const [w, h] = [전각 ? 16 : 8, 16];
         const [r, g, b, a] = 배경색;
         this.ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${a})`;
-        this.ctx.fillRect(x, y + 15, w, 2);
+        this.ctx.fillRect(x, y + 16, w, 2);
         // this.ctx.fillStyle = `rgb(${r}, ${g}, ${b}, ${a / 255.0})`;
         // this.ctx.fillRect(x + 1, y + 1, w - 2, h - 2);
     }
 
     // 좌표 변환
     private textToGraphic(위치: 위치틀): [number, number] {
-        return [위치.열 * 8, 위치.행 * 21];
+        return [위치.열 * 8, 위치.행 * 22];
     }
 
     private 비트맵을이미지로(x: number, y: number, 너비: number, 빗맵: 비트맵, 색: color.RGBA): ImageData {
