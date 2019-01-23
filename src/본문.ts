@@ -290,11 +290,11 @@ function 정오색상(현재커서위치: boolean, 정오: [정오표, 정오표
     const 정오색 = (ㅈ: 정오표): 색상.RGBA => {
         switch (ㅈ) {
             case 정오표.정타:
-                return 현재커서위치 ? 색상.흰색 : 색상.검정;
+                return false && 현재커서위치 ? 색상.흰색 : 색상.검정;
             case 정오표.오타:
-                return 현재커서위치 ? 색상.빨강 : 색상.노랑;
+                return true || 현재커서위치 ? 색상.빨강 : 색상.노랑;
             case 정오표.미정:
-                return 현재커서위치 ? 색상.회색 : 색상.밝은회색;
+                return true || 현재커서위치 ? 색상.밝은회색 : 색상.회색;
         }
         return 색상.검정;
     };

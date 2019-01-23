@@ -75,7 +75,7 @@ export default class 그림판틀 {
         const [w, h] = [전각 ? 16 : 8, 16];
         const [r, g, b, a] = 배경색;
         this.ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${a})`;
-        this.ctx.fillRect(x, y, w, h);
+        this.ctx.fillRect(x, y + 15, w, 2);
         // this.ctx.fillStyle = `rgb(${r}, ${g}, ${b}, ${a / 255.0})`;
         // this.ctx.fillRect(x + 1, y + 1, w - 2, h - 2);
     }
