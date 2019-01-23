@@ -82,7 +82,7 @@ export default class 그림판틀 {
 
     // 좌표 변환
     private textToGraphic(위치: 위치틀): [number, number] {
-        return [위치.열 * 8, 위치.행 * 20];
+        return [위치.열 * 8, 위치.행 * 21];
     }
 
     private 비트맵을이미지로(x: number, y: number, 너비: number, 빗맵: 비트맵, 색: color.RGBA): ImageData {
