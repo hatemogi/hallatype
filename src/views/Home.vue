@@ -172,8 +172,8 @@ function 타수구하기(글자들: Iterator<색칠할글자>): number {
 .버튼 {
   text-align: center;
   color: white;
-  width: 120px;
-  height: 2rem;
+  width: 140px;
+  height: 3rem;
   font-size: 1.5rem;
   background-color: #268bd2;
   border: 1px solid white;
