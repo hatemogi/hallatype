@@ -16,6 +16,7 @@
       <table>
         <tr><th>시간</th><td>{{소요시간}}</td></tr>
         <tr><th>유효타수</th><td>{{유효타수}} / {{기대타수}}</td></tr>
+        <tr><th>정확도</th><td>{{정확도}}%</td></tr>
         <tr><th>타속</th><td>분당 <strong>{{타속}}</strong>타</td></tr>
       </table>
       <button class="버튼" v-on:click="reset">다시하기</button>
@@ -111,6 +112,10 @@ export default class Home extends Vue {
         return `${분}:${초 < 10 ? '0' + 초 : 초}`;
     }
 
+    public get 정확도() {
+        return Math.floor(this.유효타수 * 100 / this.기대타수);
+    }
+
     private 타이머시작() {
         const 시작시간 = new Date().getTime() / 1000;
         this.인터벌핸들 = setInterval(() => {
@@ -145,7 +150,7 @@ function 타수구하기(글자들: Iterator<색칠할글자>): number {
 <style lang="scss">
 
 .연습 {
-    width: 800px;
+    width: 850px;
     margin: auto;
 }
 
@@ -155,10 +160,11 @@ function 타수구하기(글자들: Iterator<색칠할글자>): number {
 }
 
 .결과 {
-    font-size: 1.4rem;
+    font-size: 1.5rem;
     text-align: left;
     background-color: #eee;
     border-radius: 5px;
+    margin: 1rem;
     padding: 20px;
 }
 
