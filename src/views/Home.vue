@@ -14,10 +14,12 @@
     <div class="결과" v-if="결과화면보이기">
       <h2>타자 연습 결과</h2>
       <table>
-        <tr><th>시간</th><td>{{소요시간}}</td></tr>
-        <tr><th>유효타수</th><td>{{유효타수}} / {{기대타수}}</td></tr>
-        <tr><th>정확도</th><td>{{정확도}}%</td></tr>
-        <tr><th>타속</th><td>분당 <strong>{{타속}}</strong>타</td></tr>
+        <tbody>
+          <tr><th>시간</th><td>{{소요시간}}</td></tr>
+          <tr><th>유효타수</th><td>{{유효타수}} / {{기대타수}}</td></tr>
+          <tr><th>정확도</th><td>{{정확도}}%</td></tr>
+          <tr><th>타속</th><td>분당 <strong>{{타속}}</strong>타</td></tr>
+        </tbody>
       </table>
       <button class="버튼" v-on:click="reset">다시하기</button>
     </div>
@@ -25,22 +27,26 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
+import { defineComponent } from 'vue';
 import { 글자꼴, 글자없음, 끝글자, 색칠할글자 } from '@/글자';
 import { 지문틀, 본문틀 } from '@/본문';
 import { 입력모드, 입력머신틀, 위치이동, 필요타수 } from '@/입력';
 import 그림판틀 from '@/그림판';
 
-@Component
-export default class Home extends Vue {
-    public 소요초 = 0;
-    public 기대타수 = 0;
-    public 유효타수 = 0;
-    public 타속 = 0;
-    public 결과화면보이기 = false;
-    private 인터벌핸들 = 0;
-
-    public reset() {
+export default defineComponent({
+  data() {
+    return {
+      소요초: 0,
+      기대타수: 0,
+      유효타수: 0,
+      타속: 0,
+      결과화면보이기: false,
+      인터벌핸들: 0,
+    };
+  },
+  methods: {
+    reset() {
+        window.clearInterval(this.인터벌핸들);
         this.결과화면보이기 = false;
         this.소요초 = 0;
         console.log('준비하기 눌림');
@@ -96,42 +102,41 @@ export default class Home extends Vue {
                 self.입력끝(본문.유효타수);
             }
         };
-    }
+    },
 
-    public mounted() {
-        this.reset();
-    }
-
-    public keydown(e: KeyboardEvent) {
-        (e.target as HTMLInputElement).value = '';
-    }
-
-    public get 소요시간() {
-        const 분 = Math.floor(this.소요초 / 60);
-        const 초 = this.소요초 % 60;
-        return `${분}:${초 < 10 ? '0' + 초 : 초}`;
-    }
-
-    public get 정확도() {
-        return Math.floor(this.유효타수 * 100 / this.기대타수);
-    }
-
-    private 타이머시작() {
-        const 시작시간 = new Date().getTime() / 1000;
-        this.인터벌핸들 = setInterval(() => {
-            this.소요초 = Math.floor((new Date().getTime() / 1000) - 시작시간);
+    타이머시작() {
+        const 시작시간 = Date.now() / 1000;
+        this.인터벌핸들 = window.setInterval(() => {
+            this.소요초 = Math.floor((Date.now() / 1000) - 시작시간);
         }, 1000);
-    }
+    },
 
-    private 입력끝(유효타수: number) {
-        clearInterval(this.인터벌핸들);
+    입력끝(유효타수: number) {
+        window.clearInterval(this.인터벌핸들);
         this.유효타수 = 유효타수;
         this.타속 = Math.floor(this.유효타수 * 60 / this.소요초);
         this.결과화면보이기 = true;
-    }
+    },
+  },
+  mounted() {
+    this.reset();
+  },
+  beforeUnmount() {
+    window.onkeydown = null;
+    window.clearInterval(this.인터벌핸들);
+  },
+  computed: {
+    소요시간() {
+        const 분 = Math.floor(this.소요초 / 60);
+        const 초 = this.소요초 % 60;
+        return `${분}:${초 < 10 ? '0' + 초 : 초}`;
+    },
 
-
-}
+    정확도() {
+        return Math.floor(this.유효타수 * 100 / this.기대타수);
+    },
+  },
+});
 
 function 타수구하기(글자들: Iterator<색칠할글자>): number {
     let 타수 = 0;

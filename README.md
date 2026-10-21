@@ -1,10 +1,10 @@
 # hallatype
 
-온라인 한글 타자 연습 앱.
+한글 비트맵 글꼴 편집기(`/`)와 타자 연습 앱(`/practice`).
 
 ## 목표
 
-* 프런트 기술 연습: TypeScript, Vue, Vuex
+* 프런트 기술 연습: TypeScript, Vue
 * 이제야 구현해 보는 한글 오토마타
 * 재미로 해보는 복고풍 한글 구현
 * 한달 동안의 사이드 프로젝트
@@ -15,35 +15,40 @@
 * 수익모델 (정말?)
 * 기본 두벌식 외 자판 지원
 
-## Project setup
+## 개발 환경
+
+Vue 3, Vue Router 5, Vite 8, Vitest 5를 사용합니다. Node.js 26과 npm 11에서 빌드 및 단위 테스트를 확인했습니다.
+
+## 설치
 ```
-yarn install
+npm ci
 ```
 
-### Compiles and hot-reloads for development
+같은 작업을 `make install`, `make dev`, `make test`, `make build`로도 실행할 수 있습니다. 전체 검증은 `make check`를 사용하세요.
+
+### 개발 서버
 ```
-yarn run serve
+npm run dev
 ```
 
-### Compiles and minifies for production
+### 프로덕션 빌드
 ```
-yarn run build
-```
-
-### Run your tests
-```
-yarn run test
+npm run build
 ```
 
-### Lints and fixes files
+빌드 전에 `vue-tsc`로 타입을 검사합니다. 결과는 `dist/`에 생성되며 PWA 서비스 워커도 포함됩니다. 현재 `docs/`에는 과거 GitHub Pages 배포 빌드가 들어 있습니다.
+
+### 단위 테스트
 ```
-yarn run lint
+npm test
 ```
 
-### Run your unit tests
-```
-yarn run test:unit
-```
+`npm run typecheck`로 타입 검사만 실행할 수 있습니다.
 
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+## 글꼴 편집
+
+첫 화면에서 초성(8벌), 중성(4벌), 종성(4벌)의 자소를 선택합니다. 왼쪽 16×16 원본과 오른쪽 32×32 글꼴을 나란히 편집할 수 있습니다. 32×32 기본값은 원본 픽셀을 2배로 확대한 뒤 사선과 안쪽 모서리의 빈 칸을 메워 생성합니다. 오른쪽을 수동으로 수정한 자소는 왼쪽을 바꿔도 보존되며, `선택 자소 다시 생성`으로 원본에서 새로 만들 수 있습니다.
+
+두 판 모두 클릭·드래그로 그리고 오른쪽 클릭이나 지우기 도구로 지울 수 있습니다. 되돌리기·다시하기를 지원하며, 아래 미리보기는 편집한 32×32 글꼴을 프로젝트의 `벌식` 규칙대로 조합합니다.
+
+편집 내용은 브라우저에 자동 저장됩니다. 기존 16×16 작업도 자동으로 가져옵니다. `불러오기`는 16×16과 32×32 `.fnt` 파일을 받습니다. `16×16 저장`과 `32×32 .fnt 저장`은 같은 348자소 텍스트 형식으로 각각 16행 또는 32행의 비트를 내보냅니다. 기존 타자 연습은 `/practice`에서 열 수 있습니다.
