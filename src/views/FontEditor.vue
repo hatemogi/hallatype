@@ -3,6 +3,7 @@
     <header class="topbar">
       <div class="brand"><span class="brand-mark">▦</span><div><strong>한글 비트맵 스튜디오</strong><small>16 × 16 → 32 × 32 → 8비트 안티앨리어싱</small></div></div>
       <div class="top-actions">
+        <router-link class="quiet-link" to="/masks">키 마스크 편집 →</router-link>
         <router-link class="quiet-link" to="/practice">타자 연습 →</router-link>
         <button class="button button-ghost" @click="openFile">불러오기</button>
         <button class="button button-ghost" @click="downloadFont(16)">16×16 저장</button>
