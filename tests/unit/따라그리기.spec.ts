@@ -19,10 +19,12 @@ describe('장문 따라그리기', () => {
         const 본문 = 연습('가나');
         expect(본문.기대타수).toBe(4);
         expect(본문.입력('KeyT', false)).toEqual([new 위치틀()]);
+        expect(본문.방금오타).toBe(true);
         expect(본문.위치).toEqual(new 위치틀());
         expect(보이는글자(본문).자.코드).toEqual([1, 1, 0]);
         expect(보이는글자(본문).색[0]).toBe(색상.빨강);
         본문.입력('KeyR', false);
+        expect(본문.방금오타).toBe(false);
         expect(보이는글자(본문).색[0]).toBe(색상.주황);
         본문.입력('KeyK', false);
         expect(보이는글자(본문).색[1]).toBe(색상.검정);

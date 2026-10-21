@@ -7,6 +7,7 @@ import { antialiasFont, upscaleFont } from './font-editor';
 
 type 비트맵 = number[];
 type 글자칸 = { 화면위치: 위치틀; 너비: number };
+type 오타효과 = { 위치: 위치틀; 키: string; 시작: number; 진행: number; 흔들림: boolean };
 type 그릴본문 = {
     지문글자: (위치: 위치틀) => 글자꼴;
     글자스트림: (시작위치?: 위치틀) => Iterator<색칠할글자>;
@@ -27,6 +28,8 @@ export default class 그림판틀 {
     private 본문: 그릴본문;
     private 안티앨리어싱강도 = 100;
     private 글자칸들 = new Map<string, 글자칸>();
+    private 오타효과?: 오타효과;
+    private 효과프레임 = 0;
     // 본문의 어느 부분을 보일 것인가?
     private viewPort: [number, number, number, number] = [0, 0, 0, 0];
 
@@ -37,6 +40,37 @@ export default class 그림판틀 {
 
     public 안티앨리어싱강도설정(강도: number) {
         this.안티앨리어싱강도 = Math.max(0, Math.min(300, 강도));
+    }
+
+    public 오타효과시작(위치: 위치틀) {
+        this.오타효과중지(false);
+        const 효과: 오타효과 = {
+            위치, 키: this.위치키(위치), 시작: performance.now(), 진행: 0,
+            흔들림: !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches,
+        };
+        this.오타효과 = 효과;
+        this.변경그리기([위치]);
+        const 한프레임 = (시각: number) => {
+            if (this.오타효과 !== 효과) { return; }
+            효과.진행 = Math.min(1, (시각 - 효과.시작) / 400);
+            if (효과.진행 === 1) {
+                this.오타효과 = undefined;
+                this.효과프레임 = 0;
+                this.커서밑줄그리기(효과, false);
+                return;
+            }
+            this.커서밑줄그리기(효과, true);
+            this.효과프레임 = requestAnimationFrame(한프레임);
+        };
+        this.효과프레임 = requestAnimationFrame(한프레임);
+    }
+
+    public 오타효과중지(다시그리기 = true) {
+        if (this.효과프레임) { cancelAnimationFrame(this.효과프레임); }
+        this.효과프레임 = 0;
+        const 이전위치 = this.오타효과?.위치;
+        this.오타효과 = undefined;
+        if (이전위치 && 다시그리기) { this.변경그리기([이전위치]); }
     }
 
     public 그리기() {
@@ -58,7 +92,7 @@ export default class 그림판틀 {
             }
             const 너비 = 지문글자.전각 ? 32 : 16;
             this.글자칸들.set(this.위치키(문서위치), { 화면위치, 너비 });
-            this.글자그리기(화면위치, 색자, 너비);
+            this.글자그리기(화면위치, 색자, 너비, this.오타효과?.키 === this.위치키(문서위치));
             if (지문글자.다음행) {
                 화면위치 = 화면위치.다음행.다음행;
                 문서위치 = 문서위치.다음행;
@@ -82,7 +116,7 @@ export default class 그림판틀 {
             this.ctx.fillStyle = '#fff';
             this.ctx.fillRect(x, y, 칸.너비, 44);
             const {value, done} = this.본문.글자스트림(문서위치).next();
-            if (!done) { this.글자그리기(칸.화면위치, value, 칸.너비); }
+            if (!done) { this.글자그리기(칸.화면위치, value, 칸.너비, this.오타효과?.키 === 키); }
         }
     }
 
@@ -90,9 +124,9 @@ export default class 그림판틀 {
         return `${위치.행}:${위치.열}`;
     }
 
-    public 글자그리기(위치: 위치틀, 글자: 색칠할글자, 칸너비 = 글자.자.전각 ? 32 : 16) {
+    public 글자그리기(위치: 위치틀, 글자: 색칠할글자, 칸너비 = 글자.자.전각 ? 32 : 16, 오타효과 = false) {
         const [x, y] = this.textToGraphic(위치);
-        this.바탕칠하기(위치, 칸너비, 글자.배경색);
+        this.바탕칠하기(위치, 칸너비, 글자.배경색, 오타효과);
         const 빗맵들: 비트맵[] = 글자.자.한글 ? 한글비트맵(글자) : 그외비트맵(글자);
         const 알파들 = 글자.자.한글 && this.안티앨리어싱강도 > 0
             ? 한글비트맵(글자, 안티앨리어싱글꼴) : [];
@@ -112,14 +146,27 @@ export default class 그림판틀 {
         this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
     }
 
-    private 바탕칠하기(위치: 위치틀, 너비: number, 배경색: color.RGBA) {
+    private 바탕칠하기(위치: 위치틀, 너비: number, 배경색: color.RGBA, 오타효과: boolean) {
         if (배경색 === color.흰색) {
             return;
         }
         const [x, y] = this.textToGraphic(위치);
-        const [r, g, b, a] = 배경색;
+        const 색 = 오타효과 ? color.경고빨강 : 배경색;
+        const [r, g, b, a] = 색;
         this.ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${a / 255.0})`;
-        this.ctx.fillRect(x, y + 32, 너비, 4);
+        const 이동 = 오타효과 && this.오타효과?.흔들림
+            ? Math.round(Math.sin(this.오타효과.진행 * Math.PI * 8) * 3 * (1 - this.오타효과.진행)) : 0;
+        this.ctx.fillRect(x + (오타효과 ? 4 + 이동 : 0), y + 32, 너비 - (오타효과 ? 8 : 0), 4);
+    }
+
+    // 애니메이션 프레임에는 글꼴 비트맵을 다시 만들지 않고 밑줄 4픽셀만 갱신한다.
+    private 커서밑줄그리기(효과: 오타효과, 활성: boolean) {
+        const 칸 = this.글자칸들.get(효과.키);
+        if (!칸) { return; }
+        const [x, y] = this.textToGraphic(칸.화면위치);
+        this.ctx.fillStyle = '#fff';
+        this.ctx.fillRect(x, y + 32, 칸.너비, 4);
+        this.바탕칠하기(칸.화면위치, 칸.너비, 활성 ? color.경고빨강 : color.파랑, 활성);
     }
 
     // 좌표 변환

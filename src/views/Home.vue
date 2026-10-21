@@ -58,6 +58,7 @@ export default defineComponent({
   methods: {
     reset() {
         window.clearInterval(this.인터벌핸들);
+        this.그림판?.오타효과중지(false);
         this.결과화면보이기 = false;
         this.소요초 = 0;
         this.유효타수 = 0;
@@ -100,7 +101,12 @@ export default defineComponent({
                 self.타이머시작();
             }
             const 바뀐위치 = 본문.입력(e.code, e.shiftKey);
-            그림판.변경그리기(바뀐위치);
+            if (본문.방금오타) {
+                그림판.오타효과시작(본문.위치);
+            } else {
+                그림판.오타효과중지(false);
+                그림판.변경그리기(바뀐위치);
+            }
             self.유효타수 = 본문.유효타수;
             self.진행상태갱신();
             if (본문.끝) {
@@ -139,6 +145,7 @@ export default defineComponent({
   beforeUnmount() {
     window.onkeydown = null;
     window.clearInterval(this.인터벌핸들);
+    this.그림판?.오타효과중지(false);
   },
   computed: {
     소요시간() {

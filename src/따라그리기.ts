@@ -56,6 +56,7 @@ export class 따라그리기틀 {
     private readonly 위치별번호 = new Map<string, number>();
     private 획번호 = 0;
     private 맞은타수 = 0;
+    private 마지막오타 = false;
 
     constructor(private readonly 지문: 지문틀) {
         let 위치 = new 위치틀();
@@ -80,12 +81,14 @@ export class 따라그리기틀 {
     public get 끝(): boolean { return this.획번호 === this.획들.length; }
     public get 기대타수(): number { return this.획들.length; }
     public get 유효타수(): number { return this.맞은타수; }
+    public get 방금오타(): boolean { return this.마지막오타; }
 
     public 입력(code: string, shift: boolean): 위치틀[] {
         if (this.끝) { return []; }
         const 획 = this.획들[this.획번호];
         const 현재 = this.글자들[획.글자번호];
-        if (획.키.code !== code || 획.키.shift !== shift) {
+        this.마지막오타 = 획.키.code !== code || 획.키.shift !== shift;
+        if (this.마지막오타) {
             획.틀림 = true;
             현재.상태[획.자소] = '오타';
             return [현재.위치];

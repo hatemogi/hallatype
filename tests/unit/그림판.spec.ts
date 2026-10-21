@@ -2,6 +2,7 @@ import 그림판틀 from '@/그림판';
 import { 위치틀, 지문틀, 본문틀 } from '@/본문';
 import { 끝글자, 글자틀, 색칠할글자 } from '@/글자';
 import { 검정, 흰색 } from '@/색상';
+import { 따라그리기틀 } from '@/따라그리기';
 
 describe('타자 연습 캔버스 글꼴', () => {
     const 화면 = (흰바탕 = false) => {
@@ -133,5 +134,49 @@ describe('타자 연습 캔버스 글꼴', () => {
         그림판.변경그리기([본문.위치]);
         expect(칠한영역).toContainEqual([0, 44, 32, 44]);
         expect(칠한영역.some(([, , w]) => w === 1286)).toBe(false);
+    });
+
+    it('오타 애니메이션 중에는 밑줄만 갱신하고 정타 입력을 즉시 반영한다', () => {
+        const 지문 = new 지문틀();
+        지문.글쓰기('가나');
+        지문.쓰기(지문.위치, 끝글자);
+        const 본문 = new 따라그리기틀(지문);
+        const ctx = {
+            canvas: { width: 1286, height: 500 },
+            fillRect: () => undefined,
+            getImageData: (_x: number, _y: number, w: number, h: number) =>
+                ({ width: w, height: h, data: new Uint8ClampedArray(w * h * 4).fill(255) } as ImageData),
+            putImageData: () => undefined,
+        } as unknown as CanvasRenderingContext2D;
+        const 그림판 = new 그림판틀(ctx, 본문);
+        그림판.그리기();
+        let 프레임: FrameRequestCallback = () => undefined;
+        const 취소 = vi.fn();
+        vi.stubGlobal('window', { matchMedia: () => ({ matches: false }) });
+        vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+            프레임 = callback;
+            return 1;
+        });
+        vi.stubGlobal('cancelAnimationFrame', 취소);
+        try {
+            const 다시그리기 = vi.spyOn(그림판, '변경그리기');
+            본문.입력('KeyT', false);
+            그림판.오타효과시작(본문.위치);
+            expect(다시그리기).toHaveBeenCalledTimes(1);
+            프레임(performance.now() + 100);
+            expect(다시그리기).toHaveBeenCalledTimes(1);
+
+            const 바뀐위치 = 본문.입력('KeyR', false);
+            그림판.오타효과중지(false);
+            그림판.변경그리기(바뀐위치);
+            expect(취소).toHaveBeenCalled();
+            expect(다시그리기).toHaveBeenCalledTimes(2);
+            expect(본문.방금오타).toBe(false);
+            expect(본문.유효타수).toBe(0);
+            본문.입력('KeyK', false);
+            expect(본문.위치).toEqual(new 위치틀(0, 1));
+        } finally {
+            vi.unstubAllGlobals();
+        }
     });
 });
