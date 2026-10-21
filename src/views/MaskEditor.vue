@@ -30,7 +30,7 @@
         <div class="variant-grid">
           <button v-for="n in 4" :key="n" :class="{ active: variant === n - 1 }" @click="variant = n - 1">{{ n }}벌</button>
         </div>
-        <p class="sidebar-note">글꼴 편집기에서 저장한 16×16 원본 글꼴을 자동으로 읽습니다. 글꼴을 고친 뒤 이 화면을 다시 열면 새 모양에 맞춰 마스크를 확인할 수 있습니다.</p>
+        <p class="sidebar-note">글꼴 편집기에서 저장한 16×16 원본 글꼴을 자동으로 읽습니다. 편집한 마스크는 같은 브라우저에서 타자 연습을 다시 열면 적용됩니다.</p>
       </aside>
 
       <section class="main-panel">

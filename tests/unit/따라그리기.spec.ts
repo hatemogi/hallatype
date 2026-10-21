@@ -41,13 +41,18 @@ describe('장문 따라그리기', () => {
         본문.입력('KeyR', false);
         본문.입력('KeyH', false);
         expect(보이는글자(본문).색[1]).toBe(색상.검정);
+        expect(보이는글자(본문).키색[1]).toEqual([색상.검정, 색상.밝은회색]);
         본문.입력('KeyJ', false);
         expect(보이는글자(본문).색[1]).toBe(색상.빨강);
+        expect(보이는글자(본문).키색[1]).toEqual([색상.검정, 색상.빨강]);
         expect(본문.위치).toEqual(new 위치틀());
         본문.입력('KeyK', false);
         expect(보이는글자(본문).색[1]).toBe(색상.주황);
+        expect(보이는글자(본문).키색[1]).toEqual([색상.검정, 색상.주황]);
         본문.입력('KeyF', false);
+        expect(보이는글자(본문).키색[2]).toEqual([색상.검정, 색상.밝은회색]);
         본문.입력('KeyA', false);
+        expect(보이는글자(본문).키색[2]).toEqual([색상.검정, 색상.검정]);
         expect(본문.끝).toBe(true);
         expect(본문.유효타수).toBe(4);
     });

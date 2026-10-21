@@ -166,9 +166,12 @@ export class 색칠할글자 {
     public readonly 자: 글자꼴;
     public readonly 색: color.RGBA[];
     public readonly 배경색: color.RGBA;
-    constructor(자: 글자꼴, 색: color.RGBA[], 배경색: color.RGBA) {
+    public readonly 키색: Array<[color.RGBA, color.RGBA] | undefined>;
+    constructor(자: 글자꼴, 색: color.RGBA[], 배경색: color.RGBA,
+                키색: Array<[color.RGBA, color.RGBA] | undefined> = []) {
         this.자 = 자;
         this.색 = 색;
         this.배경색 = 배경색;
+        this.키색 = 키색;
     }
 }

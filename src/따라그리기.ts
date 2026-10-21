@@ -4,7 +4,7 @@ import * as 색상 from './색상';
 
 type 자소 = 0 | 1 | 2;
 type 키 = { code: string; shift: boolean };
-type 획 = { 글자번호: number; 자소: 자소; 키: 키; 틀림: boolean };
+type 획 = { 글자번호: number; 자소: 자소; 키번호: number; 키: 키; 틀림: boolean };
 type 상태 = '미입력' | '정타' | '오타' | '정정';
 
 const 자음: string[] = [
@@ -49,9 +49,18 @@ function 자소키(글자: 글자꼴): Array<[자소, 키[]]> {
     return 결과;
 }
 
+function 상태색(값: 상태): 색상.RGBA {
+    switch (값) {
+        case '정타': return 색상.검정;
+        case '오타': return 색상.빨강;
+        case '정정': return 색상.주황;
+        default: return 색상.밝은회색;
+    }
+}
+
 /** 지문에 적힌 키를 한 획씩 확인하고, 각 자소의 정오 이력을 보존한다. */
 export class 따라그리기틀 {
-    private readonly 글자들: Array<{ 위치: 위치틀; 글자: 글자꼴; 상태: 상태[] }> = [];
+    private readonly 글자들: Array<{ 위치: 위치틀; 글자: 글자꼴; 상태: 상태[]; 키상태: 상태[][] }> = [];
     private readonly 획들: 획[] = [];
     private readonly 위치별번호 = new Map<string, number>();
     private 획번호 = 0;
@@ -65,9 +74,12 @@ export class 따라그리기틀 {
             if (글자.코드[0] === 0) { throw new Error('지문 끝글자가 필요합니다.'); }
             const 글자번호 = this.글자들.length;
             this.위치별번호.set(this.위치키(위치), 글자번호);
-            this.글자들.push({ 위치, 글자, 상태: ['미입력', '미입력', '미입력'] });
-            for (const [자소, 키들] of 자소키(글자)) {
-                for (const 키 of 키들) { this.획들.push({ 글자번호, 자소, 키, 틀림: false }); }
+            const 키묶음 = 자소키(글자);
+            const 키상태: 상태[][] = [[], [], []];
+            this.글자들.push({ 위치, 글자, 상태: ['미입력', '미입력', '미입력'], 키상태 });
+            for (const [자소, 키들] of 키묶음) {
+                키상태[자소] = 키들.map(() => '미입력');
+                키들.forEach((키, 키번호) => this.획들.push({ 글자번호, 자소, 키번호, 키, 틀림: false }));
             }
             위치 = 글자.다음행 ? 위치.다음행 : 위치.다음;
         }
@@ -91,11 +103,13 @@ export class 따라그리기틀 {
         if (this.마지막오타) {
             획.틀림 = true;
             현재.상태[획.자소] = '오타';
+            현재.키상태[획.자소][획.키번호] = '오타';
             return [현재.위치];
         }
         if (!획.틀림) { this.맞은타수++; }
         const 이전상태 = 현재.상태[획.자소];
         현재.상태[획.자소] = 획.틀림 || 이전상태 === '오타' || 이전상태 === '정정' ? '정정' : '정타';
+        현재.키상태[획.자소][획.키번호] = 획.틀림 ? '정정' : '정타';
         this.획번호++;
         return [현재.위치, this.위치];
     }
@@ -107,18 +121,13 @@ export class 따라그리기틀 {
                 if (번호 >= this.글자들.length) {
                     return { done: true, value: undefined };
                 }
-                const { 글자, 상태 } = this.글자들[번호];
-                const 색 = 상태.map((값) => {
-                    switch (값) {
-                        case '정타': return 색상.검정;
-                        case '오타': return 색상.빨강;
-                        case '정정': return 색상.주황;
-                        default: return 색상.밝은회색;
-                    }
-                });
+                const { 글자, 상태, 키상태 } = this.글자들[번호];
+                const 색 = 상태.map(상태색);
+                const 키색 = 키상태.map((키들): [색상.RGBA, 색상.RGBA] | undefined =>
+                    키들.length === 2 ? [상태색(키들[0]), 상태색(키들[1])] : undefined);
                 const 배경색 = 번호 === this.획들[this.획번호]?.글자번호 ? 색상.파랑 : 색상.흰색;
                 번호++;
-                return { done: false, value: new 색칠할글자(글자, 색, 배경색) };
+                return { done: false, value: new 색칠할글자(글자, 색, 배경색, 키색) };
             },
         };
     }

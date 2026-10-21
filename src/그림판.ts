@@ -4,6 +4,8 @@ import { 위치틀 } from './본문';
 import * as color from './색상';
 import { 한글글꼴, 라틴글꼴, 특수문자 } from './fonts';
 import { antialiasFont, upscaleFont } from './font-editor';
+import { expandedMask, practiceMasks } from './practice-mask';
+import { MaskSet } from './key-mask';
 
 type 비트맵 = number[];
 type 글자칸 = { 화면위치: 위치틀; 너비: number };
@@ -30,12 +32,17 @@ export default class 그림판틀 {
     private 글자칸들 = new Map<string, 글자칸>();
     private 오타효과?: 오타효과;
     private 효과프레임 = 0;
+    private readonly 마스크들: MaskSet;
+    private readonly 키영역들 = new Map<string, 비트맵>();
     // 본문의 어느 부분을 보일 것인가?
     private viewPort: [number, number, number, number] = [0, 0, 0, 0];
 
     constructor(ctx: CanvasRenderingContext2D, 본문: 그릴본문) {
         this.ctx = ctx;
         this.본문 = 본문;
+        let storage: Storage | undefined;
+        try { storage = typeof window === 'undefined' ? undefined : window.localStorage; } catch (_) { /* 저장소 없이 실행 */ }
+        this.마스크들 = practiceMasks(storage);
     }
 
     public 안티앨리어싱강도설정(강도: number) {
@@ -134,10 +141,27 @@ export default class 그림판틀 {
         const 배율 = 글자.자.한글 ? 1 : 픽셀배율;
         빗맵들.forEach((빗맵: 비트맵, i: number) => {
             if (빗맵 && 빗맵.length > 0) {
-                const 이미지 = this.비트맵을이미지로(x, y, 원본너비, 배율, 빗맵, 글자.색[i], 알파들[i]);
+                const 키색 = 글자.키색[i];
+                const 영역 = 키색 ? this.키영역(글자.자, i, 빗맵) : undefined;
+                const 이미지 = this.비트맵을이미지로(x, y, 원본너비, 배율, 빗맵, 글자.색[i], 알파들[i],
+                    키색 && 영역 ? { 색: 키색, 영역 } : undefined);
                 this.ctx.putImageData(이미지, x, y, 0, 0, Math.min(칸너비, 이미지.width), 이미지.height);
             }
         });
+    }
+
+    private 키영역(글자: 글자꼴, 자소: number, 빗맵: 비트맵): 비트맵 | undefined {
+        if (!글자.한글 || (자소 !== 1 && 자소 !== 2)) { return undefined; }
+        const 벌 = 벌식([글자.초성, 글자.중성, 글자.종성]);
+        const key = `${자소 === 1 ? 'jung' : 'jong'}:${벌[자소]}:${자소 === 1 ? 글자.중성 - 1 : 글자.종성 - 1}`;
+        const source = this.마스크들[key];
+        if (!source) { return undefined; }
+        let 영역 = this.키영역들.get(key);
+        if (!영역) {
+            영역 = expandedMask(source, 빗맵);
+            this.키영역들.set(key, 영역);
+        }
+        return 영역;
     }
 
     private 바탕지우기(배경색: color.RGBA) {
@@ -175,7 +199,8 @@ export default class 그림판틀 {
     }
 
     private 비트맵을이미지로(x: number, y: number, 원본너비: number, 배율: number,
-                              빗맵: 비트맵, 색: color.RGBA, 알파?: number[]): ImageData {
+                              빗맵: 비트맵, 색: color.RGBA, 알파?: number[],
+                              키분리?: { 색: [color.RGBA, color.RGBA]; 영역: 비트맵 }): ImageData {
         const 너비 = 원본너비 * 배율;
         const 높이 = 빗맵.length * 배율;
         const 이미지 = this.ctx.getImageData(x, y, 너비, 높이);
@@ -184,16 +209,19 @@ export default class 그림판틀 {
                 const 불투명도 = (빗맵[py] & (1 << (원본너비 - px - 1))) !== 0 ? 255
                     : 알파 ? Math.min(255, Math.round(알파[py * 32 + px] * this.안티앨리어싱강도 / 100)) : 0;
                 if (불투명도 > 0) {
+                    const 픽셀색 = 키분리
+                        ? 키분리.색[(키분리.영역[py] & (1 << (원본너비 - px - 1))) !== 0 ? 0 : 1]
+                        : 색;
                     for (let dy = 0; dy < 배율; dy++) {
                         for (let dx = 0; dx < 배율; dx++) {
                             const 위치 = (((py * 배율 + dy) * 너비) + px * 배율 + dx) * 4;
                             if (불투명도 === 255) {
-                                이미지.data.set(색, 위치);
+                                이미지.data.set(픽셀색, 위치);
                             } else {
                                 const 비율 = 불투명도 / 255;
                                 for (let 채널 = 0; 채널 < 3; 채널++) {
                                     이미지.data[위치 + 채널] = Math.round(
-                                        이미지.data[위치 + 채널] * (1 - 비율) + 색[채널] * 비율,
+                                        이미지.data[위치 + 채널] * (1 - 비율) + 픽셀색[채널] * 비율,
                                     );
                                 }
                                 이미지.data[위치 + 3] = 255;
