@@ -107,7 +107,7 @@ export default defineComponent({
 
     reset() {
         window.clearInterval(this.인터벌핸들);
-        this.그림판?.오타효과중지(false);
+        this.그림판?.종료();
         this.결과화면보이기 = false;
         this.소요초 = 0;
         this.유효타수 = 0;
@@ -191,7 +191,7 @@ export default defineComponent({
   beforeUnmount() {
     window.onkeydown = null;
     window.clearInterval(this.인터벌핸들);
-    this.그림판?.오타효과중지(false);
+    this.그림판?.종료();
   },
   computed: {
     상태문구() {

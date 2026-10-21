@@ -30,6 +30,9 @@ export default class 그림판틀 {
     private 본문: 그릴본문;
     private 안티앨리어싱강도 = 100;
     private 글자칸들 = new Map<string, 글자칸>();
+    private 커서키?: string;
+    private 커서보임 = true;
+    private 깜빡임타이머 = 0;
     private 오타효과?: 오타효과;
     private 효과프레임 = 0;
     private readonly 마스크들: MaskSet;
@@ -51,6 +54,7 @@ export default class 그림판틀 {
 
     public 오타효과시작(위치: 위치틀) {
         this.오타효과중지(false);
+        this.커서깜빡임중지();
         const 효과: 오타효과 = {
             위치, 키: this.위치키(위치), 시작: performance.now(), 진행: 0,
             흔들림: !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches,
@@ -64,6 +68,7 @@ export default class 그림판틀 {
                 this.오타효과 = undefined;
                 this.효과프레임 = 0;
                 this.커서밑줄그리기(효과, false);
+                this.커서깜빡임시작();
                 return;
             }
             this.커서밑줄그리기(효과, true);
@@ -80,7 +85,15 @@ export default class 그림판틀 {
         if (이전위치 && 다시그리기) { this.변경그리기([이전위치]); }
     }
 
+    public 종료() {
+        this.커서깜빡임중지();
+        this.오타효과중지(false);
+    }
+
     public 그리기() {
+        this.커서깜빡임중지();
+        this.커서키 = undefined;
+        this.커서보임 = true;
         let 화면위치 = new 위치틀(0, 0);
         let 문서위치 = new 위치틀(0, 0);
         const 글자스트림 = this.본문.글자스트림();
@@ -98,7 +111,9 @@ export default class 그림판틀 {
                 화면위치 = 화면위치.다음행;
             }
             const 너비 = 지문글자.전각 ? 32 : 16;
-            this.글자칸들.set(this.위치키(문서위치), { 화면위치, 너비 });
+            const 키 = this.위치키(문서위치);
+            this.글자칸들.set(키, { 화면위치, 너비 });
+            if (색자.배경색 === color.파랑) { this.커서키 = 키; }
             this.글자그리기(화면위치, 색자, 너비, this.오타효과?.키 === this.위치키(문서위치));
             if (지문글자.다음행) {
                 화면위치 = 화면위치.다음행.다음행;
@@ -109,9 +124,12 @@ export default class 그림판틀 {
                 문서위치 = 문서위치.다음;
             }
         }
+        this.커서깜빡임시작();
     }
 
     public 변경그리기(위치들: 위치틀[]) {
+        this.커서깜빡임중지();
+        this.커서보임 = true;
         const 본위치 = new Set<string>();
         for (const 문서위치 of 위치들) {
             const 키 = this.위치키(문서위치);
@@ -123,8 +141,33 @@ export default class 그림판틀 {
             this.ctx.fillStyle = '#fff';
             this.ctx.fillRect(x, y, 칸.너비, 44);
             const {value, done} = this.본문.글자스트림(문서위치).next();
+            if (done || value.배경색 !== color.파랑) {
+                if (this.커서키 === 키) { this.커서키 = undefined; }
+            } else {
+                this.커서키 = 키;
+            }
             if (!done) { this.글자그리기(칸.화면위치, value, 칸.너비, this.오타효과?.키 === 키); }
         }
+        this.커서깜빡임시작();
+    }
+
+    private 커서깜빡임중지() {
+        if (this.깜빡임타이머) { window.clearInterval(this.깜빡임타이머); }
+        this.깜빡임타이머 = 0;
+    }
+
+    private 커서깜빡임시작() {
+        if (!this.커서키 || this.오타효과 || typeof window === 'undefined' ||
+            !window.setInterval || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) { return; }
+        this.깜빡임타이머 = window.setInterval(() => {
+            const 칸 = this.커서키 && this.글자칸들.get(this.커서키);
+            if (!칸) { return; }
+            const [x, y] = this.textToGraphic(칸.화면위치);
+            this.커서보임 = !this.커서보임;
+            this.ctx.fillStyle = '#fff';
+            this.ctx.fillRect(x, y + 32, 칸.너비, 4);
+            if (this.커서보임) { this.바탕칠하기(칸.화면위치, 칸.너비, color.파랑, false); }
+        }, 500);
     }
 
     private 위치키(위치: 위치틀): string {

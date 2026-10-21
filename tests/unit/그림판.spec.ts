@@ -179,4 +179,73 @@ describe('타자 연습 캔버스 글꼴', () => {
             vi.unstubAllGlobals();
         }
     });
+
+    it('커서 밑줄만 깜빡이고 입력 시 새 위치에서 다시 시작한다', () => {
+        const 지문 = new 지문틀();
+        지문.글쓰기('가나');
+        지문.쓰기(지문.위치, 끝글자);
+        const 본문 = new 따라그리기틀(지문);
+        const 칠한영역: Array<{ 위치: number[]; 색: string }> = [];
+        let 이미지수 = 0;
+        let 현재색 = '';
+        const ctx = {
+            canvas: { width: 1286, height: 500 },
+            set fillStyle(색: string) { 현재색 = 색; },
+            fillRect(x: number, y: number, w: number, h: number) {
+                칠한영역.push({ 위치: [x, y, w, h], 색: 현재색 });
+            },
+            getImageData: (_x: number, _y: number, w: number, h: number) =>
+                ({ width: w, height: h, data: new Uint8ClampedArray(w * h * 4).fill(255) } as ImageData),
+            putImageData: () => { 이미지수++; },
+        } as unknown as CanvasRenderingContext2D;
+        const 틱들: Array<() => void> = [];
+        const 타이머시작 = vi.fn((틱: () => void) => { 틱들.push(틱); return 틱들.length; });
+        const 타이머중지 = vi.fn();
+        let 프레임: FrameRequestCallback = () => undefined;
+        vi.stubGlobal('window', {
+            setInterval: 타이머시작,
+            clearInterval: 타이머중지,
+            matchMedia: () => ({ matches: false }),
+        });
+        vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+            프레임 = callback;
+            return 1;
+        });
+        vi.stubGlobal('cancelAnimationFrame', vi.fn());
+        try {
+            const 그림판 = new 그림판틀(ctx, 본문);
+            그림판.그리기();
+            expect(타이머시작).toHaveBeenCalledWith(expect.any(Function), 500);
+            const 처음이미지수 = 이미지수;
+            칠한영역.length = 0;
+
+            틱들[0]();
+            expect(칠한영역).toEqual([{ 위치: [0, 32, 32, 4], 색: '#fff' }]);
+            틱들[0]();
+            expect(칠한영역[2].위치).toEqual([0, 32, 32, 4]);
+            expect(칠한영역[2].색).not.toBe('#fff');
+            expect(이미지수).toBe(처음이미지수);
+
+            본문.입력('KeyR', false);
+            그림판.변경그리기([본문.위치]);
+            const 바뀐위치 = 본문.입력('KeyK', false);
+            그림판.변경그리기(바뀐위치);
+            expect(타이머중지).toHaveBeenCalled();
+            칠한영역.length = 0;
+            틱들.at(-1)!();
+            expect(칠한영역).toEqual([{ 위치: [32, 32, 32, 4], 색: '#fff' }]);
+
+            const 이전타이머수 = 틱들.length;
+            그림판.오타효과시작(본문.위치);
+            expect(타이머중지).toHaveBeenLastCalledWith(이전타이머수);
+            expect(틱들).toHaveLength(이전타이머수);
+            프레임(performance.now() + 500);
+            expect(틱들).toHaveLength(이전타이머수 + 1);
+
+            그림판.종료();
+            expect(타이머중지).toHaveBeenLastCalledWith(틱들.length);
+        } finally {
+            vi.unstubAllGlobals();
+        }
+    });
 });
