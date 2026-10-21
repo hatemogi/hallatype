@@ -12,18 +12,22 @@
         <strong>HALLATYPE</strong>
         <span class="제목구분">/</span>
         <span>장문 따라그리기</span>
-        <span class="제목번호">01</span>
+        <span class="제목번호">{{String(선택된지문 + 1).padStart(2, '0')}}</span>
       </div>
-      <div class="메뉴줄" aria-label="연습 정보">
-        <span class="메뉴활성">연습 01</span>
-        <span>한글 2벌식</span>
-        <span class="메뉴끝">둥근모꼴 16×16</span>
+      <div class="메뉴줄" role="group" aria-label="연습 지문 선택">
+        <span class="메뉴제목">지문 선택</span>
+        <button v-for="(지문, 번호) in 지문목록" :key="지문.제목" type="button" class="지문버튼"
+          :class="{ 선택됨: 선택된지문 === 번호 }" :aria-pressed="선택된지문 === 번호"
+          @click="지문선택(번호, $event)">
+          <span class="지문번호">{{String(번호 + 1).padStart(2, '0')}}</span> {{지문.제목}}
+        </button>
+        <span class="메뉴끝">한글 2벌식</span>
       </div>
 
       <div class="창내용">
         <div class="화면머리">
           <span><span class="화면머리표식" aria-hidden="true">■</span> 지문 화면</span>
-          <span>LONG FORM / LIVE INPUT</span>
+          <span>{{지문목록[선택된지문].출처}}</span>
         </div>
         <div class="화면테두리">
           <canvas id="캔버스" width="1286" height="500" aria-label="따라 입력할 지문"></canvas>
@@ -74,10 +78,13 @@ import { 끝글자 } from '@/글자';
 import { 지문틀 } from '@/본문';
 import { 따라그리기틀 } from '@/따라그리기';
 import 그림판틀 from '@/그림판';
+import { 연습지문들 } from '@/practice-passages';
 
 export default defineComponent({
   data() {
     return {
+      지문목록: 연습지문들,
+      선택된지문: 0,
       소요초: 0,
       기대타수: 0,
       유효타수: 0,
@@ -90,6 +97,13 @@ export default defineComponent({
     };
   },
   methods: {
+    지문선택(번호: number, event: MouseEvent) {
+        (event.currentTarget as HTMLElement).blur();
+        if (this.선택된지문 === 번호) { return; }
+        this.선택된지문 = 번호;
+        this.reset();
+    },
+
     reset() {
         window.clearInterval(this.인터벌핸들);
         this.그림판?.오타효과중지(false);
@@ -98,18 +112,8 @@ export default defineComponent({
         this.유효타수 = 0;
         this.타속 = 0;
         this.시작시각 = 0;
-        console.log('준비하기 눌림');
         const 지문 = new 지문틀();
-        지문.글쓰기('오늘도 또 우리 수탉이 막 쫓기었다. 내가 점심을 먹고 나무를 하러 갈 양으로 나올 때이었다. ');
-        지문.글쓰기('산으로 올라서려니까 등뒤에서 푸드득 푸드득 하고 닭의 횃소리가 야단이다. 깜짝 놀라서 ');
-        지문.글쓰기('고개를 돌려보니 아니나다르랴 두 놈이 또 얼리었다.\n');
-        지문.글쓰기('점순네 수탉이 덩저리 작은 우리 수탉을 함부로 ');
-        지문.글쓰기('해내는 것이다. 그것도 그냥 해내는 것이 아니라 푸드득하고 면두를 쪼고 물러섰다가 좀 사이를 ');
-        지문.글쓰기('두고 푸드득하고 모가지를 쪼았다. 이렇게 멋을 부려 가며 여지없이 닦아 놓는다. 그러면 이 못생긴 ');
-        지문.글쓰기('것은 쪼일 적마다 주둥이로 땅을 받으며 그 비명이 킥, 킥, 할 뿐이다.'); /* 물론 미처 아물지도 않은 ');
-        지문.글쓰기('면두를 또 쪼이며 붉은 선혈은 뚝뚝 떨어진다. 이걸 가만히 내려다보자니 내 대강이가 터져서 피가 ');
-        지문.글쓰기('흐르는 것같이 두 눈에서 불이 번쩍 난다. 대뜸 지게막대기를 메고 달려들어 점순네 닭을 후려칠까 ');
-        지문.글쓰기('하다가 생각을 고쳐먹고 헛매질로 떼어만 놓았다.');*/
+        지문.글쓰기(this.지문목록[this.선택된지문].본문);
         지문.쓰기(지문.위치, 끝글자);
         const 본문 = new 따라그리기틀(지문);
         const 캔버스 = document.getElementById('캔버스') as HTMLCanvasElement;
@@ -122,6 +126,9 @@ export default defineComponent({
         const self = this;
         let 시작함 = false;
         window.onkeydown = (e: KeyboardEvent) => {
+            if ((e.target as HTMLElement | null)?.closest('button, input, select, textarea, [contenteditable="true"]')) {
+                return;
+            }
             if (e.code.startsWith('Shift') || e.code.startsWith('Control') ||
                 e.code.startsWith('Alt') || e.code.startsWith('Meta') ||
                 e.getModifierState('Control') || e.getModifierState('Alt') || e.getModifierState('Meta') ||
@@ -292,21 +299,57 @@ export default defineComponent({
 .메뉴줄 {
   display: flex;
   align-items: center;
-  gap: 24px;
-  min-height: 35px;
-  padding: 0 18px;
+  gap: 7px;
+  min-height: 43px;
+  padding: 5px 12px;
   border-bottom: 1px solid #81878b;
   color: #49525c;
   font-size: 12px;
   font-weight: 700;
 }
 
-.메뉴활성 {
-  color: #126f74;
+.메뉴제목 {
+  flex: none;
+  margin-right: 5px;
+}
+
+.지문버튼 {
+  padding: 6px 9px;
+  border: 1px solid;
+  border-color: #fff #898f91 #898f91 #fff;
+  background: #e1e3e1;
+  color: #39454d;
+  font: inherit;
+  font-size: 11px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.지문버튼:hover {
+  background: #f0f2ef;
+}
+
+.지문버튼.선택됨 {
+  border-color: #206d72;
+  background: #368f93;
+  box-shadow: inset 1px 1px #256f73;
+  color: #fff;
+}
+
+.지문버튼:focus-visible {
+  outline: 2px solid #1415ad;
+  outline-offset: 2px;
+}
+
+.지문번호 {
+  margin-right: 4px;
+  opacity: .7;
 }
 
 .메뉴끝 {
   margin-left: auto;
+  font-size: 11px;
+  white-space: nowrap;
 }
 
 .창내용 {
@@ -556,7 +599,10 @@ export default defineComponent({
   .연습 { padding: 24px 12px 18px; }
   .프로그램창 { box-shadow: 4px 5px 0 #09096f; }
   .창내용 { padding: 12px; }
-  .메뉴줄 { gap: 12px; padding: 0 11px; font-size: 10px; }
+  .메뉴줄 { gap: 4px; padding: 5px 9px; }
+  .메뉴제목, .메뉴끝 { display: none; }
+  .지문버튼 { flex: 1; padding: 6px 3px; font-size: 10px; }
+  .지문번호 { margin-right: 1px; }
   .화면머리 { font-size: 10px; }
   .상태줄 .상태오른쪽 { display: none; }
   .아래패널 { grid-template-columns: 1fr; gap: 12px; }
