@@ -3,6 +3,8 @@ import { 벌식, 분리 } from './한글';
 
 export type Part = 'cho' | 'jung' | 'jong';
 export type Bitmap = number[];
+/** Row-major 32×32 alpha values, each in the range 0–255. */
+export type AlphaGlyph = number[];
 
 export const INITIALS = Array.from('ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ');
 export const MEDIALS = Array.from('ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ');
@@ -38,10 +40,17 @@ export function setPixel(rows: Bitmap, size: FontSize, x: number, y: number, on:
     rows[y] = (on ? rows[y] | mask : rows[y] & ~mask) >>> 0;
 }
 
-/** Nearest-neighbour 2× scale, then fill one-pixel gaps at diagonal and inside corners. */
+/** Nearest-neighbour 2× scale, then join diagonal strokes without rounding right-angle corners. */
 export function upscaleGlyph(source: Bitmap): Bitmap {
     if (source.length !== 16) { throw new Error('16행 원본 비트맵이 필요합니다.'); }
     const result = Array<number>(32).fill(0);
+    const runBounds = (y: number, start: number): [number, number] => {
+        let left = start;
+        let right = start;
+        while (left > 0 && hasPixel(source, 16, left - 1, y)) { left--; }
+        while (right < 15 && hasPixel(source, 16, right + 1, y)) { right++; }
+        return [left, right];
+    };
     for (let y = 0; y < 16; y++) {
         for (let x = 0; x < 16; x++) {
             if (!hasPixel(source, 16, x, y)) { continue; }
@@ -62,14 +71,15 @@ export function upscaleGlyph(source: Bitmap): Bitmap {
             } else if (b && c && !a && !d) {
                 setPixel(result, 32, x * 2 + 1, y * 2 + 1, true);
                 setPixel(result, 32, x * 2 + 2, y * 2 + 2, true);
-            } else if (a && b && c && !d) {
-                setPixel(result, 32, x * 2 + 2, y * 2 + 2, true);
-            } else if (a && b && d && !c) {
-                setPixel(result, 32, x * 2 + 1, y * 2 + 2, true);
-            } else if (a && c && d && !b) {
-                setPixel(result, 32, x * 2 + 2, y * 2 + 1, true);
-            } else if (b && c && d && !a) {
-                setPixel(result, 32, x * 2 + 1, y * 2 + 1, true);
+            } else if ([a, b, c, d].filter(Boolean).length === 3) {
+                const [upperLeft, upperRight] = runBounds(y, a ? x : x + 1);
+                const [lowerLeft, lowerRight] = runBounds(y + 1, c ? x : x + 1);
+                const shift = lowerLeft - upperLeft;
+                if (Math.abs(shift) !== 1 || lowerRight - upperRight !== shift) { continue; }
+                if (!a) { setPixel(result, 32, x * 2 + 1, y * 2 + 1, true); }
+                else if (!b) { setPixel(result, 32, x * 2 + 2, y * 2 + 1, true); }
+                else if (!c) { setPixel(result, 32, x * 2 + 1, y * 2 + 2, true); }
+                else { setPixel(result, 32, x * 2 + 2, y * 2 + 2, true); }
             }
         }
     }
@@ -81,7 +91,71 @@ export function upscaleFont(font: Bitmap[]): Bitmap[] {
     return font.map(upscaleGlyph);
 }
 
-export function glyphForSyllable(font: Bitmap[], character: string): [Bitmap, Bitmap, Bitmap | null] | null {
+export function alphaAt(glyph: AlphaGlyph, x: number, y: number): number {
+    return x >= 0 && x < 32 && y >= 0 && y < 32 ? glyph[y * 32 + x] : 0;
+}
+
+/** Keep solid pixels opaque and add a faint 8-bit edge fringe. */
+export function antialiasGlyph(source: Bitmap): AlphaGlyph {
+    if (source.length !== 32) { throw new Error('32행 비트맵이 필요합니다.'); }
+    const weights = [1, 2, 1];
+    const result: AlphaGlyph = Array(1024).fill(0);
+    for (let y = 0; y < 32; y++) {
+        for (let x = 0; x < 32; x++) {
+            if (hasPixel(source, 32, x, y)) {
+                result[y * 32 + x] = 255;
+                continue;
+            }
+            let sum = 0;
+            for (let dy = -1; dy <= 1; dy++) {
+                for (let dx = -1; dx <= 1; dx++) {
+                    if (hasPixel(source, 32, x + dx, y + dy)) {
+                        sum += weights[dy + 1] * weights[dx + 1];
+                    }
+                }
+            }
+            result[y * 32 + x] = Math.round(sum * 255 / 64);
+        }
+    }
+    return result;
+}
+
+export function antialiasFont(font: Bitmap[]): AlphaGlyph[] {
+    if (font.length !== 348) { throw new Error('348개 자소 글꼴이 필요합니다.'); }
+    return font.map(antialiasGlyph);
+}
+
+/** Refresh generated glyphs after an algorithm change while preserving manual pixel edits. */
+export function regenerateAutomaticFonts(source: Bitmap[], target: Bitmap[], alpha: AlphaGlyph[],
+                                         manual32: boolean[], manualAA: boolean[]): { target: Bitmap[]; alpha: AlphaGlyph[] } {
+    const refreshed = source.map((glyph, index) => manual32[index] ? target[index] : upscaleGlyph(glyph));
+    return {
+        target: refreshed,
+        alpha: refreshed.map((glyph, index) => manualAA[index] ? alpha[index] : antialiasGlyph(glyph)),
+    };
+}
+
+export function validAlphaFont(value: unknown): value is AlphaGlyph[] {
+    return Array.isArray(value) && value.length === 348 && value.every((glyph) =>
+        Array.isArray(glyph) && glyph.length === 1024 && glyph.every((alpha: unknown) =>
+            Number.isInteger(alpha) && Number(alpha) >= 0 && Number(alpha) <= 255));
+}
+
+export function exportAlphaFont(font: AlphaGlyph[]): string {
+    if (!validAlphaFont(font)) { throw new Error('올바른 32×32 8비트 글꼴이 필요합니다.'); }
+    return JSON.stringify({ format: 'hallatype-alpha-v1', width: 32, height: 32, glyphs: font });
+}
+
+export function importAlphaFont(source: string): AlphaGlyph[] {
+    const value: unknown = JSON.parse(source);
+    if (!value || typeof value !== 'object' || !('format' in value) ||
+        value.format !== 'hallatype-alpha-v1' || !('glyphs' in value) || !validAlphaFont(value.glyphs)) {
+        throw new Error('올바른 32×32 8비트 글꼴 파일이 아닙니다.');
+    }
+    return value.glyphs;
+}
+
+export function glyphForSyllable<T>(font: T[], character: string): [T, T, T | null] | null {
     const code = character.charCodeAt(0);
     if (code < 0xac00 || code > 0xd7a3) { return null; }
     const [cho, jung, jong] = 분리(code);
@@ -93,12 +167,69 @@ export function glyphForSyllable(font: Bitmap[], character: string): [Bitmap, Bi
     ];
 }
 
+export function paintAlphaBitmap(ctx: CanvasRenderingContext2D, glyph: AlphaGlyph | undefined | null,
+                                 x: number, y: number, color: string, scale = 1): void {
+    if (!glyph) { return; }
+    ctx.fillStyle = color;
+    for (let py = 0; py < 32; py++) {
+        for (let px = 0; px < 32; px++) {
+            const alpha = alphaAt(glyph, px, py);
+            if (!alpha) { continue; }
+            ctx.globalAlpha = alpha / 255;
+            ctx.fillRect(x + px * scale, y + py * scale, scale, scale);
+        }
+    }
+    ctx.globalAlpha = 1;
+}
+
+export function paintAlphaText(ctx: CanvasRenderingContext2D, font: AlphaGlyph[], text: string,
+                               colors: [string, string, string], scale: number, maxWidth: number): void {
+    let x = 0;
+    let y = 0;
+    for (const character of text) {
+        if (character === '\n') { x = 0; y += 42 * scale; continue; }
+        const syllable = glyphForSyllable(font, character);
+        const width = syllable ? 32 : 16;
+        if (x + width * scale > maxWidth && x > 0) { x = 0; y += 42 * scale; }
+        if (syllable) {
+            syllable.forEach((glyph, part) => paintAlphaBitmap(ctx, glyph, x, y, colors[part], scale));
+        } else {
+            const code = character.charCodeAt(0);
+            const latin = 라틴글꼴[code];
+            if (latin) {
+                for (let py = 0; py < 16; py++) {
+                    for (let px = 0; px < 8; px++) {
+                        if (latin[py] & (1 << (7 - px))) {
+                            ctx.fillStyle = colors[0];
+                            ctx.fillRect(x + px * scale * 2, y + py * scale * 2, scale * 2, scale * 2);
+                        }
+                    }
+                }
+            }
+        }
+        x += width * scale;
+    }
+}
+
 export function syllableSelection(character: string): { cho: [number, number]; jung: [number, number]; jong: [number, number] | null } | null {
     const code = character.charCodeAt(0);
     if (code < 0xac00 || code > 0xd7a3) { return null; }
     const [cho, jung, jong] = 분리(code);
     const [a, b, c] = 벌식([cho, jung, jong]);
     return { cho: [a, cho - 1], jung: [b, jung - 1], jong: jong ? [c, jong - 1] : null };
+}
+
+/** Find a composed Hangul syllable that actually uses the selected glyph variant. */
+export function previewSyllable(part: Part, variant: number, jamo: number): string {
+    glyphIndex(part, variant, jamo);
+    for (let code = 0xac00; code <= 0xd7a3; code++) {
+        const character = String.fromCharCode(code);
+        const selected = syllableSelection(character)?.[part];
+        if (selected && selected[0] === variant && selected[1] === jamo) {
+            return character;
+        }
+    }
+    throw new Error('선택한 자소를 사용하는 글자가 없습니다.');
 }
 
 export function paintBitmap(ctx: CanvasRenderingContext2D, rows: Bitmap | undefined | null,
@@ -118,7 +249,7 @@ export function paintText(ctx: CanvasRenderingContext2D, font: Bitmap[], text: s
                           colors: [string, string, string], scale: number, maxWidth: number, fontSize: FontSize = 16): void {
     let x = 0;
     let y = 0;
-    const lineHeight = (fontSize + (fontSize === 32 ? 10 : 5)) * scale;
+    const lineHeight = Math.round(fontSize * 1.3125) * scale;
     for (const character of text) {
         if (character === '\n') { x = 0; y += lineHeight; continue; }
         const syllable = glyphForSyllable(font, character);
@@ -129,14 +260,15 @@ export function paintText(ctx: CanvasRenderingContext2D, font: Bitmap[], text: s
         } else {
             const code = character.charCodeAt(0);
             if (code < 라틴글꼴.length) {
-                if (fontSize === 32) {
+                if (fontSize !== 16) {
                     const latin = 라틴글꼴[code];
                     if (latin) {
+                        const latinScale = fontSize / 16 * scale;
                         for (let py = 0; py < 16; py++) {
                             for (let px = 0; px < 8; px++) {
                                 if (latin[py] & (1 << (7 - px))) {
                                     ctx.fillStyle = colors[0];
-                                    ctx.fillRect(x + px * scale * 2, y + py * scale * 2, scale * 2, scale * 2);
+                                    ctx.fillRect(x + px * latinScale, y + py * latinScale, latinScale, latinScale);
                                 }
                             }
                         }

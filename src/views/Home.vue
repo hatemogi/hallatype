@@ -1,7 +1,12 @@
 <template>
   <div class="연습">
     <h1>한글 타자 연습 <small>by hatemogi</small></h1>
-    <canvas id="캔버스" width="643" height="250"></canvas>
+    <canvas id="캔버스" width="1286" height="500"></canvas>
+    <div class="글꼴설정">
+      <label for="안티앨리어싱강도">안티앨리어싱 강도</label>
+      <input id="안티앨리어싱강도" v-model.number="안티앨리어싱강도" type="range" min="0" max="300" step="10" @input="글꼴다시그리기" @keydown.stop>
+      <output for="안티앨리어싱강도">{{안티앨리어싱강도}}%</output>
+    </div>
     <div class="설명" v-if="!결과화면보이기">
       <h3>위 지문을 따라 입력하고 나면, 타자 속도와 정확도를 알려드립니다.</h3>
       <div>{{소요시간}}</div>
@@ -27,7 +32,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
+import { defineComponent, markRaw } from 'vue';
 import { 글자꼴, 글자없음, 끝글자, 색칠할글자 } from '@/글자';
 import { 지문틀, 본문틀 } from '@/본문';
 import { 입력모드, 입력머신틀, 위치이동, 필요타수 } from '@/입력';
@@ -42,6 +47,8 @@ export default defineComponent({
       타속: 0,
       결과화면보이기: false,
       인터벌핸들: 0,
+      안티앨리어싱강도: 0,
+      그림판: null as 그림판틀 | null,
     };
   },
   methods: {
@@ -66,7 +73,9 @@ export default defineComponent({
         지문.쓰기(지문.위치, 끝글자);
         const 캔버스 = document.getElementById('캔버스') as HTMLCanvasElement;
         const ctx = 캔버스.getContext('2d', { alpha: false }) as CanvasRenderingContext2D;
-        const 그림판 = new 그림판틀(ctx, 본문);
+        const 그림판 = markRaw(new 그림판틀(ctx, 본문));
+        그림판.안티앨리어싱강도설정(this.안티앨리어싱강도);
+        this.그림판 = 그림판;
         그림판.그리기();
         this.기대타수 = 타수구하기(본문.글자스트림());
         const self = this;
@@ -102,6 +111,11 @@ export default defineComponent({
                 self.입력끝(본문.유효타수);
             }
         };
+    },
+
+    글꼴다시그리기() {
+        this.그림판?.안티앨리어싱강도설정(this.안티앨리어싱강도);
+        this.그림판?.그리기();
     },
 
     타이머시작() {
@@ -174,10 +188,30 @@ function 타수구하기(글자들: Iterator<색칠할글자>): number {
 }
 
 #캔버스 {
+  width: 643px;
+  height: 250px;
   border: 1px solid black;
   border-radius: 3px;
   padding: 3px;
-  zoom: 130%;
+  zoom: 100%;
+}
+
+.글꼴설정 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 12px 0 20px;
+  font-size: 14px;
+}
+
+.글꼴설정 input {
+  width: 240px;
+}
+
+.글꼴설정 output {
+  min-width: 44px;
+  text-align: right;
 }
 
 .버튼 {
