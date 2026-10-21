@@ -20,7 +20,7 @@ const 픽셀배율 = 2;
 export default class 그림판틀 {
     private ctx!: CanvasRenderingContext2D;
     private 본문: 본문틀;
-    private 안티앨리어싱강도 = 0;
+    private 안티앨리어싱강도 = 100;
     // 본문의 어느 부분을 보일 것인가?
     private viewPort: [number, number, number, number] = [0, 0, 0, 0];
 

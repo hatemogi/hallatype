@@ -47,7 +47,7 @@ export default defineComponent({
       타속: 0,
       결과화면보이기: false,
       인터벌핸들: 0,
-      안티앨리어싱강도: 0,
+      안티앨리어싱강도: 100,
       그림판: null as 그림판틀 | null,
     };
   },
