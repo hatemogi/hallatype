@@ -6,6 +6,7 @@ import { 한글글꼴, 라틴글꼴, 특수문자 } from './fonts';
 import { antialiasFont, upscaleFont } from './font-editor';
 
 type 비트맵 = number[];
+type 글자칸 = { 화면위치: 위치틀; 너비: number };
 const 연습글꼴 = upscaleFont(한글글꼴);
 const 안티앨리어싱글꼴 = antialiasFont(연습글꼴);
 const 픽셀배율 = 2;
@@ -21,6 +22,7 @@ export default class 그림판틀 {
     private ctx!: CanvasRenderingContext2D;
     private 본문: 본문틀;
     private 안티앨리어싱강도 = 100;
+    private 글자칸들 = new Map<string, 글자칸>();
     // 본문의 어느 부분을 보일 것인가?
     private viewPort: [number, number, number, number] = [0, 0, 0, 0];
 
@@ -34,32 +36,59 @@ export default class 그림판틀 {
     }
 
     public 그리기() {
-        let 위치 = new 위치틀(0, 0);
-        const 글자스트림 = this.본문.글자스트림(위치);
+        let 화면위치 = new 위치틀(0, 0);
+        let 문서위치 = new 위치틀(0, 0);
+        const 글자스트림 = this.본문.글자스트림();
+        this.글자칸들.clear();
         this.바탕지우기(color.흰색);
-        while (위치.행 < 11) {
+        while (화면위치.행 < 11) {
             const {value, done} = 글자스트림.next();
             const 색자 = value;
             if (done) {
                 break;
             }
-            if (색자.자.전각 && 위치.열 === 79) {
+            const 지문글자 = this.본문.지문글자(문서위치);
+            if (지문글자.전각 && 화면위치.열 === 79) {
                 // 한글 그릴 공간이 부족한 경우 다음줄로 이동.
-                위치 = 위치.다음행;
+                화면위치 = 화면위치.다음행;
             }
-            this.글자그리기(위치, 색자);
-            if (색자.자.다음행) {
-                위치 = 위치.다음행.다음행;
+            const 너비 = 지문글자.전각 ? 32 : 16;
+            this.글자칸들.set(this.위치키(문서위치), { 화면위치, 너비 });
+            this.글자그리기(화면위치, 색자, 너비);
+            if (지문글자.다음행) {
+                화면위치 = 화면위치.다음행.다음행;
+                문서위치 = 문서위치.다음행;
             } else {
-                위치 = 색자.자.전각 ? 위치.다음.다음 : 위치.다음;
-                위치 = 위치.열 >= 80 ? 위치.다음행 : 위치;
+                화면위치 = 지문글자.전각 ? 화면위치.다음.다음 : 화면위치.다음;
+                화면위치 = 화면위치.열 >= 80 ? 화면위치.다음행 : 화면위치;
+                문서위치 = 문서위치.다음;
             }
         }
     }
 
-    public 글자그리기(위치: 위치틀, 글자: 색칠할글자) {
+    public 변경그리기(위치들: 위치틀[]) {
+        const 본위치 = new Set<string>();
+        for (const 문서위치 of 위치들) {
+            const 키 = this.위치키(문서위치);
+            if (본위치.has(키)) { continue; }
+            본위치.add(키);
+            const 칸 = this.글자칸들.get(키);
+            if (!칸) { continue; }
+            const [x, y] = this.textToGraphic(칸.화면위치);
+            this.ctx.fillStyle = '#fff';
+            this.ctx.fillRect(x, y, 칸.너비, 44);
+            const {value, done} = this.본문.글자스트림(문서위치).next();
+            if (!done) { this.글자그리기(칸.화면위치, value, 칸.너비); }
+        }
+    }
+
+    private 위치키(위치: 위치틀): string {
+        return `${위치.행}:${위치.열}`;
+    }
+
+    public 글자그리기(위치: 위치틀, 글자: 색칠할글자, 칸너비 = 글자.자.전각 ? 32 : 16) {
         const [x, y] = this.textToGraphic(위치);
-        this.바탕칠하기(위치, 글자.자.전각, 글자.배경색);
+        this.바탕칠하기(위치, 칸너비, 글자.배경색);
         const 빗맵들: 비트맵[] = 글자.자.한글 ? 한글비트맵(글자) : 그외비트맵(글자);
         const 알파들 = 글자.자.한글 && this.안티앨리어싱강도 > 0
             ? 한글비트맵(글자, 안티앨리어싱글꼴) : [];
@@ -68,7 +97,7 @@ export default class 그림판틀 {
         빗맵들.forEach((빗맵: 비트맵, i: number) => {
             if (빗맵 && 빗맵.length > 0) {
                 const 이미지 = this.비트맵을이미지로(x, y, 원본너비, 배율, 빗맵, 글자.색[i], 알파들[i]);
-                this.ctx.putImageData(이미지, x, y);
+                this.ctx.putImageData(이미지, x, y, 0, 0, Math.min(칸너비, 이미지.width), 이미지.height);
             }
         });
     }
@@ -79,15 +108,14 @@ export default class 그림판틀 {
         this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
     }
 
-    private 바탕칠하기(위치: 위치틀, 전각: boolean, 배경색: color.RGBA) {
+    private 바탕칠하기(위치: 위치틀, 너비: number, 배경색: color.RGBA) {
         if (배경색 === color.흰색) {
             return;
         }
         const [x, y] = this.textToGraphic(위치);
-        const w = 전각 ? 32 : 16;
         const [r, g, b, a] = 배경색;
         this.ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${a / 255.0})`;
-        this.ctx.fillRect(x, y + 32, w, 4);
+        this.ctx.fillRect(x, y + 32, 너비, 4);
     }
 
     // 좌표 변환

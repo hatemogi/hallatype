@@ -1,6 +1,6 @@
 import 그림판틀 from '@/그림판';
-import { 위치틀, 본문틀 } from '@/본문';
-import { 글자틀, 색칠할글자 } from '@/글자';
+import { 위치틀, 지문틀, 본문틀 } from '@/본문';
+import { 끝글자, 글자틀, 색칠할글자 } from '@/글자';
 import { 검정, 흰색 } from '@/색상';
 
 describe('타자 연습 캔버스 글꼴', () => {
@@ -69,5 +69,69 @@ describe('타자 연습 캔버스 글꼴', () => {
             }
         }
         expect(부드러운가장자리).toBe(true);
+    });
+
+    it('입력과 커서 이동 때 바뀐 칸만 지우고 다시 그린다', () => {
+        const 지문 = new 지문틀();
+        지문.글쓰기('가A나');
+        지문.쓰기(지문.위치, 끝글자);
+        const 본문 = new 본문틀(지문);
+        const 칠한영역: number[][] = [];
+        const 이미지영역: number[][] = [];
+        const ctx = {
+            canvas: { width: 1286, height: 500 },
+            fillRect: (x: number, y: number, w: number, h: number) => 칠한영역.push([x, y, w, h]),
+            getImageData: (_x: number, _y: number, w: number, h: number) =>
+                ({ width: w, height: h, data: new Uint8ClampedArray(w * h * 4).fill(255) } as ImageData),
+            putImageData: (이미지: ImageData, x: number, y: number,
+                           _dx: number, _dy: number, w: number) => 이미지영역.push([x, y, 이미지.width, w]),
+        } as unknown as CanvasRenderingContext2D;
+        const 그림판 = new 그림판틀(ctx, 본문);
+        그림판.그리기();
+
+        칠한영역.length = 0;
+        이미지영역.length = 0;
+        본문.쓰기(글자틀.생성('A'.charCodeAt(0)));
+        그림판.변경그리기([본문.위치]);
+        expect(칠한영역).toContainEqual([0, 0, 32, 44]);
+        expect(이미지영역).toEqual([[0, 0, 16, 16]]);
+
+        칠한영역.length = 0;
+        이미지영역.length = 0;
+        const 이전위치 = 본문.위치;
+        본문.다음();
+        그림판.변경그리기([이전위치, 본문.위치]);
+        expect(칠한영역.filter(([, , , h]) => h === 44)).toEqual([[0, 0, 32, 44], [32, 0, 16, 44]]);
+        expect(이미지영역.every(([x]) => x === 0 || x === 32)).toBe(true);
+
+        칠한영역.length = 0;
+        이미지영역.length = 0;
+        본문.쓰기(글자틀.생성('가'.charCodeAt(0)));
+        그림판.변경그리기([본문.위치]);
+        expect(칠한영역).toContainEqual([32, 0, 16, 44]);
+        expect(이미지영역).toEqual([[32, 0, 32, 16], [32, 0, 32, 16]]);
+    });
+
+    it('줄바꿈 후의 글자도 문서 위치로 찾아 해당 칸만 갱신한다', () => {
+        const 지문 = new 지문틀();
+        지문.글쓰기('가'.repeat(39) + 'A나');
+        지문.쓰기(지문.위치, 끝글자);
+        const 본문 = new 본문틀(지문);
+        const 칠한영역: number[][] = [];
+        const ctx = {
+            canvas: { width: 1286, height: 500 },
+            fillRect: (x: number, y: number, w: number, h: number) => 칠한영역.push([x, y, w, h]),
+            getImageData: (_x: number, _y: number, w: number, h: number) =>
+                ({ width: w, height: h, data: new Uint8ClampedArray(w * h * 4).fill(255) } as ImageData),
+            putImageData: () => undefined,
+        } as unknown as CanvasRenderingContext2D;
+        const 그림판 = new 그림판틀(ctx, 본문);
+        그림판.그리기();
+        for (let i = 0; i < 40; i++) { 본문.다음(); }
+
+        칠한영역.length = 0;
+        그림판.변경그리기([본문.위치]);
+        expect(칠한영역).toContainEqual([0, 44, 32, 44]);
+        expect(칠한영역.some(([, , w]) => w === 1286)).toBe(false);
     });
 });

@@ -167,6 +167,10 @@ export class 본문틀 {
         this.커서 = new 지문커서(지문);
     }
 
+    public 지문글자(위치: 위치틀): 글자꼴 {
+        return this.지문.글자(위치);
+    }
+
     public 글자스트림(시작위치 = new 위치틀(0, 0)): Iterator<색칠할글자> {
         const 지문 = this.지문;
         const 쓴글 = this.쓴글;

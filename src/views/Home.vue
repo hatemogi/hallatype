@@ -93,6 +93,7 @@ export default defineComponent({
             const 단순키코드 = e.code.replace('Key', '').replace('Digit', '');
             const 종성없음 = 지문.글자(본문.위치).종성 === 0;
             const [이동, 완성, 조립] = 입력머신.입력([종성없음 ? 입력모드.종성없음 : 입력모드.한글, e.getModifierState('Shift'), 단순키코드]);
+            const 바뀐위치 = [본문.위치];
             switch (이동) {
                 case 위치이동.유지:
                 본문.쓰기(조립);
@@ -100,13 +101,15 @@ export default defineComponent({
                 case 위치이동.다음:
                 완성.forEach((글자: 글자꼴) => {
                     본문.쓰기(글자).다음();
+                    바뀐위치.push(본문.위치);
                 });
                 본문.쓰기(조립);
                 break;
                 case 위치이동.이전:
                 본문.쓰기(글자없음).이전().쓰기(글자없음);
+                바뀐위치.push(본문.위치);
             }
-            그림판.그리기();
+            그림판.변경그리기(바뀐위치);
             if (본문.끝) {
                 self.입력끝(본문.유효타수);
             }
