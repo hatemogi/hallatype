@@ -38,7 +38,15 @@ make run
 npm run build
 ```
 
-빌드 전에 `vue-tsc`로 타입을 검사합니다. 결과는 `dist/`에 생성되며 PWA 서비스 워커도 포함됩니다. 현재 `docs/`에는 과거 GitHub Pages 배포 빌드가 들어 있습니다.
+빌드 전에 `vue-tsc`로 타입을 검사합니다. 결과는 `dist/`에 생성되며 PWA 서비스 워커도 포함됩니다.
+
+### GitHub Pages용 타자 연습 빌드
+
+```
+make build-pages
+```
+
+타자 연습 화면만 `docs/index.html`에 빌드합니다. 글꼴·마스크 편집기 화면은 이 빌드에 포함되지 않습니다. 빌드할 때 기존 `docs/` 산출물을 교체하고 `type.hatemogi.com`의 `CNAME`과 같은 경로의 서비스 워커를 다시 만듭니다. 일반 개발용 전체 앱은 `make build`로 `dist/`에 빌드합니다. GitHub Pages가 브랜치의 `/docs`를 게시하도록 설정되어 있다면, 빌드된 `docs/`를 커밋하고 푸시하면 배포됩니다.
 
 ### 단위 테스트
 ```

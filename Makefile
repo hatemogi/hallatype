@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 
-.PHONY: help install run dev typecheck test build preview check
+.PHONY: help install run dev typecheck test build build-pages preview check
 
 help:
 	@echo "사용 가능한 명령:"
@@ -10,6 +10,7 @@ help:
 	@echo "  make typecheck  타입 검사"
 	@echo "  make test       단위 테스트"
 	@echo "  make build      프로덕션 빌드"
+	@echo "  make build-pages  타자 연습만 docs/에 GitHub Pages용으로 빌드"
 	@echo "  make preview    빌드 결과 미리보기"
 	@echo "  make check      테스트와 빌드 검증"
 
@@ -29,6 +30,9 @@ test:
 
 build:
 	npm run build
+
+build-pages:
+	npm run build:pages
 
 preview:
 	npm run preview
