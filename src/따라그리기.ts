@@ -65,6 +65,7 @@ export class 따라그리기틀 {
     private readonly 위치별번호 = new Map<string, number>();
     private 획번호 = 0;
     private 맞은타수 = 0;
+    private 건너뛴타수 = 0;
     private 마지막오타 = false;
 
     constructor(private readonly 지문: 지문틀) {
@@ -91,15 +92,24 @@ export class 따라그리기틀 {
         return this.글자들[this.획들[this.획번호]?.글자번호]?.위치 || this.지문.위치;
     }
     public get 끝(): boolean { return this.획번호 === this.획들.length; }
-    public get 기대타수(): number { return this.획들.length; }
+    public get 기대타수(): number { return this.획들.length - this.건너뛴타수; }
     public get 유효타수(): number { return this.맞은타수; }
     public get 방금오타(): boolean { return this.마지막오타; }
 
     public 입력(code: string, shift: boolean): 위치틀[] {
         if (this.끝) { return []; }
+        const 바뀐위치: 위치틀[] = [];
+        let 다음번호 = this.획번호;
+        while (다음번호 < this.획들.length && this.선택입력(this.획들[다음번호]) &&
+            !this.일치(this.획들[다음번호], code, shift)) {
+            다음번호++;
+        }
+        if (다음번호 < this.획들.length && this.일치(this.획들[다음번호], code, shift)) {
+            바뀐위치.push(...this.건너뛰기(다음번호));
+        }
         const 획 = this.획들[this.획번호];
         const 현재 = this.글자들[획.글자번호];
-        this.마지막오타 = 획.키.code !== code || 획.키.shift !== shift;
+        this.마지막오타 = !this.일치(획, code, shift);
         if (this.마지막오타) {
             획.틀림 = true;
             현재.상태[획.자소] = '오타';
@@ -111,7 +121,11 @@ export class 따라그리기틀 {
         현재.상태[획.자소] = 획.틀림 || 이전상태 === '오타' || 이전상태 === '정정' ? '정정' : '정타';
         현재.키상태[획.자소][획.키번호] = 획.틀림 ? '정정' : '정타';
         this.획번호++;
-        return [현재.위치, this.위치];
+        바뀐위치.push(현재.위치);
+        let 끝번호 = this.획번호;
+        while (끝번호 < this.획들.length && this.선택입력(this.획들[끝번호])) { 끝번호++; }
+        if (끝번호 === this.획들.length) { 바뀐위치.push(...this.건너뛰기(끝번호)); }
+        return [...바뀐위치, this.위치];
     }
 
     public 글자스트림(시작위치 = new 위치틀()): Iterator<색칠할글자> {
@@ -133,4 +147,26 @@ export class 따라그리기틀 {
     }
 
     private 위치키(위치: 위치틀): string { return `${위치.행}:${위치.열}`; }
+
+    private 일치(획: 획, code: string, shift: boolean): boolean {
+        return 획.키.code === code && 획.키.shift === shift;
+    }
+
+    private 선택입력(획: 획): boolean {
+        return 획.키.code === 'Space' || 획.키.code === 'Enter';
+    }
+
+    private 건너뛰기(끝번호: number): 위치틀[] {
+        const 바뀐위치: 위치틀[] = [];
+        while (this.획번호 < 끝번호) {
+            const 획 = this.획들[this.획번호++];
+            const 현재 = this.글자들[획.글자번호];
+            const 상태 = 획.틀림 ? '정정' : '정타';
+            현재.상태[획.자소] = 상태;
+            현재.키상태[획.자소][획.키번호] = 상태;
+            this.건너뛴타수++;
+            바뀐위치.push(현재.위치);
+        }
+        return 바뀐위치;
+    }
 }

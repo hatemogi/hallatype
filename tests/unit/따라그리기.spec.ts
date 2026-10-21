@@ -58,8 +58,8 @@ describe('장문 따라그리기', () => {
     });
 
     it('쉬프트 자소, 문장부호, 줄바꿈을 물리 키로 확인한다', () => {
-        const 본문 = 연습('까!\n');
-        expect(본문.기대타수).toBe(4);
+        const 본문 = 연습('까!\n가');
+        expect(본문.기대타수).toBe(6);
         본문.입력('KeyR', false);
         expect(보이는글자(본문).색[0]).toBe(색상.빨강);
         본문.입력('KeyR', true);
@@ -67,7 +67,69 @@ describe('장문 따라그리기', () => {
         본문.입력('Digit1', true);
         expect(본문.위치).toEqual(new 위치틀(0, 2));
         본문.입력('Enter', false);
+        expect(본문.위치).toEqual(new 위치틀(1, 0));
+        본문.입력('KeyR', false);
+        본문.입력('KeyK', false);
         expect(본문.끝).toBe(true);
-        expect(본문.유효타수).toBe(3);
+        expect(본문.유효타수).toBe(5);
+    });
+
+    it('띄어쓰기 대신 다음 글자 키를 누르면 건너뛰고 기대타수에서도 뺀다', () => {
+        const 본문 = 연습('가 나');
+        본문.입력('KeyR', false);
+        본문.입력('KeyK', false);
+        expect(본문.위치).toEqual(new 위치틀(0, 1));
+        const 바뀐위치 = 본문.입력('KeyS', false);
+        expect(바뀐위치).toContainEqual(new 위치틀(0, 1));
+        expect(바뀐위치).toContainEqual(new 위치틀(0, 2));
+        expect(본문.방금오타).toBe(false);
+        expect(보이는글자(본문, new 위치틀(0, 1)).색[0]).toBe(색상.검정);
+        expect(본문.기대타수).toBe(4);
+        본문.입력('KeyK', false);
+        expect(본문.끝).toBe(true);
+        expect(본문.유효타수).toBe(4);
+
+        const 공백입력 = 연습('가 나');
+        for (const code of ['KeyR', 'KeyK', 'Space', 'KeyS', 'KeyK']) {
+            공백입력.입력(code, false);
+        }
+        expect(공백입력.끝).toBe(true);
+        expect(공백입력.기대타수).toBe(5);
+        expect(공백입력.유효타수).toBe(5);
+    });
+
+    it('연속된 공백과 줄바꿈을 넘겨 다음 행으로 진행한다', () => {
+        const 본문 = 연습('가 \n나');
+        본문.입력('KeyR', false);
+        본문.입력('KeyK', false);
+        본문.입력('KeyS', false);
+        expect(본문.위치).toEqual(new 위치틀(1, 0));
+        expect(본문.기대타수).toBe(4);
+        expect(보이는글자(본문, new 위치틀(0, 2)).색[0]).toBe(색상.검정);
+        본문.입력('KeyK', false);
+        expect(본문.끝).toBe(true);
+    });
+
+    it('공백에서 엉뚱한 키는 오타로 남고 다음 글자 키로 건너뛰면 정정 색이 된다', () => {
+        const 본문 = 연습('가 나');
+        본문.입력('KeyR', false);
+        본문.입력('KeyK', false);
+        본문.입력('KeyT', false);
+        expect(본문.방금오타).toBe(true);
+        expect(본문.위치).toEqual(new 위치틀(0, 1));
+        본문.입력('KeyS', false);
+        expect(본문.방금오타).toBe(false);
+        expect(보이는글자(본문, new 위치틀(0, 1)).색[0]).toBe(색상.주황);
+        expect(본문.기대타수).toBe(4);
+    });
+
+    it('끝에 남은 줄바꿈은 마지막 글자와 함께 완료한다', () => {
+        const 본문 = 연습('가\n');
+        본문.입력('KeyR', false);
+        본문.입력('KeyK', false);
+        expect(본문.끝).toBe(true);
+        expect(본문.기대타수).toBe(2);
+        expect(본문.유효타수).toBe(2);
+        expect(보이는글자(본문, new 위치틀(0, 1)).색[0]).toBe(색상.검정);
     });
 });

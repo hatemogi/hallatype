@@ -8,7 +8,7 @@
       <output for="안티앨리어싱강도">{{안티앨리어싱강도}}%</output>
     </div>
     <div class="설명" v-if="!결과화면보이기">
-      <h3>위 지문을 따라 입력하세요. 틀린 키는 다시 눌러야 진행됩니다. 정확도는 입력을 마치면 알려드립니다.</h3>
+      <h3>위 지문을 따라 입력하세요. 띄어쓰기와 줄바꿈은 생략할 수 있습니다. 틀린 키는 다시 눌러야 진행됩니다. 정확도는 입력을 마치면 알려드립니다.</h3>
       <div class="진행상태">
         <span>{{소요시간}}</span>
         <span>타속: 분당 <strong>{{타속}}</strong>타</span>
@@ -108,6 +108,7 @@ export default defineComponent({
                 그림판.변경그리기(바뀐위치);
             }
             self.유효타수 = 본문.유효타수;
+            self.기대타수 = 본문.기대타수;
             self.진행상태갱신();
             if (본문.끝) {
                 self.입력끝();
@@ -155,7 +156,7 @@ export default defineComponent({
     },
 
     정확도() {
-        return Math.floor(this.유효타수 * 100 / this.기대타수);
+        return this.기대타수 ? Math.floor(this.유효타수 * 100 / this.기대타수) : 100;
     },
   },
 });
