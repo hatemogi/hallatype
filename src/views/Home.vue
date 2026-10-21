@@ -379,7 +379,7 @@ export default defineComponent({
   padding: 9px;
   border: 2px solid;
   border-color: #626871 #fff #fff #626871;
-  background: #aeb4b5;
+  background: #fff;
   box-shadow: inset 1px 1px #292f3a;
 }
 
@@ -387,7 +387,6 @@ export default defineComponent({
   display: block;
   width: min(100%, 643px);
   height: auto;
-  border: 2px solid #313946;
   background: #fff;
 }
 
