@@ -1,12 +1,16 @@
 import { 벌식 } from './한글';
-import { 끝글자, 색칠할글자 } from './글자';
-import { 위치틀, 본문틀 } from './본문';
+import { 끝글자, 글자꼴, 색칠할글자 } from './글자';
+import { 위치틀 } from './본문';
 import * as color from './색상';
 import { 한글글꼴, 라틴글꼴, 특수문자 } from './fonts';
 import { antialiasFont, upscaleFont } from './font-editor';
 
 type 비트맵 = number[];
 type 글자칸 = { 화면위치: 위치틀; 너비: number };
+type 그릴본문 = {
+    지문글자: (위치: 위치틀) => 글자꼴;
+    글자스트림: (시작위치?: 위치틀) => Iterator<색칠할글자>;
+};
 const 연습글꼴 = upscaleFont(한글글꼴);
 const 안티앨리어싱글꼴 = antialiasFont(연습글꼴);
 const 픽셀배율 = 2;
@@ -20,13 +24,13 @@ const 픽셀배율 = 2;
  */
 export default class 그림판틀 {
     private ctx!: CanvasRenderingContext2D;
-    private 본문: 본문틀;
+    private 본문: 그릴본문;
     private 안티앨리어싱강도 = 100;
     private 글자칸들 = new Map<string, 글자칸>();
     // 본문의 어느 부분을 보일 것인가?
     private viewPort: [number, number, number, number] = [0, 0, 0, 0];
 
-    constructor(ctx: CanvasRenderingContext2D, 본문: 본문틀) {
+    constructor(ctx: CanvasRenderingContext2D, 본문: 그릴본문) {
         this.ctx = ctx;
         this.본문 = 본문;
     }

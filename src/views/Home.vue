@@ -8,8 +8,11 @@
       <output for="안티앨리어싱강도">{{안티앨리어싱강도}}%</output>
     </div>
     <div class="설명" v-if="!결과화면보이기">
-      <h3>위 지문을 따라 입력하고 나면, 타자 속도와 정확도를 알려드립니다.</h3>
-      <div>{{소요시간}}</div>
+      <h3>위 지문을 따라 입력하세요. 틀린 키는 다시 눌러야 진행됩니다. 정확도는 입력을 마치면 알려드립니다.</h3>
+      <div class="진행상태">
+        <span>{{소요시간}}</span>
+        <span>타속: 분당 <strong>{{타속}}</strong>타</span>
+      </div>
     </div>
     <!--div class="안내">
         이 프로그램은, 한글 타자 연습을 웹 애플리케이션으로 하면서, 자소별 진행 상황을 보이면
@@ -33,9 +36,9 @@
 
 <script lang="ts">
 import { defineComponent, markRaw } from 'vue';
-import { 글자꼴, 글자없음, 끝글자, 색칠할글자 } from '@/글자';
-import { 지문틀, 본문틀 } from '@/본문';
-import { 입력모드, 입력머신틀, 위치이동, 필요타수 } from '@/입력';
+import { 끝글자 } from '@/글자';
+import { 지문틀 } from '@/본문';
+import { 따라그리기틀 } from '@/따라그리기';
 import 그림판틀 from '@/그림판';
 
 export default defineComponent({
@@ -47,6 +50,7 @@ export default defineComponent({
       타속: 0,
       결과화면보이기: false,
       인터벌핸들: 0,
+      시작시각: 0,
       안티앨리어싱강도: 100,
       그림판: null as 그림판틀 | null,
     };
@@ -56,10 +60,11 @@ export default defineComponent({
         window.clearInterval(this.인터벌핸들);
         this.결과화면보이기 = false;
         this.소요초 = 0;
+        this.유효타수 = 0;
+        this.타속 = 0;
+        this.시작시각 = 0;
         console.log('준비하기 눌림');
         const 지문 = new 지문틀();
-        const 본문 = new 본문틀(지문);
-        const 입력머신 = new 입력머신틀();
         지문.글쓰기('오늘도 또 우리 수탉이 막 쫓기었다. 내가 점심을 먹고 나무를 하러 갈 양으로 나올 때이었다. ');
         지문.글쓰기('산으로 올라서려니까 등뒤에서 푸드득 푸드득 하고 닭의 횃소리가 야단이다. 깜짝 놀라서 ');
         지문.글쓰기('고개를 돌려보니 아니나다르랴 두 놈이 또 얼리었다.\n');
@@ -71,47 +76,35 @@ export default defineComponent({
         지문.글쓰기('흐르는 것같이 두 눈에서 불이 번쩍 난다. 대뜸 지게막대기를 메고 달려들어 점순네 닭을 후려칠까 ');
         지문.글쓰기('하다가 생각을 고쳐먹고 헛매질로 떼어만 놓았다.');*/
         지문.쓰기(지문.위치, 끝글자);
+        const 본문 = new 따라그리기틀(지문);
         const 캔버스 = document.getElementById('캔버스') as HTMLCanvasElement;
         const ctx = 캔버스.getContext('2d', { alpha: false }) as CanvasRenderingContext2D;
         const 그림판 = markRaw(new 그림판틀(ctx, 본문));
         그림판.안티앨리어싱강도설정(this.안티앨리어싱강도);
         this.그림판 = 그림판;
         그림판.그리기();
-        this.기대타수 = 타수구하기(본문.글자스트림());
+        this.기대타수 = 본문.기대타수;
         const self = this;
         let 시작함 = false;
         window.onkeydown = (e: KeyboardEvent) => {
-            // 컨트롤키 입력은 무시
-            if (e.code === 'ShiftLeft' || e.code === 'ShiftRight' ||
-                e.getModifierState('Control') || e.getModifierState('Alt') || e.getModifierState('Meta')) {
+            if (e.code.startsWith('Shift') || e.code.startsWith('Control') ||
+                e.code.startsWith('Alt') || e.code.startsWith('Meta') ||
+                e.getModifierState('Control') || e.getModifierState('Alt') || e.getModifierState('Meta') ||
+                !/^(Key[A-Z]|Digit[0-9]|Space|Enter|Backspace|Backquote|Minus|Equal|BracketLeft|BracketRight|Backslash|Semicolon|Quote|Comma|Period|Slash)$/.test(e.code) ||
+                self.결과화면보이기) {
                 return;
             }
+            e.preventDefault();
             if (!시작함) {
                 시작함 = true;
                 self.타이머시작();
             }
-            const 단순키코드 = e.code.replace('Key', '').replace('Digit', '');
-            const 종성없음 = 지문.글자(본문.위치).종성 === 0;
-            const [이동, 완성, 조립] = 입력머신.입력([종성없음 ? 입력모드.종성없음 : 입력모드.한글, e.getModifierState('Shift'), 단순키코드]);
-            const 바뀐위치 = [본문.위치];
-            switch (이동) {
-                case 위치이동.유지:
-                본문.쓰기(조립);
-                break;
-                case 위치이동.다음:
-                완성.forEach((글자: 글자꼴) => {
-                    본문.쓰기(글자).다음();
-                    바뀐위치.push(본문.위치);
-                });
-                본문.쓰기(조립);
-                break;
-                case 위치이동.이전:
-                본문.쓰기(글자없음).이전().쓰기(글자없음);
-                바뀐위치.push(본문.위치);
-            }
+            const 바뀐위치 = 본문.입력(e.code, e.shiftKey);
             그림판.변경그리기(바뀐위치);
+            self.유효타수 = 본문.유효타수;
+            self.진행상태갱신();
             if (본문.끝) {
-                self.입력끝(본문.유효타수);
+                self.입력끝();
             }
         };
     },
@@ -122,16 +115,21 @@ export default defineComponent({
     },
 
     타이머시작() {
-        const 시작시간 = Date.now() / 1000;
+        this.시작시각 = performance.now();
         this.인터벌핸들 = window.setInterval(() => {
-            this.소요초 = Math.floor((Date.now() / 1000) - 시작시간);
+            this.진행상태갱신();
         }, 1000);
     },
 
-    입력끝(유효타수: number) {
+    진행상태갱신() {
+        const 경과초 = (performance.now() - this.시작시각) / 1000;
+        this.소요초 = Math.floor(경과초);
+        this.타속 = Math.floor(this.유효타수 * 60 / Math.max(1, 경과초));
+    },
+
+    입력끝() {
         window.clearInterval(this.인터벌핸들);
-        this.유효타수 = 유효타수;
-        this.타속 = Math.floor(this.유효타수 * 60 / this.소요초);
+        this.진행상태갱신();
         this.결과화면보이기 = true;
     },
   },
@@ -154,18 +152,6 @@ export default defineComponent({
     },
   },
 });
-
-function 타수구하기(글자들: Iterator<색칠할글자>): number {
-    let 타수 = 0;
-    while (true) {
-        const 다음 = 글자들.next();
-        if (다음.done) {
-            break;
-        }
-        필요타수(다음.value.자).forEach((타) => 타수 += 타);
-    }
-    return 타수;
-}
 
 </script>
 
@@ -215,6 +201,12 @@ function 타수구하기(글자들: Iterator<색칠할글자>): number {
 .글꼴설정 output {
   min-width: 44px;
   text-align: right;
+}
+
+.진행상태 {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
 }
 
 .버튼 {
