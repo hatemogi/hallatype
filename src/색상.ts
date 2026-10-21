@@ -5,9 +5,11 @@ export const 밝은회색: RGBA = [0x83, 0x94, 0x96, 255];
 export const 회색: RGBA = [0x07, 0x36, 0x42, 255];
 export const 검정: RGBA = [0, 0, 0, 255];
 export const 빨강: RGBA = [0xD3, 0x36, 0x82, 255];
+export const 오타빨강: RGBA = [0xB4, 0x23, 0x18, 255];
 export const 경고빨강: RGBA = [0xD3, 0x2F, 0x2F, 255];
 export const 초록: RGBA = [0x85, 0x99, 0, 255];
 export const 주황: RGBA = [0xB4, 0x53, 0x09, 255];
+export const 정정파랑: RGBA = [0x17, 0x5C, 0xD3, 255];
 export const 파랑: RGBA = [0x26, 0x8d, 0xd2, 255];
 export const 노랑: RGBA = [255, 255, 0, 255];
 

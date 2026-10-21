@@ -52,8 +52,8 @@ function 자소키(글자: 글자꼴): Array<[자소, 키[]]> {
 function 상태색(값: 상태): 색상.RGBA {
     switch (값) {
         case '정타': return 색상.검정;
-        case '오타': return 색상.빨강;
-        case '정정': return 색상.주황;
+        case '오타': return 색상.오타빨강;
+        case '정정': return 색상.정정파랑;
         default: return 색상.밝은회색;
     }
 }

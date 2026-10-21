@@ -34,7 +34,7 @@
         </div>
 
         <div class="상태줄">
-          <span class="연결상태"><span class="상태등" aria-hidden="true"></span>{{결과화면보이기 ? '연습 완료' : 시작시각 ? '입력 중' : '입력 대기'}}</span>
+          <span class="연결상태" :class="{ 오타상태: 입력상태 === '오타', 정정상태: 입력상태 === '정정' }"><span class="상태등" aria-hidden="true"></span>{{상태문구}}</span>
           <span>경과 <strong>{{소요시간}}</strong></span>
           <span>분당 <strong>{{타속}}</strong>타</span>
           <span class="상태오른쪽">SPACE · ENTER 선택</span>
@@ -89,6 +89,7 @@ export default defineComponent({
       기대타수: 0,
       유효타수: 0,
       타속: 0,
+      입력상태: '대기' as '대기' | '진행' | '오타' | '정정',
       결과화면보이기: false,
       인터벌핸들: 0,
       시작시각: 0,
@@ -111,6 +112,7 @@ export default defineComponent({
         this.소요초 = 0;
         this.유효타수 = 0;
         this.타속 = 0;
+        this.입력상태 = '대기';
         this.시작시각 = 0;
         const 지문 = new 지문틀();
         지문.글쓰기(this.지문목록[this.선택된지문].본문);
@@ -141,7 +143,9 @@ export default defineComponent({
                 시작함 = true;
                 self.타이머시작();
             }
+            const 직전오타 = self.입력상태 === '오타';
             const 바뀐위치 = 본문.입력(e.code, e.shiftKey);
+            self.입력상태 = 본문.방금오타 ? '오타' : 직전오타 ? '정정' : '진행';
             if (본문.방금오타) {
                 그림판.오타효과시작(본문.위치);
             } else {
@@ -190,6 +194,13 @@ export default defineComponent({
     this.그림판?.오타효과중지(false);
   },
   computed: {
+    상태문구() {
+        if (this.결과화면보이기) { return '연습 완료'; }
+        if (this.입력상태 === '오타') { return '오타 · 다시 입력'; }
+        if (this.입력상태 === '정정') { return '정정 완료'; }
+        return this.입력상태 === '진행' ? '입력 중' : '입력 대기';
+    },
+
     소요시간() {
         const 분 = Math.floor(this.소요초 / 60);
         const 초 = this.소요초 % 60;
@@ -429,6 +440,26 @@ export default defineComponent({
   border: 1px solid #155c45;
   background: #36bb74;
   box-shadow: 0 0 0 2px #b5d4bf;
+}
+
+.연결상태.오타상태 {
+  color: #a52b22;
+}
+
+.오타상태 .상태등 {
+  border-color: #9d281e;
+  background: #c63229;
+  box-shadow: 0 0 0 2px #e4bbb8;
+}
+
+.연결상태.정정상태 {
+  color: #175cd3;
+}
+
+.정정상태 .상태등 {
+  border-color: #175cd3;
+  background: #3476e5;
+  box-shadow: 0 0 0 2px #b8cef2;
 }
 
 .상태줄 .상태오른쪽 {

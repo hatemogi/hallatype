@@ -22,10 +22,10 @@ describe('장문 따라그리기', () => {
         expect(본문.방금오타).toBe(true);
         expect(본문.위치).toEqual(new 위치틀());
         expect(보이는글자(본문).자.코드).toEqual([1, 1, 0]);
-        expect(보이는글자(본문).색[0]).toBe(색상.빨강);
+        expect(보이는글자(본문).색[0]).toBe(색상.오타빨강);
         본문.입력('KeyR', false);
         expect(본문.방금오타).toBe(false);
-        expect(보이는글자(본문).색[0]).toBe(색상.주황);
+        expect(보이는글자(본문).색[0]).toBe(색상.정정파랑);
         본문.입력('KeyK', false);
         expect(보이는글자(본문).색[1]).toBe(색상.검정);
         expect(본문.위치).toEqual(new 위치틀(0, 1));
@@ -43,12 +43,12 @@ describe('장문 따라그리기', () => {
         expect(보이는글자(본문).색[1]).toBe(색상.검정);
         expect(보이는글자(본문).키색[1]).toEqual([색상.검정, 색상.밝은회색]);
         본문.입력('KeyJ', false);
-        expect(보이는글자(본문).색[1]).toBe(색상.빨강);
-        expect(보이는글자(본문).키색[1]).toEqual([색상.검정, 색상.빨강]);
+        expect(보이는글자(본문).색[1]).toBe(색상.오타빨강);
+        expect(보이는글자(본문).키색[1]).toEqual([색상.검정, 색상.오타빨강]);
         expect(본문.위치).toEqual(new 위치틀());
         본문.입력('KeyK', false);
-        expect(보이는글자(본문).색[1]).toBe(색상.주황);
-        expect(보이는글자(본문).키색[1]).toEqual([색상.검정, 색상.주황]);
+        expect(보이는글자(본문).색[1]).toBe(색상.정정파랑);
+        expect(보이는글자(본문).키색[1]).toEqual([색상.검정, 색상.정정파랑]);
         본문.입력('KeyF', false);
         expect(보이는글자(본문).키색[2]).toEqual([색상.검정, 색상.밝은회색]);
         본문.입력('KeyA', false);
@@ -61,7 +61,7 @@ describe('장문 따라그리기', () => {
         const 본문 = 연습('까!\n가');
         expect(본문.기대타수).toBe(6);
         본문.입력('KeyR', false);
-        expect(보이는글자(본문).색[0]).toBe(색상.빨강);
+        expect(보이는글자(본문).색[0]).toBe(색상.오타빨강);
         본문.입력('KeyR', true);
         본문.입력('KeyK', false);
         본문.입력('Digit1', true);
@@ -119,7 +119,7 @@ describe('장문 따라그리기', () => {
         expect(본문.위치).toEqual(new 위치틀(0, 1));
         본문.입력('KeyS', false);
         expect(본문.방금오타).toBe(false);
-        expect(보이는글자(본문, new 위치틀(0, 1)).색[0]).toBe(색상.주황);
+        expect(보이는글자(본문, new 위치틀(0, 1)).색[0]).toBe(색상.정정파랑);
         expect(본문.기대타수).toBe(4);
     });
 
