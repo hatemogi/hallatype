@@ -9,6 +9,7 @@ import { MaskSet } from './key-mask';
 
 type 비트맵 = number[];
 type 글자칸 = { 화면위치: 위치틀; 너비: number };
+type 그릴칸 = 글자칸 & { 문서위치: 위치틀; 색자: 색칠할글자; 코드: number; 다음행: boolean };
 type 오타효과 = { 위치: 위치틀; 키: string; 시작: number; 진행: number; 흔들림: boolean };
 type 그릴본문 = {
     지문글자: (위치: 위치틀) => 글자꼴;
@@ -19,6 +20,43 @@ const 안티앨리어싱글꼴 = antialiasFont(연습글꼴);
 const 픽셀배율 = 2;
 const 한줄칸수 = 80;
 const 줄끝기호 = ' !,.:;?)]}';
+
+function 줄의공백넓히기(그릴칸들: 그릴칸[]) {
+    const 행별칸들 = new Map<number, 그릴칸[]>();
+    for (const 칸 of 그릴칸들) {
+        const 행 = 칸.화면위치.행;
+        if (!행별칸들.has(행)) { 행별칸들.set(행, []); }
+        행별칸들.get(행)!.push(칸);
+    }
+
+    for (const [행, 칸들] of 행별칸들) {
+        // 자동 줄바꿈으로 이어지는 줄만 맞춘다. 문단의 마지막 줄은 그대로 둔다.
+        if (!행별칸들.has(행 + 1) || 칸들.some((칸) => 칸.다음행)) { continue; }
+        let 마지막글자 = 칸들.length - 1;
+        while (마지막글자 >= 0 && 칸들[마지막글자].코드 === 32) { 마지막글자--; }
+        if (마지막글자 < 1) { continue; }
+
+        const 끝칸 = 칸들[마지막글자];
+        const 남은폭 = 한줄칸수 * 16 - (끝칸.화면위치.열 * 16 + 끝칸.너비);
+        if (남은폭 <= 0 || 남은폭 > 64) { continue; }
+        const 공백들 = 칸들.flatMap((칸, i) =>
+            칸.코드 === 32 && i > 0 && i < 마지막글자 &&
+            칸들.slice(0, i).some((앞) => 앞.코드 !== 32) &&
+            칸들.slice(i + 1, 마지막글자 + 1).some((뒤) => 뒤.코드 !== 32) ? [i] : []);
+        if (공백들.length === 0 || 남은폭 > 공백들.length * 8) { continue; }
+
+        let 지난공백 = 0;
+        for (let i = 0; i < 칸들.length; i++) {
+            const 칸 = 칸들[i];
+            const 이동 = Math.floor(남은폭 * 지난공백 / 공백들.length);
+            칸.화면위치 = new 위치틀(행, (칸.화면위치.열 * 16 + 이동) / 16);
+            if (칸.코드 === 32 && 공백들.includes(i)) {
+                지난공백++;
+                칸.너비 += Math.floor(남은폭 * 지난공백 / 공백들.length) - 이동;
+            }
+        }
+    }
+}
 
 /**
  * 그림판 역할:
@@ -104,9 +142,8 @@ export default class 그림판틀 {
         let 화면위치 = new 위치틀(0, 0);
         let 문서위치 = new 위치틀(0, 0);
         const 글자스트림 = this.본문.글자스트림();
-        const 그릴칸들: Array<{ 화면위치: 위치틀; 색자: 색칠할글자; 너비: number }> = [];
+        const 그릴칸들: 그릴칸[] = [];
         let 마지막행 = 0;
-        let 오른쪽끝 = 한줄칸수;
         let 이전코드: number | null = null;
         this.글자칸들.clear();
         while (true) {
@@ -127,11 +164,9 @@ export default class 그림판틀 {
             }
             const 너비 = 지문글자.전각 ? 32 : 16;
             const 키 = this.위치키(문서위치);
-            this.글자칸들.set(키, { 화면위치, 너비 });
             if (색자.배경색 === color.필사커서) { this.커서키 = 키; }
-            그릴칸들.push({ 화면위치, 색자, 너비 });
+            그릴칸들.push({ 문서위치, 화면위치, 색자, 너비, 코드, 다음행: 지문글자.다음행 });
             마지막행 = Math.max(마지막행, 화면위치.행);
-            오른쪽끝 = Math.max(오른쪽끝, 화면위치.열 + 칸수);
             이전코드 = 코드;
             if (지문글자.다음행) {
                 화면위치 = 화면위치.다음행.다음행;
@@ -141,7 +176,13 @@ export default class 그림판틀 {
                 문서위치 = 문서위치.다음;
             }
         }
-        this.ctx.canvas.width = Math.max(1286, 오른쪽끝 * 16 + 6);
+        줄의공백넓히기(그릴칸들);
+        let 오른쪽끝 = 한줄칸수 * 16;
+        for (const 칸 of 그릴칸들) {
+            this.글자칸들.set(this.위치키(칸.문서위치), { 화면위치: 칸.화면위치, 너비: 칸.너비 });
+            오른쪽끝 = Math.max(오른쪽끝, 칸.화면위치.열 * 16 + 칸.너비);
+        }
+        this.ctx.canvas.width = Math.max(1286, 오른쪽끝 + 6);
         this.ctx.canvas.height = Math.max(500, (마지막행 + 1) * 44);
         this.바탕지우기(color.흰색);
         for (const { 화면위치: 위치, 색자, 너비 } of 그릴칸들) {

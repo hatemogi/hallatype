@@ -180,6 +180,55 @@ describe('타자 연습 캔버스 글꼴', () => {
         }
     });
 
+    it('자동 줄바꿈의 남은 폭만 단어 사이 공백에 나누고 원문과 입력 위치를 보존한다', () => {
+        const 글 = '가 '.repeat(26) + 'A나';
+        const 지문 = new 지문틀();
+        지문.글쓰기(글);
+        지문.쓰기(지문.위치, 끝글자);
+        const 원문글자들 = 지문.줄(0).map((글자) => [...글자.코드]);
+        const 칠한영역: number[][] = [];
+        const ctx = {
+            canvas: { width: 1286, height: 500 },
+            fillRect: (x: number, y: number, w: number, h: number) => 칠한영역.push([x, y, w, h]),
+        } as unknown as CanvasRenderingContext2D;
+        const 그림판 = new 그림판틀(ctx, new 따라그리기틀(지문));
+        const 그린글자 = vi.spyOn(그림판, '글자그리기').mockImplementation(() => undefined);
+
+        그림판.그리기();
+
+        expect(그린글자.mock.calls[0][0]).toEqual(new 위치틀(0, 0));
+        expect(그린글자.mock.calls[52][0]).toEqual(new 위치틀(0, 79));
+        expect(그린글자.mock.calls[53][0]).toEqual(new 위치틀(1, 0));
+        expect(그린글자.mock.calls.filter(([, , 너비], i) => i < 52 && 너비 === 17)).toHaveLength(16);
+        expect(지문.줄(0).map((글자) => 글자.코드)).toEqual(원문글자들);
+
+        칠한영역.length = 0;
+        그림판.변경그리기([new 위치틀(0, 52)]);
+        expect(칠한영역).toContainEqual([1264, 0, 16, 44]);
+    });
+
+    it('문단 마지막 줄과 공백 없는 줄은 늘리지 않는다', () => {
+        for (const [글, 예상] of [
+            ['가 '.repeat(26) + 'A', 78],
+            ['가 '.repeat(26) + 'A\n나', 78],
+            ['가'.repeat(39) + 'A나', 78],
+        ] as const) {
+            const 지문 = new 지문틀();
+            지문.글쓰기(글);
+            지문.쓰기(지문.위치, 끝글자);
+            const ctx = {
+                canvas: { width: 1286, height: 500 },
+                fillRect: () => undefined,
+            } as unknown as CanvasRenderingContext2D;
+            const 그림판 = new 그림판틀(ctx, new 따라그리기틀(지문));
+            const 그린글자 = vi.spyOn(그림판, '글자그리기').mockImplementation(() => undefined);
+
+            그림판.그리기();
+
+            expect(그린글자.mock.calls[글.indexOf('A')][0].열).toBe(예상);
+        }
+    });
+
     it('오타 애니메이션 중에는 밑줄만 갱신하고 정타 입력을 즉시 반영한다', () => {
         const 지문 = new 지문틀();
         지문.글쓰기('가나');
