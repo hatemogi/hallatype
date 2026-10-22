@@ -20,13 +20,13 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'img/icons/*.png'],
       manifest: {
-        name: '한글 타자 연습',
+        name: 'HALLATYPE · 한글 필사',
         short_name: 'hallatype',
         start_url: '/',
         scope: '/',
         display: 'standalone',
-        background_color: '#1415ad',
-        theme_color: '#1415ad',
+        background_color: '#f4f1e9',
+        theme_color: '#f4f1e9',
         icons: [
           { src: '/img/icons/android-chrome-192x192.png', sizes: '192x192', type: 'image/png' },
           { src: '/img/icons/android-chrome-512x512.png', sizes: '512x512', type: 'image/png' },

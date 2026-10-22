@@ -46,8 +46,8 @@ describe('편집한 키 마스크의 타자 연습 반영', () => {
                 }
                 return total;
             };
-            return { first: count(색상.검정), pending: count(색상.밝은회색),
-                wrong: count(색상.오타빨강), corrected: count(색상.정정파랑) };
+            return { first: count(색상.필사먹색), pending: count(색상.필사바탕글),
+                wrong: count(색상.필사안내), corrected: count(색상.필사먹색) };
         };
 
         본문.입력('KeyD', false); // ㅇ

@@ -57,7 +57,7 @@ export default class 그림판틀 {
         this.커서깜빡임중지();
         const 효과: 오타효과 = {
             위치, 키: this.위치키(위치), 시작: performance.now(), 진행: 0,
-            흔들림: !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches,
+            흔들림: false,
         };
         this.오타효과 = 효과;
         this.변경그리기([위치]);
@@ -113,7 +113,7 @@ export default class 그림판틀 {
             const 너비 = 지문글자.전각 ? 32 : 16;
             const 키 = this.위치키(문서위치);
             this.글자칸들.set(키, { 화면위치, 너비 });
-            if (색자.배경색 === color.파랑) { this.커서키 = 키; }
+            if (색자.배경색 === color.필사커서) { this.커서키 = 키; }
             this.글자그리기(화면위치, 색자, 너비, this.오타효과?.키 === this.위치키(문서위치));
             if (지문글자.다음행) {
                 화면위치 = 화면위치.다음행.다음행;
@@ -141,7 +141,7 @@ export default class 그림판틀 {
             this.ctx.fillStyle = '#fff';
             this.ctx.fillRect(x, y, 칸.너비, 44);
             const {value, done} = this.본문.글자스트림(문서위치).next();
-            if (done || value.배경색 !== color.파랑) {
+            if (done || value.배경색 !== color.필사커서) {
                 if (this.커서키 === 키) { this.커서키 = undefined; }
             } else {
                 this.커서키 = 키;
@@ -166,7 +166,7 @@ export default class 그림판틀 {
             this.커서보임 = !this.커서보임;
             this.ctx.fillStyle = '#fff';
             this.ctx.fillRect(x, y + 32, 칸.너비, 4);
-            if (this.커서보임) { this.바탕칠하기(칸.화면위치, 칸.너비, color.파랑, false); }
+            if (this.커서보임) { this.바탕칠하기(칸.화면위치, 칸.너비, color.필사커서, false); }
         }, 500);
     }
 
@@ -218,7 +218,7 @@ export default class 그림판틀 {
             return;
         }
         const [x, y] = this.textToGraphic(위치);
-        const 색 = 오타효과 ? color.경고빨강 : 배경색;
+        const 색 = 오타효과 ? color.필사안내 : 배경색;
         const [r, g, b, a] = 색;
         this.ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${a / 255.0})`;
         const 이동 = 오타효과 && this.오타효과?.흔들림
@@ -233,7 +233,7 @@ export default class 그림판틀 {
         const [x, y] = this.textToGraphic(칸.화면위치);
         this.ctx.fillStyle = '#fff';
         this.ctx.fillRect(x, y + 32, 칸.너비, 4);
-        this.바탕칠하기(칸.화면위치, 칸.너비, 활성 ? color.경고빨강 : color.파랑, 활성);
+        this.바탕칠하기(칸.화면위치, 칸.너비, 활성 ? color.필사안내 : color.필사커서, 활성);
     }
 
     // 좌표 변환

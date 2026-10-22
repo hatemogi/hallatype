@@ -12,6 +12,10 @@ export const 주황: RGBA = [0xB4, 0x53, 0x09, 255];
 export const 정정파랑: RGBA = [0x17, 0x5C, 0xD3, 255];
 export const 파랑: RGBA = [0x26, 0x8d, 0xd2, 255];
 export const 노랑: RGBA = [255, 255, 0, 255];
+export const 필사바탕글: RGBA = [0x9A, 0x92, 0x86, 255];
+export const 필사먹색: RGBA = [0x45, 0x40, 0x37, 255];
+export const 필사커서: RGBA = [0x9B, 0x8A, 0x6D, 255];
+export const 필사안내: RGBA = [0xAA, 0x80, 0x6D, 255];
 
 /*
 $base03:    #002b36;
