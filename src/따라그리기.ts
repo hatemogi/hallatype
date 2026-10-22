@@ -64,6 +64,7 @@ export class 따라그리기틀 {
     private readonly 획들: 획[] = [];
     private readonly 위치별번호 = new Map<string, number>();
     private 획번호 = 0;
+    private 누른타수 = 0;
     private 맞은타수 = 0;
     private 건너뛴타수 = 0;
     private 마지막오타 = false;
@@ -93,12 +94,14 @@ export class 따라그리기틀 {
     }
     public get 끝(): boolean { return this.획번호 === this.획들.length; }
     public get 기대타수(): number { return this.획들.length - this.건너뛴타수; }
+    public get 입력타수(): number { return this.누른타수; }
     public get 유효타수(): number { return this.맞은타수; }
     public get 진행률(): number { return Math.ceil(this.획번호 * 100 / this.획들.length); }
     public get 방금오타(): boolean { return this.마지막오타; }
 
     public 입력(code: string, shift: boolean): 위치틀[] {
         if (this.끝) { return []; }
+        this.누른타수++;
         const 바뀐위치: 위치틀[] = [];
         let 다음번호 = this.획번호;
         while (다음번호 < this.획들.length && this.선택입력(this.획들[다음번호]) &&

@@ -43,7 +43,11 @@
           <div class="지문머리">
             <p class="분류">오늘의 문장</p>
             <h2 id="지문제목">{{지문목록[선택된지문].제목}}</h2>
-            <p class="출처">{{지문목록[선택된지문].출처}}</p>
+            <p class="출처">
+              {{지문목록[선택된지문].출처}}
+              <a v-if="지문목록[선택된지문].원문" :href="지문목록[선택된지문].원문"
+                target="_blank" rel="noopener noreferrer">원문 보기 ↗</a>
+            </p>
           </div>
           <div class="가는선" aria-hidden="true"></div>
 
@@ -66,10 +70,15 @@
 
           <div v-if="결과화면보이기" class="마침">
             <div class="마침문양" aria-hidden="true">✳</div>
-            <div>
+            <div class="마침내용">
               <p class="마침꼬리">한 편을 마쳤어요</p>
               <h3>문장을 따라 걸어온 시간이<br>잠시 마음에 남기를 바랍니다.</h3>
-              <p>조금 쉬었다가, 또 다른 글을 만나 보세요.</p>
+              <p class="마침설명">조금 쉬었다가, 또 다른 글을 만나 보세요.</p>
+              <dl class="마침통계" aria-label="이번 필사 기록">
+                <div><dt>걸린 시간</dt><dd>{{걸린시간}}</dd></div>
+                <div><dt>입력과 정타</dt><dd>{{총입력타수}}타 중 {{정타수}}타</dd></div>
+                <div><dt>분당 정타</dt><dd>{{분당타수}}타</dd></div>
+              </dl>
             </div>
             <div class="마침동작">
               <button type="button" class="주버튼" @click="다음글">다른 글 쓰기 <span aria-hidden="true">↗</span></button>
@@ -110,6 +119,11 @@ export default defineComponent({
       진행률: 0,
       입력상태: '대기' as '대기' | '진행' | '오타' | '정정',
       결과화면보이기: false,
+      시작시각: null as number | null,
+      완료초: 0,
+      총입력타수: 0,
+      정타수: 0,
+      분당타수: 0,
       그림판: null as 그림판틀 | null,
     };
   },
@@ -131,6 +145,11 @@ export default defineComponent({
       this.결과화면보이기 = false;
       this.진행률 = 0;
       this.입력상태 = '대기';
+      this.시작시각 = null;
+      this.완료초 = 0;
+      this.총입력타수 = 0;
+      this.정타수 = 0;
+      this.분당타수 = 0;
       const 지문 = new 지문틀();
       지문.글쓰기(this.지문목록[this.선택된지문].본문);
       지문.쓰기(지문.위치, 끝글자);
@@ -153,6 +172,7 @@ export default defineComponent({
           return;
         }
         e.preventDefault();
+        if (self.시작시각 === null) { self.시작시각 = performance.now(); }
         const 직전오타 = self.입력상태 === '오타';
         const 바뀐위치 = 본문.입력(e.code, e.shiftKey);
         self.입력상태 = 본문.방금오타 ? '오타' : 직전오타 ? '정정' : '진행';
@@ -164,6 +184,11 @@ export default defineComponent({
         }
         self.진행률 = 본문.진행률;
         if (본문.끝) {
+          const 걸린밀리초 = Math.max(1000, performance.now() - self.시작시각);
+          self.완료초 = Math.max(1, Math.round(걸린밀리초 / 1000));
+          self.총입력타수 = 본문.입력타수;
+          self.정타수 = 본문.유효타수;
+          self.분당타수 = Math.round(self.정타수 * 60000 / 걸린밀리초);
           self.결과화면보이기 = true;
         }
       };
@@ -179,6 +204,9 @@ export default defineComponent({
     this.그림판?.종료();
   },
   computed: {
+    걸린시간() {
+      return `${Math.floor(this.완료초 / 60)}분 ${this.완료초 % 60}초`;
+    },
     상태문구() {
       if (this.결과화면보이기) { return '오늘의 필사를 마쳤어요'; }
       if (this.입력상태 === '오타') { return '이 자리에서 다시 이어 써 보세요'; }
@@ -309,6 +337,8 @@ button { font: inherit; }
   letter-spacing: -.04em;
 }
 .출처 { margin: 14px 0 0; color: #958e81; font-size: 12px; }
+.출처 a { margin-left: 10px; color: #80735e; text-underline-offset: 3px; }
+.출처 a:hover { color: #41382d; }
 .가는선 { width: 42px; height: 1px; margin: 34px auto 0; background: #c9bda9; }
 .캔버스영역 { display: flex; justify-content: center; max-width: 930px; margin: 26px auto 0; overflow: hidden; }
 #캔버스 { display: block; width: 100%; height: auto; image-rendering: auto; }
@@ -337,8 +367,13 @@ button { font: inherit; }
 }
 .마침문양 { align-self: flex-start; color: #aa9372; font-size: 25px; }
 .마침꼬리 { margin: 0 0 10px; }
+.마침내용 { min-width: 0; }
 .마침 h3 { margin: 0; font-family: 'AppleMyungjo', 'Nanum Myeongjo', 'Batang', serif; font-size: 20px; font-weight: 500; line-height: 1.55; }
-.마침 p:last-child { margin: 10px 0 0; color: #958f83; font-size: 12px; }
+.마침설명 { margin: 10px 0 0; color: #958f83; font-size: 12px; }
+.마침통계 { display: flex; flex-wrap: wrap; gap: 12px 26px; margin: 24px 0 0; padding: 15px 0 0; border-top: 1px solid #eeeae2; }
+.마침통계 div { display: flex; flex-direction: column; gap: 5px; }
+.마침통계 dt { color: #a19a8d; font-size: 11px; }
+.마침통계 dd { margin: 0; color: #716b60; font-size: 12px; font-variant-numeric: tabular-nums; }
 .마침동작 { display: flex; flex-direction: column; align-items: center; gap: 9px; margin-left: auto; }
 .주버튼 { min-width: 132px; padding: 11px 14px; border: 1px solid #82755f; border-radius: 2px; background: #82755f; color: #fff; font-size: 12px; cursor: pointer; }
 .주버튼:hover { background: #665b49; }

@@ -35,7 +35,10 @@ describe('장문 따라그리기', () => {
         본문.입력('KeyK', false);
         expect(본문.끝).toBe(true);
         expect(본문.진행률).toBe(100);
+        expect(본문.입력타수).toBe(5);
         expect(본문.유효타수).toBe(3);
+        본문.입력('KeyT', false);
+        expect(본문.입력타수).toBe(5);
     });
 
     it('겹모음과 겹받침을 순서대로 받고, 도중에 틀린 획만 유효타수에서 뺀다', () => {
@@ -90,6 +93,7 @@ describe('장문 따라그리기', () => {
         expect(본문.기대타수).toBe(4);
         본문.입력('KeyK', false);
         expect(본문.끝).toBe(true);
+        expect(본문.입력타수).toBe(4);
         expect(본문.유효타수).toBe(4);
 
         const 공백입력 = 연습('가 나');
@@ -97,6 +101,7 @@ describe('장문 따라그리기', () => {
             공백입력.입력(code, false);
         }
         expect(공백입력.끝).toBe(true);
+        expect(공백입력.입력타수).toBe(5);
         expect(공백입력.기대타수).toBe(5);
         expect(공백입력.유효타수).toBe(5);
     });
