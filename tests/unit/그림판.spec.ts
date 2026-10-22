@@ -164,6 +164,7 @@ describe('타자 연습 캔버스 글꼴', () => {
             const 지문 = new 지문틀();
             지문.글쓰기(글);
             지문.쓰기(지문.위치, 끝글자);
+            const 원문글자들 = 지문.줄(0).map((글자) => [...글자.코드]);
             const ctx = {
                 canvas: { width: 1286, height: 500 },
                 fillRect: () => undefined,
@@ -175,6 +176,7 @@ describe('타자 연습 캔버스 글꼴', () => {
 
             expect(그린글자.mock.calls.slice(40).map(([위치]) => 위치)).toEqual(예상위치);
             expect(ctx.canvas.width).toBeGreaterThanOrEqual(1302);
+            expect(지문.줄(0).map((글자) => 글자.코드)).toEqual(원문글자들);
         }
     });
 
