@@ -17,6 +17,8 @@ type 그릴본문 = {
 const 연습글꼴 = upscaleFont(한글글꼴);
 const 안티앨리어싱글꼴 = antialiasFont(연습글꼴);
 const 픽셀배율 = 2;
+const 한줄칸수 = 80;
+const 줄끝기호 = ' !,.:;?)]}';
 
 /**
  * 그림판 역할:
@@ -90,6 +92,11 @@ export default class 그림판틀 {
         this.오타효과중지(false);
     }
 
+    public get 커서세로위치(): number | null {
+        const 칸 = this.커서키 && this.글자칸들.get(this.커서키);
+        return 칸 ? this.textToGraphic(칸.화면위치)[1] + 44 : null;
+    }
+
     public 그리기() {
         this.커서깜빡임중지();
         this.커서키 = undefined;
@@ -97,32 +104,47 @@ export default class 그림판틀 {
         let 화면위치 = new 위치틀(0, 0);
         let 문서위치 = new 위치틀(0, 0);
         const 글자스트림 = this.본문.글자스트림();
+        const 그릴칸들: Array<{ 화면위치: 위치틀; 색자: 색칠할글자; 너비: number }> = [];
+        let 마지막행 = 0;
+        let 오른쪽끝 = 한줄칸수;
+        let 이전코드: number | null = null;
         this.글자칸들.clear();
-        this.바탕지우기(color.흰색);
-        while (화면위치.행 < 11) {
+        while (true) {
             const {value, done} = 글자스트림.next();
             const 색자 = value;
             if (done) {
                 break;
             }
             const 지문글자 = this.본문.지문글자(문서위치);
-            if (지문글자.전각 && 화면위치.열 === 79) {
-                // 한글 그릴 공간이 부족한 경우 다음줄로 이동.
+            const 코드 = 지문글자.코드[0];
+            const 칸수 = 지문글자.전각 ? 2 : 1;
+            const 닫는따옴표 = (코드 === 34 || 코드 === 39) && 이전코드 !== null &&
+                이전코드 !== 32 && 이전코드 !== 10;
+            const 줄끝에남길글자 = 지문글자.다음행 || 줄끝기호.includes(String.fromCodePoint(코드)) || 닫는따옴표;
+            if (!줄끝에남길글자 && 화면위치.열 + 칸수 > 한줄칸수) {
                 화면위치 = 화면위치.다음행;
             }
             const 너비 = 지문글자.전각 ? 32 : 16;
             const 키 = this.위치키(문서위치);
             this.글자칸들.set(키, { 화면위치, 너비 });
             if (색자.배경색 === color.필사커서) { this.커서키 = 키; }
-            this.글자그리기(화면위치, 색자, 너비, this.오타효과?.키 === this.위치키(문서위치));
+            그릴칸들.push({ 화면위치, 색자, 너비 });
+            마지막행 = Math.max(마지막행, 화면위치.행);
+            오른쪽끝 = Math.max(오른쪽끝, 화면위치.열 + 칸수);
+            이전코드 = 코드;
             if (지문글자.다음행) {
                 화면위치 = 화면위치.다음행.다음행;
                 문서위치 = 문서위치.다음행;
             } else {
                 화면위치 = 지문글자.전각 ? 화면위치.다음.다음 : 화면위치.다음;
-                화면위치 = 화면위치.열 >= 80 ? 화면위치.다음행 : 화면위치;
                 문서위치 = 문서위치.다음;
             }
+        }
+        this.ctx.canvas.width = Math.max(1286, 오른쪽끝 * 16 + 6);
+        this.ctx.canvas.height = Math.max(500, (마지막행 + 1) * 44);
+        this.바탕지우기(color.흰색);
+        for (const { 화면위치: 위치, 색자, 너비 } of 그릴칸들) {
+            this.글자그리기(위치, 색자, 너비);
         }
         this.커서깜빡임시작();
     }

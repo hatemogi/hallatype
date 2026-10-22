@@ -136,6 +136,48 @@ describe('타자 연습 캔버스 글꼴', () => {
         expect(칠한영역.some(([, , w]) => w === 1286)).toBe(false);
     });
 
+    it('긴 필사 지문의 마지막 줄까지 캔버스를 늘려 그린다', () => {
+        const 지문 = new 지문틀();
+        지문.글쓰기('가'.repeat(500));
+        지문.쓰기(지문.위치, 끝글자);
+        const 본문 = new 따라그리기틀(지문);
+        const ctx = {
+            canvas: { width: 1286, height: 500 },
+            fillRect: () => undefined,
+        } as unknown as CanvasRenderingContext2D;
+        const 그림판 = new 그림판틀(ctx, 본문);
+        const 그린글자 = vi.spyOn(그림판, '글자그리기').mockImplementation(() => undefined);
+
+        그림판.그리기();
+
+        expect(ctx.canvas.height).toBeGreaterThan(500);
+        expect(그린글자).toHaveBeenCalledTimes(500);
+        expect(그린글자.mock.calls.at(-1)?.[0].행).toBeGreaterThanOrEqual(11);
+        expect(그림판.커서세로위치).toBe(44);
+    });
+
+    it('80칸 끝의 공백과 마침표는 같은 줄에 남기고 다음 글자부터 줄을 바꾼다', () => {
+        for (const [글, 예상위치] of [
+            ['가'.repeat(40) + ' 나', [new 위치틀(0, 80), new 위치틀(1, 0)]],
+            ['가'.repeat(40) + '. 나', [new 위치틀(0, 80), new 위치틀(0, 81), new 위치틀(1, 0)]],
+        ] as const) {
+            const 지문 = new 지문틀();
+            지문.글쓰기(글);
+            지문.쓰기(지문.위치, 끝글자);
+            const ctx = {
+                canvas: { width: 1286, height: 500 },
+                fillRect: () => undefined,
+            } as unknown as CanvasRenderingContext2D;
+            const 그림판 = new 그림판틀(ctx, new 따라그리기틀(지문));
+            const 그린글자 = vi.spyOn(그림판, '글자그리기').mockImplementation(() => undefined);
+
+            그림판.그리기();
+
+            expect(그린글자.mock.calls.slice(40).map(([위치]) => 위치)).toEqual(예상위치);
+            expect(ctx.canvas.width).toBeGreaterThanOrEqual(1302);
+        }
+    });
+
     it('오타 애니메이션 중에는 밑줄만 갱신하고 정타 입력을 즉시 반영한다', () => {
         const 지문 = new 지문틀();
         지문.글쓰기('가나');

@@ -55,7 +55,9 @@
             <canvas id="캔버스" width="1286" height="500"
               :aria-label="`${지문목록[선택된지문].제목} 필사 지문. 키보드로 따라 입력하세요.`"></canvas>
           </div>
+        </article>
 
+        <section class="진행판" aria-label="필사 진행 상황">
           <div class="진행영역">
             <div class="진행문구">
               <span class="상태표시" :class="{ 오류: 입력상태 === '오타', 완료: 결과화면보이기 }" aria-hidden="true"></span>
@@ -76,8 +78,8 @@
               <p class="마침설명">조금 쉬었다가, 또 다른 글을 만나 보세요.</p>
               <dl class="마침통계" aria-label="이번 필사 기록">
                 <div><dt>걸린 시간</dt><dd>{{걸린시간}}</dd></div>
-                <div><dt>입력과 정타</dt><dd>{{총입력타수}}타 중 {{정타수}}타</dd></div>
-                <div><dt>분당 정타</dt><dd>{{분당타수}}타</dd></div>
+                <div><dt>정타 / 총입력</dt><dd>{{정타수}}/{{총입력타수}}</dd></div>
+                <div><dt>분당 정타</dt><dd>{{분당타수}}/분</dd></div>
               </dl>
             </div>
             <div class="마침동작">
@@ -86,11 +88,11 @@
             </div>
           </div>
 
-          <div v-else class="종이아래">
+          <div v-else class="진행아래">
             <span>띄어쓰기와 줄바꿈은 건너뛰어도 괜찮아요.</span>
             <button type="button" class="글자버튼" @click="reset">처음부터 다시 쓰기 <span aria-hidden="true">↺</span></button>
           </div>
-        </article>
+        </section>
 
         <p class="작은도움">키보드로 지문을 따라 써 보세요. 글자의 획이 한 자씩 채워집니다.</p>
       </section>
@@ -141,6 +143,7 @@ export default defineComponent({
     },
 
     reset() {
+      const 다시시작 = this.그림판 !== null;
       this.그림판?.종료();
       this.결과화면보이기 = false;
       this.진행률 = 0;
@@ -159,6 +162,9 @@ export default defineComponent({
       const 그림판 = markRaw(new 그림판틀(ctx, 본문));
       this.그림판 = 그림판;
       그림판.그리기();
+      if (다시시작) {
+        this.$nextTick(() => document.querySelector('.지문머리')?.scrollIntoView({ block: 'start', behavior: 'smooth' }));
+      }
       const self = this;
       window.onkeydown = (e: KeyboardEvent) => {
         if ((e.target as HTMLElement | null)?.closest('button, input, select, textarea, [contenteditable="true"]')) {
@@ -190,6 +196,14 @@ export default defineComponent({
           self.정타수 = 본문.유효타수;
           self.분당타수 = Math.round(self.정타수 * 60000 / 걸린밀리초);
           self.결과화면보이기 = true;
+          self.$nextTick(() => document.querySelector('.마침')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }));
+        } else {
+          const 커서세로 = 그림판.커서세로위치;
+          if (커서세로 !== null) {
+            const 경계 = window.innerHeight - 100;
+            const 화면세로 = 캔버스.getBoundingClientRect().top + 커서세로 * 캔버스.clientHeight / 캔버스.height;
+            if (화면세로 > 경계) { window.scrollBy(0, 화면세로 - 경계); }
+          }
         }
       };
     },
@@ -342,15 +356,24 @@ button { font: inherit; }
 .가는선 { width: 42px; height: 1px; margin: 34px auto 0; background: #c9bda9; }
 .캔버스영역 { display: flex; justify-content: center; max-width: 930px; margin: 26px auto 0; overflow: hidden; }
 #캔버스 { display: block; width: 100%; height: auto; image-rendering: auto; }
-.진행영역 { max-width: 800px; margin: 2px auto 0; }
+.진행판 {
+  box-sizing: border-box;
+  max-width: 960px;
+  margin: 32px auto 0;
+  padding: 22px clamp(24px, 5.4vw, 73px) 20px;
+  border: 1px solid #dfd8ca;
+  border-radius: 3px;
+  background: #ece7dc;
+}
+.진행영역 { max-width: 800px; margin: 0 auto; }
 .진행문구 { display: flex; align-items: center; gap: 9px; color: #8b8579; font-size: 12px; }
 .상태표시 { width: 6px; height: 6px; flex: none; border-radius: 50%; background: #b6ab98; }
 .상태표시.오류 { background: #aa806d; }
 .상태표시.완료 { background: #84947a; }
 .진행숫자 { margin-left: auto; font-size: 11px; font-variant-numeric: tabular-nums; }
-.진행막대 { height: 2px; margin-top: 13px; overflow: hidden; background: #eeeae2; }
+.진행막대 { height: 2px; margin-top: 13px; overflow: hidden; background: #d9d2c5; }
 .진행막대 span { display: block; height: 100%; background: #9b8a6d; transition: width .2s ease; }
-.종이아래 { display: flex; justify-content: space-between; align-items: center; gap: 20px; max-width: 800px; margin: 25px auto 0; color: #a19a8d; font-size: 11px; }
+.진행아래 { display: flex; justify-content: space-between; align-items: center; gap: 20px; max-width: 800px; margin: 19px auto 0; color: #8f887a; font-size: 11px; }
 .글자버튼 { padding: 4px 0; border: 0; background: none; color: #80735e; font-size: 12px; cursor: pointer; }
 .글자버튼:hover { color: #41382d; text-decoration: underline; text-underline-offset: 4px; }
 .글자버튼 span { margin-left: 4px; font-size: 16px; }
@@ -361,16 +384,16 @@ button { font: inherit; }
   align-items: center;
   gap: 24px;
   max-width: 800px;
-  margin: 29px auto 0;
-  padding: 27px 0 7px;
-  border-top: 1px solid #eeeae2;
+  margin: 23px auto 0;
+  padding: 23px 0 0;
+  border-top: 1px solid #d9d2c5;
 }
 .마침문양 { align-self: flex-start; color: #aa9372; font-size: 25px; }
 .마침꼬리 { margin: 0 0 10px; }
 .마침내용 { min-width: 0; }
 .마침 h3 { margin: 0; font-family: 'AppleMyungjo', 'Nanum Myeongjo', 'Batang', serif; font-size: 20px; font-weight: 500; line-height: 1.55; }
 .마침설명 { margin: 10px 0 0; color: #958f83; font-size: 12px; }
-.마침통계 { display: flex; flex-wrap: wrap; gap: 12px 26px; margin: 24px 0 0; padding: 15px 0 0; border-top: 1px solid #eeeae2; }
+.마침통계 { display: flex; flex-wrap: wrap; gap: 12px 26px; margin: 24px 0 0; padding: 15px 0 0; border-top: 1px solid #d9d2c5; }
 .마침통계 div { display: flex; flex-direction: column; gap: 5px; }
 .마침통계 dt { color: #a19a8d; font-size: 11px; }
 .마침통계 dd { margin: 0; color: #716b60; font-size: 12px; font-variant-numeric: tabular-nums; }
@@ -396,7 +419,8 @@ button:focus-visible { outline: 2px solid #947c5e; outline-offset: 3px; }
   .지문머리 { padding-top: 34px; }
   .가는선 { margin-top: 27px; }
   .캔버스영역 { margin-top: 18px; }
-  .종이아래 { align-items: start; flex-direction: column; gap: 11px; }
+  .진행판 { margin-top: 22px; padding: 18px 17px; }
+  .진행아래 { align-items: start; flex-direction: column; gap: 11px; }
   .마침 { align-items: start; flex-wrap: wrap; gap: 14px; }
   .마침동작 { align-items: start; flex-direction: row; flex-wrap: wrap; width: 100%; margin: 3px 0 0 0; }
 }
