@@ -3,16 +3,20 @@ import { 명상지문들 } from './practice-meditation-passages';
 import { 자기확언지문들 } from './practice-affirmation-passages';
 import { 생활교양지문들 } from './practice-knowledge-passages';
 import { 요리레시피지문들 } from './practice-recipe-passages';
+import { 메밀꽃지문들, 봄봄지문들 } from './practice-classic-passages';
 
-/** 하루에 한 번, 처음부터 끝까지 이어 쓰는 300자 안팎의 창작 지문. */
+/** 한 번에 처음부터 끝까지 이어 쓰는 300자 안팎의 지문. */
 export interface 연습지문 {
   id: string;
   제목: string;
   주제: string;
   본문: string;
+  저자?: string;
+  원문URL?: string;
 }
 
-export type 지문테마 = '산문' | '자기계발' | '명상' | '자기확언' | '생활교양' | '요리레시피';
+export type 지문테마 = '산문' | '자기계발' | '명상' | '자기확언' | '생활교양' | '요리레시피'
+  | '메밀꽃 필 무렵' | '봄봄';
 
 /** 기존 산문 지문은 별도의 테마로 보존한다. */
 export const 연습지문들: readonly 연습지문[] = [
@@ -67,6 +71,8 @@ export const 테마별지문들: Record<지문테마, readonly 연습지문[]> =
   자기확언: 자기확언지문들,
   생활교양: 생활교양지문들,
   요리레시피: 요리레시피지문들,
+  '메밀꽃 필 무렵': 메밀꽃지문들,
+  봄봄: 봄봄지문들,
 };
 
 export function 날짜키(날짜: Date): string {
@@ -85,12 +91,10 @@ export function 지문선택읽기(저장소?: Pick<Storage, 'getItem'>):
     const 선택: unknown = JSON.parse(값);
     if (!선택 || typeof 선택 !== 'object') { return 기본; }
     const 기록 = 선택 as { 테마?: unknown; 지문ID?: unknown };
-    if (기록.테마 !== '산문' && 기록.테마 !== '자기계발' &&
-        기록.테마 !== '명상' && 기록.테마 !== '자기확언' &&
-        기록.테마 !== '생활교양' && 기록.테마 !== '요리레시피') {
+    if (typeof 기록.테마 !== 'string' || !(기록.테마 in 테마별지문들)) {
       return 기본;
     }
-    const 테마 = 기록.테마;
+    const 테마 = 기록.테마 as 지문테마;
     return { 테마, 지문: 테마별지문들[테마].find((지문) => 지문.id === 기록.지문ID)
       ?? 테마별지문들[테마][0] };
   } catch (_) { return 기본; }

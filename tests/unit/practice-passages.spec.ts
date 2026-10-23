@@ -4,7 +4,7 @@ import { 따라그리기틀 } from '@/따라그리기';
 import { 날짜키, 연습지문들, 지문선택읽기, 지문선택저장,
   테마별지문들 } from '@/practice-passages';
 
-it('여섯 테마에 각각 14개의 입력 가능한 300자 지문을 둔다', () => {
+it('창작 테마와 두 단편에 입력 가능한 지문을 둔다', () => {
   const 전체 = Object.values(테마별지문들).flat();
   expect(테마별지문들.산문).toBe(연습지문들);
   expect(테마별지문들.산문).toHaveLength(14);
@@ -13,10 +13,12 @@ it('여섯 테마에 각각 14개의 입력 가능한 300자 지문을 둔다', 
   expect(테마별지문들.자기확언).toHaveLength(14);
   expect(테마별지문들.생활교양).toHaveLength(14);
   expect(테마별지문들.요리레시피).toHaveLength(14);
+  expect(테마별지문들['메밀꽃 필 무렵']).toHaveLength(27);
+  expect(테마별지문들.봄봄).toHaveLength(37);
   expect(new Set(전체.map((지문) => 지문.id)).size).toBe(전체.length);
   for (const 선택 of 전체) {
     expect(선택.id).toMatch(/^[A-Za-z]{12}$/);
-    expect(선택.본문.length).toBeGreaterThanOrEqual(280);
+    expect(선택.본문.length).toBeGreaterThanOrEqual(260);
     expect(선택.본문.length).toBeLessThanOrEqual(330);
     expect(선택.본문).not.toMatch(/[.!?][가-힣]/);
     expect(선택.본문).toMatch(/^[\uAC00-\uD7A3\x20-\x7E]+$/);
@@ -25,6 +27,12 @@ it('여섯 테마에 각각 14개의 입력 가능한 300자 지문을 둔다', 
     지문.쓰기(지문.위치, 끝글자);
     expect(new 따라그리기틀(지문).기대타수).toBeGreaterThan(100);
   }
+  expect(테마별지문들['메밀꽃 필 무렵'][0].본문).toMatch(/^여름장이란/);
+  expect(테마별지문들['메밀꽃 필 무렵'].at(-1)?.본문).toMatch(/달이 어지간히 기울어졌다\.$/);
+  expect(테마별지문들.봄봄[0].본문).toMatch(/^"장인님!/);
+  expect(테마별지문들.봄봄.at(-1)?.본문).toMatch(/할아버지 소리가 나오도록 해\?"$/);
+  expect(테마별지문들['메밀꽃 필 무렵'][0].원문URL).toContain('ko.wikisource.org');
+  expect(테마별지문들.봄봄[0].저자).toBe('김유정');
 });
 
 it('고른 지문을 날짜에 관계없이 보존하고 기존 저장 형식도 읽는다', () => {
@@ -52,4 +60,7 @@ it('고른 지문을 날짜에 관계없이 보존하고 기존 저장 형식도
   const 레시피지문 = 테마별지문들.요리레시피[3];
   지문선택저장('요리레시피', 레시피지문.id, 저장소);
   expect(지문선택읽기(저장소)).toEqual({ 테마: '요리레시피', 지문: 레시피지문 });
+  const 봄봄지문 = 테마별지문들.봄봄[26];
+  지문선택저장('봄봄', 봄봄지문.id, 저장소);
+  expect(지문선택읽기(저장소)).toEqual({ 테마: '봄봄', 지문: 봄봄지문 });
 });

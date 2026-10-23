@@ -98,7 +98,10 @@
           <div class="지문머리">
             <p class="분류">선택한 글 · {{오늘지문.주제}}</p>
             <h2 id="지문제목">{{오늘지문.제목}}</h2>
-            <p class="출처">{{글테마}} · 창작 지문</p>
+            <p class="출처" v-if="오늘지문.원문URL">
+              <a :href="오늘지문.원문URL" target="_blank" rel="noopener noreferrer">{{오늘지문.저자}} · 위키문헌 원문 ↗</a>
+            </p>
+            <p class="출처" v-else>{{글테마}} · 창작 지문</p>
           </div>
           <div class="가는선" aria-hidden="true"></div>
 
@@ -133,7 +136,9 @@
               </dl>
             </div>
             <div class="마침동작">
-              <button type="button" class="주버튼" @click="다시쓰기">이 글 다시 쓰기 <span aria-hidden="true">↺</span></button>
+              <button v-if="다음편" type="button" class="주버튼" @click="지문선택(다음편)">다음 편 입력 <span aria-hidden="true">→</span></button>
+              <button v-if="다음편" type="button" class="글자버튼" @click="다시쓰기">이 글 다시 쓰기 <span aria-hidden="true">↺</span></button>
+              <button v-else type="button" class="주버튼" @click="다시쓰기">이 글 다시 쓰기 <span aria-hidden="true">↺</span></button>
             </div>
           </div>
 
@@ -170,7 +175,8 @@ const 테마선택지: Array<{ 이름: 필사테마 }> = [
 ];
 const 글자크기선택지: 지문크기[] = ['작게', '보통', '크게'];
 const 가장자리단계이름 = ['선명하게', '조금 선명하게', '보통', '조금 부드럽게', '부드럽게'];
-const 글테마선택지: 지문테마[] = ['산문', '자기계발', '명상', '자기확언', '생활교양', '요리레시피'];
+const 글테마선택지: 지문테마[] = ['산문', '자기계발', '명상', '자기확언', '생활교양', '요리레시피',
+  '메밀꽃 필 무렵', '봄봄'];
 
 export default defineComponent({
   data() {
@@ -522,6 +528,11 @@ export default defineComponent({
     },
     현재지문들(): readonly 연습지문[] {
       return 테마별지문들[this.글테마];
+    },
+    다음편(): 연습지문 | null {
+      if (!this.오늘지문.원문URL) { return null; }
+      const 순서 = this.현재지문들.findIndex((지문) => 지문.id === this.오늘지문.id);
+      return 순서 < 0 ? null : this.현재지문들[순서 + 1] ?? null;
     },
     걸린시간() {
       return `${Math.floor(this.완료초 / 60)}분 ${this.완료초 % 60}초`;
