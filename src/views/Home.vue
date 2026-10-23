@@ -61,49 +61,53 @@
       <section class="소개" aria-labelledby="소개제목">
         <div>
           <p class="작은제목"><span class="작은점" aria-hidden="true"></span> 천천히 읽고, 한 자씩 쓰기</p>
-          <h1 id="소개제목">글을 따라 쓰며<br><em>잠시 머무는 시간.</em></h1>
+          <h1 id="소개제목">고른 글을<br><em>손끝으로 읽는 시간.</em></h1>
         </div>
-        <p class="소개글">문장을 눈으로 읽고 손끝으로 다시 써 봅니다.<br>속도를 재지 않아도 괜찮아요. 지금의 글에만 집중해 보세요.</p>
+        <p class="소개글">원하는 한 단락을 골라 처음부터 끝까지 천천히 써 봅니다.<br>속도를 재지 않아도 괜찮아요. 지금의 글에만 집중해 보세요.</p>
       </section>
 
       <section class="작업공간" aria-label="필사할 글">
         <div class="선택머리">
           <div>
-            <span class="구역번호">01 <span aria-hidden="true">/</span> 글 고르기</span>
-            <h2>오늘 어떤 글에 머물까요?</h2>
+            <span class="구역번호">01 <span aria-hidden="true">/</span> 지문 선택</span>
+            <h2>입력할 글 고르기</h2>
           </div>
-          <span class="선택안내">한 편 약 2분, 더 쓰고 싶을 때 이어가세요</span>
+          <span class="선택안내">각 테마의 14편을 원하는 순서로 써 보세요.</span>
         </div>
-        <div class="글선택" role="group" aria-label="필사할 글 선택">
-          <button v-for="(지문, 번호) in 지문목록" :key="지문.제목" type="button" class="글버튼"
-            :class="{ 선택됨: 선택된지문 === 번호 }" :aria-pressed="선택된지문 === 번호"
-            @click="지문선택(번호, $event)">
-            <span class="글번호">{{String(번호 + 1).padStart(2, '0')}}</span>
-            <span class="글정보"><span class="글제목">{{지문.제목}}</span>
-              <span v-if="지문기록(번호)" class="글기록">{{지문기록(번호)}}</span></span>
-            <span class="선택표시" aria-hidden="true">↗</span>
-          </button>
+
+        <div class="글테마선택" role="group" aria-label="지문 테마 선택">
+          <button v-for="테마 in 글테마선택지" :key="테마" type="button"
+            :class="{ 선택됨: 글테마 === 테마 }" :aria-pressed="글테마 === 테마"
+            @click="글테마바꾸기(테마, $event)">{{테마}}</button>
         </div>
+
+        <section class="지문서랍" :aria-label="`${글테마} 지문 목록`">
+          <h3>전체 글 <span>{{현재지문들.length}}편</span></h3>
+          <div class="글목록" role="group" :aria-label="`${글테마} 지문 선택`">
+            <button v-for="지문 in 현재지문들" :key="지문.id" type="button"
+              :class="{ 선택됨: 오늘지문.id === 지문.id }" :aria-pressed="오늘지문.id === 지문.id"
+              @click="지문선택(지문, $event)">
+              <strong>{{지문.제목}}</strong>
+              <span>{{지문.주제}} · <em :class="{ 완료: 지문상태(지문) === '완료' }">{{지문상태(지문)}}</em></span>
+            </button>
+          </div>
+        </section>
 
         <article class="종이" aria-labelledby="지문제목">
           <div class="종이상단">
-            <span>필사 노트 <span class="가운데점">·</span> {{String(선택된지문 + 1).padStart(2, '0')}}</span>
+            <span>필사 노트 <span class="가운데점">·</span> {{오늘날짜}}</span>
             <span class="종이장식" aria-hidden="true">✳</span>
           </div>
           <div class="지문머리">
-            <p class="분류">오늘의 문장 <span class="편표시">· {{선택된편 + 1}} / {{현재편들.length}}</span></p>
-            <h2 id="지문제목">{{지문목록[선택된지문].제목}}</h2>
-            <p class="출처">
-              {{지문목록[선택된지문].출처}}
-              <a v-if="지문목록[선택된지문].원문" :href="지문목록[선택된지문].원문"
-                target="_blank" rel="noopener noreferrer">원문 보기 ↗</a>
-            </p>
+            <p class="분류">선택한 글 · {{오늘지문.주제}}</p>
+            <h2 id="지문제목">{{오늘지문.제목}}</h2>
+            <p class="출처">{{글테마}} · 창작 지문</p>
           </div>
           <div class="가는선" aria-hidden="true"></div>
 
           <div class="캔버스영역">
-            <canvas id="캔버스" width="1286" height="500"
-              :aria-label="`${지문목록[선택된지문].제목} ${선택된편 + 1}편 필사 지문. 키보드로 따라 입력하세요.`"></canvas>
+            <canvas id="캔버스" width="1286" height="210"
+              :aria-label="`${오늘지문.제목} 필사 지문. 키보드로 따라 입력하세요.`"></canvas>
           </div>
         </article>
 
@@ -115,7 +119,7 @@
               <span class="진행숫자">{{진행률}}%</span>
             </div>
             <div class="진행막대" role="progressbar" :aria-valuenow="진행률" aria-valuemin="0"
-              aria-valuemax="100" :aria-label="`${지문목록[선택된지문].제목} ${선택된편 + 1}편 필사 진행률`">
+              aria-valuemax="100" :aria-label="`${오늘지문.제목} 필사 진행률`">
               <span :style="{ width: `${진행률}%` }"></span>
             </div>
             <p v-if="기록오류" class="기록안내" role="alert">진행 기록을 저장하지 못했어요. 브라우저 저장 공간을 확인해 주세요.</p>
@@ -127,17 +131,15 @@
             <div class="마침내용">
               <p class="마침꼬리">한 편을 마쳤어요</p>
               <h3>문장을 따라 걸어온 시간이<br>잠시 마음에 남기를 바랍니다.</h3>
-              <p class="마침설명">{{다음위치 ? '여기서 마쳐도 좋고, 다음 편을 이어 써도 좋아요.' : '모든 편을 마쳤어요. 첫 편부터 다시 써 볼 수도 있어요.'}}</p>
+              <p class="마침설명">이 글을 다시 쓰거나 다른 지문을 골라 볼 수 있어요.</p>
               <dl class="마침통계" aria-label="이번 필사 기록">
                 <div><dt>걸린 시간</dt><dd>{{걸린시간}}</dd></div>
-                <div><dt>정타 / 총입력</dt><dd>{{정타수}}/{{총입력타수}}</dd></div>
+                <div><dt>정타 / 전체 타수</dt><dd>{{정타수}}/{{총입력타수}} ({{정타율}}%)</dd></div>
                 <div><dt>분당 정타</dt><dd>{{분당타수}}/분</dd></div>
               </dl>
             </div>
             <div class="마침동작">
-              <button type="button" class="주버튼" @click="다음글">{{다음위치 ? '한 편 더 쓰기' : '첫 편 다시 쓰기'}} <span aria-hidden="true">↗</span></button>
-              <span class="다음안내">{{다음편안내}}</span>
-              <button type="button" class="글자버튼" @click="다시쓰기">한 번 더 쓰기</button>
+              <button type="button" class="주버튼" @click="다시쓰기">이 글 다시 쓰기 <span aria-hidden="true">↺</span></button>
             </div>
           </div>
 
@@ -147,7 +149,7 @@
           </div>
         </section>
 
-        <p class="작은도움">키보드로 지문을 따라 써 보세요. 글자의 획이 한 자씩 채워집니다.</p>
+        <p class="작은도움">키보드로 글을 따라 써 보세요. 글자의 획이 한 자씩 채워집니다. 각 테마의 14편을 모두 고를 수 있습니다.</p>
       </section>
 
       <footer class="바닥">
@@ -164,9 +166,10 @@ import { 끝글자 } from '@/글자';
 import { 지문틀 } from '@/본문';
 import { 따라그리기틀 } from '@/따라그리기';
 import 그림판틀 from '@/그림판';
-import { 연습지문들, 필사편들 } from '@/practice-passages';
-import { 다음미완료편 } from '@/practice-selection';
+import { 날짜키, 지문선택읽기, 지문선택저장, 테마별지문들,
+  type 연습지문, type 지문테마 } from '@/practice-passages';
 import { 본문버전, 브라우저저장소, 시도목록, 시도시작, 시도완료, 시도중단, 입력묶음,
+  지문입력상태, 정타율,
   진행작업읽기, 진행작업저장, 작업합치기, type 입력키, type 진행작업,
   type 필사시도, type 이어쓰기원본 } from '@/practice-progress';
 import { 기본필사설정, 필사설정, 필사설정읽기, 필사설정저장,
@@ -175,18 +178,23 @@ import { 기본필사설정, 필사설정, 필사설정읽기, 필사설정저�
 const 테마선택지: Array<{ 이름: 필사테마 }> = [{ 이름: '한지' }, { 이름: '새벽' }, { 이름: '밤' }];
 const 글자크기선택지: 지문크기[] = ['보통', '크게'];
 const 가장자리단계이름 = ['선명하게', '조금 선명하게', '보통', '조금 부드럽게', '부드럽게'];
+const 글테마선택지: 지문테마[] = ['산문', '자기계발', '명상', '자기확언'];
 
 export default defineComponent({
   data() {
+    const 선택 = 지문선택읽기();
     return {
-      지문목록: 연습지문들,
+      오늘날짜: 날짜키(new Date()),
+      오늘지문: 선택.지문,
+      글테마: 선택.테마,
+      글테마선택지,
       테마선택지,
       글자크기선택지,
       가장자리단계이름,
       설정: { ...기본필사설정 } as 필사설정,
       설정열림: false,
-      선택된지문: 0,
-      선택된편: 0,
+      날짜확인타이머: null as ReturnType<typeof setInterval> | null,
+      현재한줄칸수: 0,
       진행률: 0,
       입력상태: '대기' as '대기' | '진행' | '오타' | '정정',
       결과화면보이기: false,
@@ -210,7 +218,7 @@ export default defineComponent({
   },
   methods: {
     다른탭기록반영(event: StorageEvent) {
-      if (event.key?.startsWith('hallatype:progress:v1:op:')) {
+      if (event.key?.startsWith('hallatype:progress:v2:op:')) {
         this.기록들 = 작업합치기(this.기록들, 진행작업읽기());
       }
     },
@@ -242,31 +250,48 @@ export default defineComponent({
         this.기록타이머 = setTimeout(() => this.입력기록저장(), 2000);
       }
     },
-    복원할시도(지문번호: number, 편번호: number): 필사시도 | undefined {
-      if (this.편완료(지문번호, 편번호)) { return undefined; }
-      const 지문 = this.지문목록[지문번호];
-      const 버전 = 본문버전(필사편들(지문)[편번호]);
+    복원할시도(): 필사시도 | undefined {
+      const 버전 = 본문버전(this.오늘지문.본문);
       return this.시도들
-        .filter((시도) => 시도.시작.passageId === 지문.id && 시도.시작.part === 편번호 + 1 &&
+        .filter((시도) => 시도.시작.passageId === this.오늘지문.id &&
           시도.시작.contentVersion === 버전 && 시도.복원가능 && !시도.완료 &&
           !시도.중단됨 && 시도.입력들.length)
         .sort((a, b) => b.마지막시각.localeCompare(a.마지막시각) ||
           b.시작.attemptId.localeCompare(a.시작.attemptId))[0];
     },
-    편완료(지문번호: number, 편번호: number): boolean {
-      const 지문 = this.지문목록[지문번호];
-      const 버전 = 본문버전(필사편들(지문)[편번호]);
-      return this.시도들.some((시도) => 시도.시작.passageId === 지문.id &&
-        시도.시작.part === 편번호 + 1 && 시도.시작.contentVersion === 버전 && !!시도.완료);
+    완료한시도(): 필사시도 | undefined {
+      const 버전 = 본문버전(this.오늘지문.본문);
+      return this.시도들
+        .filter((시도) => 시도.시작.passageId === this.오늘지문.id &&
+          시도.시작.contentVersion === 버전 && 시도.복원가능 && !!시도.완료)
+        .sort((a, b) => b.완료!.at.localeCompare(a.완료!.at))[0];
     },
-    지문기록(지문번호: number): string {
-      const 완료 = [0, 1].filter((편번호) => this.편완료(지문번호, 편번호)).length;
-      return `${완료}/2편 완료${[0, 1].some((편번호) => this.복원할시도(지문번호, 편번호)) ? ' · 이어쓰기' : ''}`;
+    지문상태(지문: 연습지문): string {
+      return 지문입력상태(this.시도들, 지문.id, 본문버전(지문.본문));
     },
-    시작할편(지문번호: number): number {
-      const 이어쓸편 = [0, 1].find((편번호) => this.복원할시도(지문번호, 편번호));
-      if (이어쓸편 !== undefined) { return 이어쓸편; }
-      return [0, 1].find((편번호) => !this.편완료(지문번호, 편번호)) ?? 0;
+    글테마바꾸기(테마: 지문테마, event?: MouseEvent) {
+      (event?.currentTarget as HTMLElement | undefined)?.blur();
+      if (테마 === this.글테마) { return; }
+      this.입력기록저장();
+      this.글테마 = 테마;
+      this.오늘지문 = 테마별지문들[테마][0];
+      지문선택저장(테마, this.오늘지문.id);
+      this.reset();
+    },
+    지문선택(지문: 연습지문, event?: MouseEvent) {
+      (event?.currentTarget as HTMLElement | undefined)?.blur();
+      if (지문.id === this.오늘지문.id) { return; }
+      this.입력기록저장();
+      this.오늘지문 = 지문;
+      지문선택저장(this.글테마, 지문.id);
+      this.reset();
+    },
+    날짜변경확인() {
+      const 오늘날짜 = 날짜키(new Date());
+      if (오늘날짜 === this.오늘날짜) { return; }
+      this.입력기록저장();
+      this.오늘날짜 = 오늘날짜;
+      this.reset();
     },
     다시쓰기() {
       this.입력기록저장();
@@ -298,23 +323,21 @@ export default defineComponent({
       const 팔레트 = 필사팔레트들[this.설정.테마];
       this.본문?.팔레트설정(팔레트);
       this.그림판?.안티앨리어싱강도설정(단계별안티앨리어싱강도[this.설정.안티앨리어싱단계]);
-      this.그림판?.보기설정(팔레트, this.설정.글자크기 === '크게' ? 68 : 80,
+      this.현재한줄칸수 = this.한줄칸수();
+      this.그림판?.보기설정(팔레트, this.현재한줄칸수,
         this.설정.커서깜빡임);
     },
-
-    지문선택(번호: number, event: MouseEvent) {
-      (event.currentTarget as HTMLElement).blur();
-      if (this.선택된지문 === 번호) { return; }
-      this.선택된지문 = 번호;
-      this.선택된편 = this.시작할편(번호);
-      this.reset();
+    한줄칸수(): number {
+      return window.innerWidth <= 700
+        ? (this.설정.글자크기 === '크게' ? 42 : 50)
+        : (this.설정.글자크기 === '크게' ? 68 : 80);
     },
-
-    다음글() {
-      const 다음 = this.다음위치;
-      this.선택된지문 = 다음?.지문번호 ?? 0;
-      this.선택된편 = 다음?.편번호 ?? 0;
-      this.reset(다음 === null);
+    화면크기변경() {
+      const 칸수 = this.한줄칸수();
+      if (칸수 === this.현재한줄칸수) { return; }
+      this.현재한줄칸수 = 칸수;
+      this.그림판?.보기설정(필사팔레트들[this.설정.테마], 칸수,
+        this.설정.커서깜빡임);
     },
 
     reset(새로시작 = false) {
@@ -335,36 +358,42 @@ export default defineComponent({
       this.다음기록순서 = 0;
       this.이어쓰기복원됨 = false;
       const 지문 = new 지문틀();
-      지문.글쓰기(this.현재편들[this.선택된편]);
+      지문.글쓰기(this.오늘지문.본문);
       지문.쓰기(지문.위치, 끝글자);
       const 팔레트 = 필사팔레트들[this.설정.테마];
       const 본문 = markRaw(new 따라그리기틀(지문, 팔레트));
       this.본문 = 본문;
-      const 복원 = 새로시작 ? undefined : this.복원할시도(this.선택된지문, this.선택된편);
+      const 복원 = 새로시작 ? undefined : (this.복원할시도() ?? this.완료한시도());
       if (복원) {
-        this.이어쓰기원본 = { attemptId: 복원.시작.attemptId,
-          inputCount: 복원.입력들.length, elapsedMs: 복원.걸린밀리초 };
+        if (!복원.완료) {
+          this.이어쓰기원본 = { attemptId: 복원.시작.attemptId,
+            inputCount: 복원.입력들.length, elapsedMs: 복원.걸린밀리초 };
+          this.이어쓰기복원됨 = true;
+        }
         for (const 키 of 복원.입력들) { 본문.입력(키.code, 키.shift); }
         this.진행률 = 본문.진행률;
         this.입력상태 = 본문.방금오타 ? '오타' : '진행';
-        this.이어쓰기복원됨 = true;
         if (본문.끝) {
-          const 걸린밀리초 = Math.max(1000, 복원.걸린밀리초);
+          const 걸린밀리초 = Math.max(1000, 복원.완료?.elapsedMs ?? 복원.걸린밀리초);
           this.완료초 = Math.max(1, Math.round(걸린밀리초 / 1000));
           this.총입력타수 = 본문.입력타수;
           this.정타수 = 본문.유효타수;
           this.분당타수 = Math.round(this.정타수 * 60000 / 걸린밀리초);
           this.결과화면보이기 = true;
-          this.저장대기(시도완료(복원.시작.attemptId, 걸린밀리초, this.총입력타수, this.정타수));
+          if (!복원.완료) {
+            this.저장대기(시도완료(복원.시작.attemptId, 걸린밀리초, this.총입력타수, this.정타수));
+          }
         }
       }
       const 캔버스 = document.getElementById('캔버스') as HTMLCanvasElement;
       const ctx = 캔버스.getContext('2d', { alpha: false }) as CanvasRenderingContext2D;
+      this.현재한줄칸수 = this.한줄칸수();
       const 그림판 = markRaw(new 그림판틀(ctx, 본문, {
-        팔레트, 한줄칸수: this.설정.글자크기 === '크게' ? 68 : 80,
+        팔레트, 한줄칸수: this.현재한줄칸수,
+        최소높이: 210,
         커서깜빡임: this.설정.커서깜빡임,
         안티앨리어싱: 단계별안티앨리어싱강도[this.설정.안티앨리어싱단계],
-        영문글꼴: this.지문목록[this.선택된지문].언어 === 'en',
+        영문글꼴: false,
       }));
       this.그림판 = 그림판;
       그림판.그리기();
@@ -377,7 +406,7 @@ export default defineComponent({
           self.설정열림 = false;
           return;
         }
-        if ((e.target as HTMLElement | null)?.closest('button, input, select, textarea, [contenteditable="true"]')) {
+        if ((e.target as HTMLElement | null)?.closest('button, input, select, textarea, summary, a, [contenteditable="true"]')) {
           return;
         }
         if (e.code.startsWith('Shift') || e.code.startsWith('Control') ||
@@ -392,8 +421,8 @@ export default defineComponent({
           self.시작시각 = performance.now() - (self.이어쓰기원본?.elapsedMs ?? 0);
         }
         if (self.시도ID === null) {
-          const 시작 = 시도시작(self.지문목록[self.선택된지문].id,
-            (self.선택된편 + 1) as 1 | 2, 본문버전(self.현재편들[self.선택된편]),
+          const 시작 = 시도시작(self.오늘지문.id,
+            self.오늘날짜, 본문버전(self.오늘지문.본문),
             self.이어쓰기원본 ?? undefined);
           self.시도ID = 시작.attemptId;
           self.이어쓰기원본 = null;
@@ -435,32 +464,26 @@ export default defineComponent({
     document.title = 'HALLATYPE · 한글 필사';
     this.설정 = 필사설정읽기();
     this.기록들 = 진행작업읽기();
-    const 최근시도 = this.시도들
-      .filter((시도) => 시도.복원가능 && !시도.완료 && !시도.중단됨 && 시도.입력들.length &&
-        this.지문목록.some((지문, 번호) => 지문.id === 시도.시작.passageId &&
-          본문버전(필사편들(지문)[시도.시작.part - 1]) === 시도.시작.contentVersion &&
-          !this.편완료(번호, 시도.시작.part - 1)))
-      .sort((a, b) => b.마지막시각.localeCompare(a.마지막시각) ||
-        b.시작.attemptId.localeCompare(a.시작.attemptId))[0];
-    if (최근시도) {
-      this.선택된지문 = this.지문목록.findIndex((지문) => 지문.id === 최근시도.시작.passageId);
-      this.선택된편 = 최근시도.시작.part - 1;
-    } else {
-      const 첫편 = 다음미완료편(this.지문목록.map((지문) => 필사편들(지문).length),
-        (지문번호, 편번호) => this.편완료(지문번호, 편번호));
-      this.선택된지문 = 첫편?.지문번호 ?? 0;
-      this.선택된편 = 첫편?.편번호 ?? 0;
-    }
+    const 선택 = 지문선택읽기();
+    this.오늘날짜 = 날짜키(new Date());
+    this.글테마 = 선택.테마;
+    this.오늘지문 = 선택.지문;
     document.addEventListener('pointerdown', this.설정밖클릭);
+    document.addEventListener('visibilitychange', this.날짜변경확인);
     window.addEventListener('pagehide', this.입력기록저장);
     window.addEventListener('storage', this.다른탭기록반영);
+    window.addEventListener('resize', this.화면크기변경);
+    this.날짜확인타이머 = setInterval(this.날짜변경확인, 60000);
     this.reset();
   },
   beforeUnmount() {
     document.title = '한글 비트맵 스튜디오';
     document.removeEventListener('pointerdown', this.설정밖클릭);
+    document.removeEventListener('visibilitychange', this.날짜변경확인);
     window.removeEventListener('pagehide', this.입력기록저장);
     window.removeEventListener('storage', this.다른탭기록반영);
+    window.removeEventListener('resize', this.화면크기변경);
+    if (this.날짜확인타이머 !== null) { clearInterval(this.날짜확인타이머); }
     this.입력기록저장();
     window.onkeydown = null;
     this.그림판?.종료();
@@ -469,23 +492,17 @@ export default defineComponent({
     시도들(): 필사시도[] {
       return 시도목록(this.기록들);
     },
-    현재편들() {
-      return 필사편들(this.지문목록[this.선택된지문]);
-    },
-    다음위치() {
-      return 다음미완료편(this.지문목록.map((지문) => 필사편들(지문).length),
-        (지문번호, 편번호) => this.편완료(지문번호, 편번호),
-        { 지문번호: this.선택된지문, 편번호: this.선택된편 });
-    },
-    다음편안내() {
-      const 다음 = this.다음위치;
-      return 다음 ? `다음: ${this.지문목록[다음.지문번호].제목} · ${다음.편번호 + 1}편` : '모든 편을 마쳤어요';
+    현재지문들(): readonly 연습지문[] {
+      return 테마별지문들[this.글테마];
     },
     걸린시간() {
       return `${Math.floor(this.완료초 / 60)}분 ${this.완료초 % 60}초`;
     },
+    정타율(): string {
+      return 정타율(this.정타수, this.총입력타수);
+    },
     상태문구() {
-      if (this.결과화면보이기) { return '오늘의 필사를 마쳤어요'; }
+      if (this.결과화면보이기) { return '이 글의 필사를 마쳤어요'; }
       if (this.입력상태 === '오타') { return '이 자리에서 다시 이어 써 보세요'; }
       if (this.입력상태 === '정정') { return '좋아요, 천천히 이어 가세요'; }
       if (this.입력상태 === '진행') { return '문장을 따라 쓰고 있어요'; }
@@ -514,7 +531,6 @@ export default defineComponent({
   --종이: #fff;
   --선택바탕: #eae4d7;
   --선택안함: rgba(255, 255, 255, .44);
-  --호버바탕: #fffdf9;
   --진행바탕: #ece7dc;
   --진행테두리: #dfd8ca;
   --진행선: #d9d2c5;
@@ -546,7 +562,6 @@ export default defineComponent({
   --종이: #fafcfc;
   --선택바탕: #dbe8ec;
   --선택안함: rgba(255, 255, 255, .52);
-  --호버바탕: #fff;
   --진행바탕: #dce8eb;
   --진행테두리: #c7d9de;
   --진행선: #c1d3d8;
@@ -569,7 +584,6 @@ export default defineComponent({
   --종이: #222c31;
   --선택바탕: #334348;
   --선택안함: #263238;
-  --호버바탕: #2e3c42;
   --진행바탕: #28353a;
   --진행테두리: #405056;
   --진행선: #4b5d5f;
@@ -661,31 +675,43 @@ button { font: inherit; }
 .구역번호 span { padding: 0 5px; color: var(--옅은글); }
 .선택머리 h2 { margin: 9px 0 0; font-size: 18px; font-weight: 650; letter-spacing: -.045em; }
 .선택안내 { padding-bottom: 2px; color: var(--옅은글); font-size: 12px; }
-.글선택 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 20px 0 30px; }
-.글버튼 {
+.글테마선택 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; width: min(100%, 432px); margin-top: 18px; }
+.글테마선택 button {
+  min-width: 0;
+  padding: 10px 17px;
+  border: 1px solid var(--테두리);
+  border-radius: 3px;
+  background: var(--선택안함);
+  color: var(--보조글);
+  font-size: 13px;
+  cursor: pointer;
+}
+.글테마선택 button.선택됨 { border-color: var(--강조); background: var(--선택바탕); color: var(--글); font-weight: 700; }
+.지문서랍 { margin-top: 21px; }
+.지문서랍 h3 { margin: 0; color: var(--강조); font-size: 12px; font-weight: 600; }
+.지문서랍 h3 span { margin-left: 8px; color: var(--옅은글); font-weight: 400; }
+.글목록 { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; margin-top: 13px; }
+.글목록 button {
   display: flex;
-  align-items: center;
-  gap: 14px;
-  min-height: 66px;
-  padding: 0 19px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+  min-height: 57px;
+  padding: 11px 13px;
   border: 1px solid var(--테두리);
   border-radius: 3px;
   background: var(--선택안함);
   color: var(--글);
   text-align: left;
   cursor: pointer;
-  transition: background .2s, border-color .2s, transform .2s;
 }
-.글버튼:hover { transform: translateY(-2px); border-color: var(--강조); background: var(--호버바탕); }
-.글버튼.선택됨 { border-color: var(--강조); background: var(--선택바탕); color: var(--글); }
-.글번호 { color: var(--옅은글); font-size: 11px; font-weight: 700; letter-spacing: .08em; }
-.글정보 { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-.글제목 { font-size: 14px; font-weight: 650; }
-.글기록 { color: var(--보조글); font-size: 10px; }
-.선택표시 { margin-left: auto; color: var(--강조); font-size: 16px; }
-.글버튼.선택됨 .선택표시 { color: var(--글); }
-
+.글목록 button:hover, .글목록 button.선택됨 { border-color: var(--강조); background: var(--선택바탕); }
+.글목록 strong { font-size: 12px; }
+.글목록 span { color: var(--보조글); font-size: 10px; }
+.글목록 em { font-style: normal; }
+.글목록 em.완료 { color: var(--완료색); font-weight: 700; }
 .종이 {
+  margin-top: 22px;
   padding: 30px clamp(24px, 5.4vw, 73px) 27px;
   border: 1px solid var(--연테두리);
   border-radius: 3px;
@@ -697,7 +723,6 @@ button { font: inherit; }
 .종이장식 { color: var(--강조); font-size: 20px; }
 .지문머리 { padding-top: 43px; text-align: center; }
 .분류 { margin: 0 0 13px; }
-.편표시 { color: var(--옅은글); font-weight: 500; }
 .지문머리 h2 {
   margin: 0;
   font-family: 'AppleMyungjo', 'Nanum Myeongjo', 'Batang', serif;
@@ -706,8 +731,6 @@ button { font: inherit; }
   letter-spacing: -.04em;
 }
 .출처 { margin: 14px 0 0; color: var(--옅은글); font-size: 12px; }
-.출처 a { margin-left: 10px; color: var(--강조); text-underline-offset: 3px; }
-.출처 a:hover { color: var(--글); }
 .가는선 { width: 42px; height: 1px; margin: 34px auto 0; background: var(--진행선); }
 .캔버스영역 { display: flex; justify-content: center; max-width: 930px; margin: 26px auto 0; overflow: hidden; }
 #캔버스 { display: block; width: 100%; height: auto; image-rendering: auto; }
@@ -755,7 +778,6 @@ button { font: inherit; }
 .마침통계 dt { color: var(--옅은글); font-size: 11px; }
 .마침통계 dd { margin: 0; color: var(--보조글); font-size: 12px; font-variant-numeric: tabular-nums; }
 .마침동작 { display: flex; flex-direction: column; align-items: center; gap: 9px; margin-left: auto; }
-.다음안내 { max-width: 180px; color: var(--보조글); font-size: 11px; text-align: center; line-height: 1.5; }
 .주버튼 { min-width: 132px; padding: 11px 14px; border: 1px solid var(--강조); border-radius: 2px; background: var(--강조); color: var(--역글); font-size: 12px; cursor: pointer; }
 .주버튼:hover { background: var(--강조호버); }
 .주버튼 span { margin-left: 12px; }
@@ -764,15 +786,12 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
 
 @media (max-width: 700px) {
   .페이지 { padding: 0 18px; }
+  .글테마선택 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .상단 { height: 66px; }
   .상단문구, .선택안내 { display: none; }
   .소개 { display: block; padding: 41px 0 42px; }
   .소개글 { margin-top: 22px; font-size: 13px; }
-  .글선택 { gap: 6px; }
-  .글버튼 { min-height: 57px; gap: 4px; flex-direction: column; justify-content: center; padding: 6px 3px; text-align: center; }
-  .글번호 { font-size: 10px; }
-  .글제목 { font-size: 12px; }
-  .선택표시 { display: none; }
+  .글목록 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .종이 { padding: 22px 17px 25px; }
   .지문머리 { padding-top: 34px; }
   .가는선 { margin-top: 27px; }
@@ -781,10 +800,9 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
   .진행아래 { align-items: start; flex-direction: column; gap: 11px; }
   .마침 { align-items: start; flex-wrap: wrap; gap: 14px; }
   .마침동작 { align-items: start; flex-direction: row; flex-wrap: wrap; width: 100%; margin: 3px 0 0 0; }
-  .다음안내 { align-self: center; text-align: left; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .글버튼, .진행막대 span { transition: none; }
+  .진행막대 span { transition: none; }
 }
 </style>

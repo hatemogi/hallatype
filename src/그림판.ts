@@ -101,6 +101,7 @@ export default class 그림판틀 {
     private 안티앨리어싱강도 = 100;
     private 팔레트: 필사팔레트;
     private 한줄칸수: number;
+    private readonly 최소높이: number;
     private 깜빡임허용: boolean;
     private readonly 영문글꼴: boolean;
     private 글자칸들 = new Map<string, 글자칸>();
@@ -116,11 +117,12 @@ export default class 그림판틀 {
 
     constructor(ctx: CanvasRenderingContext2D, 본문: 그릴본문,
                 보기: { 팔레트?: 필사팔레트; 한줄칸수?: number; 커서깜빡임?: boolean;
-                    안티앨리어싱?: number; 영문글꼴?: boolean } = {}) {
+                    안티앨리어싱?: number; 영문글꼴?: boolean; 최소높이?: number } = {}) {
         this.ctx = ctx;
         this.본문 = 본문;
         this.팔레트 = 보기.팔레트 ?? 필사팔레트들.한지;
         this.한줄칸수 = 보기.한줄칸수 ?? 기본한줄칸수;
+        this.최소높이 = 보기.최소높이 ?? 500;
         this.깜빡임허용 = 보기.커서깜빡임 ?? true;
         this.영문글꼴 = 보기.영문글꼴 ?? false;
         this.안티앨리어싱강도설정(보기.안티앨리어싱 ?? 100);
@@ -237,7 +239,7 @@ export default class 그림판틀 {
             오른쪽끝 = Math.max(오른쪽끝, 칸.화면위치.열 * 16 + 칸.너비);
         }
         this.ctx.canvas.width = Math.max(this.한줄칸수 * 16 + 6, 오른쪽끝 + 6);
-        this.ctx.canvas.height = Math.max(500, (마지막행 + 1) * 44);
+        this.ctx.canvas.height = Math.max(this.최소높이, (마지막행 + 1) * 44);
         this.바탕지우기(this.팔레트.종이);
         for (const { 화면위치: 위치, 색자, 너비 } of 그릴칸들) {
             this.글자그리기(위치, 색자, 너비);

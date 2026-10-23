@@ -1,37 +1,47 @@
 import { 끝글자 } from '@/글자';
 import { 지문틀 } from '@/본문';
 import { 따라그리기틀 } from '@/따라그리기';
-import { 연습지문들, 필사편들 } from '@/practice-passages';
+import { 날짜키, 연습지문들, 지문선택읽기, 지문선택저장,
+  테마별지문들 } from '@/practice-passages';
 
-it('원문을 문단 경계에서 두 편으로 나누어 짧게 필사할 수 있다', () => {
-  expect(연습지문들).toHaveLength(9);
-  expect(new Set(연습지문들.map((지문) => 지문.제목)).size).toBe(연습지문들.length);
-  for (const 선택 of 연습지문들) {
-    const 편들 = 필사편들(선택);
-    expect(편들).toHaveLength(2);
-    expect(편들.join('\n')).toBe(선택.본문);
-    for (const 편 of 편들) {
-      expect(편.length).toBeGreaterThanOrEqual(300);
-      expect(편.length).toBeLessThanOrEqual(500);
-      expect(편).toMatch(선택.언어 === 'en' ? /^[\x20-\x7E\n]+$/ : /^[\uAC00-\uD7A3\x20-\x7E\n]+$/);
-      const 지문 = new 지문틀();
-      지문.글쓰기(편);
-      지문.쓰기(지문.위치, 끝글자);
-      const 기대타수 = new 따라그리기틀(지문).기대타수;
-      expect(기대타수).toBeGreaterThanOrEqual(선택.언어 === 'en' ? 300 : 500);
-      expect(기대타수).toBeLessThanOrEqual(1100);
-    }
+it('네 테마에 각각 14개의 입력 가능한 300자 지문을 둔다', () => {
+  const 전체 = Object.values(테마별지문들).flat();
+  expect(테마별지문들.산문).toBe(연습지문들);
+  expect(테마별지문들.산문).toHaveLength(14);
+  expect(테마별지문들.자기계발).toHaveLength(14);
+  expect(테마별지문들.명상).toHaveLength(14);
+  expect(테마별지문들.자기확언).toHaveLength(14);
+  expect(new Set(전체.map((지문) => 지문.id)).size).toBe(전체.length);
+  for (const 선택 of 전체) {
+    expect(선택.id).toMatch(/^[A-Za-z]{12}$/);
+    expect(선택.본문.length).toBeGreaterThanOrEqual(280);
+    expect(선택.본문.length).toBeLessThanOrEqual(330);
+    expect(선택.본문).not.toMatch(/[.!?][가-힣]/);
+    expect(선택.본문).toMatch(/^[\uAC00-\uD7A3\x20-\x7E]+$/);
+    const 지문 = new 지문틀();
+    지문.글쓰기(선택.본문);
+    지문.쓰기(지문.위치, 끝글자);
+    expect(new 따라그리기틀(지문).기대타수).toBeGreaterThan(100);
   }
 });
 
-it('문학 발췌 지문에는 원문 출처를 표시한다', () => {
-  const 발췌 = 연습지문들.filter((지문) => !지문.출처.startsWith('창작 지문'));
-  expect(발췌).toHaveLength(4);
-  expect(발췌.every((지문) => 지문.원문?.includes('ko.wikisource.org/wiki/'))).toBe(true);
-});
-
-it('영어 창작 지문 세 편을 제공한다', () => {
-  const 영어지문들 = 연습지문들.filter((지문) => 지문.언어 === 'en');
-  expect(영어지문들).toHaveLength(3);
-  expect(영어지문들.every((지문) => 지문.출처 === '창작 지문 · 영어')).toBe(true);
+it('고른 지문을 날짜에 관계없이 보존하고 기존 저장 형식도 읽는다', () => {
+  const 값들 = new Map<string, string>();
+  const 저장소 = { getItem: (키: string) => 값들.get(키) ?? null,
+    setItem: (키: string, 값: string) => { 값들.set(키, 값); } };
+  expect(날짜키(new Date(2026, 9, 23, 12))).toBe('2026-10-23');
+  expect(지문선택읽기(저장소)).toEqual({ 테마: '산문', 지문: 연습지문들[0] });
+  const 다른지문 = 테마별지문들.자기계발[5];
+  저장소.setItem('hallatype:passage-selection:v1', JSON.stringify({
+    날짜: '2026-10-23', 테마: '자기계발', 지문ID: 다른지문.id,
+  }));
+  expect(지문선택읽기(저장소)).toEqual({ 테마: '자기계발', 지문: 다른지문 });
+  지문선택저장('자기계발', 테마별지문들.산문[3].id, 저장소);
+  expect(지문선택읽기(저장소).지문).toBe(테마별지문들.자기계발[0]);
+  const 명상지문 = 테마별지문들.명상[4];
+  지문선택저장('명상', 명상지문.id, 저장소);
+  expect(지문선택읽기(저장소)).toEqual({ 테마: '명상', 지문: 명상지문 });
+  const 확언지문 = 테마별지문들.자기확언[7];
+  지문선택저장('자기확언', 확언지문.id, 저장소);
+  expect(지문선택읽기(저장소)).toEqual({ 테마: '자기확언', 지문: 확언지문 });
 });

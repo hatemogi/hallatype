@@ -1,6 +1,6 @@
 import { customAlphabet } from 'nanoid';
 
-const STORAGE_PREFIX = 'hallatype:progress:v1:op:';
+const STORAGE_PREFIX = 'hallatype:progress:v2:op:';
 const 새ID = customAlphabet('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', 12);
 const ID_PATTERN = /^[A-Za-z]{12}$/;
 const 버전캐시 = new Map<string, string>();
@@ -12,9 +12,9 @@ function ID확인(id: string): void {
 export type 입력키 = { code: string; shift: boolean };
 export type 이어쓰기원본 = { attemptId: string; inputCount: number; elapsedMs: number };
 
-type 작업기본 = { id: string; attemptId: string; schema: 1; at: string };
+type 작업기본 = { id: string; attemptId: string; schema: 2; at: string };
 export type 진행작업 =
-  | (작업기본 & { type: 'started'; passageId: string; part: 1 | 2; contentVersion: string;
+  | (작업기본 & { type: 'started'; passageId: string; day: string; contentVersion: string;
       continuedFrom?: 이어쓰기원본 })
   | (작업기본 & { type: 'inputs'; seq: number; keys: 입력키[]; elapsedMs: number })
   | (작업기본 & { type: 'completed'; elapsedMs: number; totalInputs: number; correctInputs: number })
@@ -33,12 +33,27 @@ export interface 필사시도 {
   복원가능: boolean;
 }
 
+export function 지문입력상태(시도들: readonly 필사시도[], passageId: string,
+  contentVersion: string): '완료' | '입력 중' | '미완료' {
+  const 해당시도들 = 시도들.filter((시도) => 시도.시작.passageId === passageId &&
+    시도.시작.contentVersion === contentVersion);
+  if (해당시도들.some((시도) => !!시도.완료)) { return '완료'; }
+  if (해당시도들.some((시도) => 시도.복원가능 && !시도.중단됨 && 시도.입력들.length > 0)) {
+    return '입력 중';
+  }
+  return '미완료';
+}
+
+export function 정타율(정타수: number, 전체타수: number): string {
+  return 전체타수 > 0 ? (정타수 / 전체타수 * 100).toFixed(2) : '0.00';
+}
+
 export function 브라우저저장소(): 저장소 | undefined {
   try { return typeof window === 'undefined' ? undefined : window.localStorage; }
   catch (_) { return undefined; }
 }
 
-/** 편 본문이 달라지면 기존 입력을 다른 내용에 재생하지 않는다. */
+/** 본문이 달라지면 기존 입력을 다른 내용에 재생하지 않는다. */
 export function 본문버전(본문: string): string {
   const 캐시 = 버전캐시.get(본문);
   if (캐시) { return 캐시; }
@@ -54,13 +69,13 @@ export function 본문버전(본문: string): string {
 function 올바른작업(값: unknown): 값 is 진행작업 {
   if (!값 || typeof 값 !== 'object') { return false; }
   const 작업 = 값 as Record<string, unknown>;
-  if (작업.schema !== 1 || typeof 작업.id !== 'string' || !ID_PATTERN.test(작업.id) ||
+  if (작업.schema !== 2 || typeof 작업.id !== 'string' || !ID_PATTERN.test(작업.id) ||
       typeof 작업.attemptId !== 'string' || !ID_PATTERN.test(작업.attemptId) ||
       typeof 작업.at !== 'string') { return false; }
   switch (작업.type) {
     case 'started':
       return typeof 작업.passageId === 'string' && ID_PATTERN.test(작업.passageId) &&
-        (작업.part === 1 || 작업.part === 2) &&
+        typeof 작업.day === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(작업.day) &&
         typeof 작업.contentVersion === 'string' &&
         (작업.continuedFrom === undefined || (!!작업.continuedFrom && typeof 작업.continuedFrom === 'object' &&
           typeof (작업.continuedFrom as 이어쓰기원본).attemptId === 'string' &&
@@ -122,29 +137,30 @@ export function 진행작업저장(작업: 진행작업, 저장소: 저장소 | 
   } catch (_) { return false; }
 }
 
-export function 시도시작(passageId: string, part: 1 | 2, contentVersion: string,
+export function 시도시작(passageId: string, day: string, contentVersion: string,
   continuedFrom?: 이어쓰기원본): Extract<진행작업, { type: 'started' }> {
   ID확인(passageId);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) { throw new Error('날짜 형식은 YYYY-MM-DD여야 합니다.'); }
   if (continuedFrom) { ID확인(continuedFrom.attemptId); }
-  return { schema: 1, id: 새ID(), attemptId: 새ID(), type: 'started',
-    passageId, part, contentVersion, ...(continuedFrom && { continuedFrom }), at: new Date().toISOString() };
+  return { schema: 2, id: 새ID(), attemptId: 새ID(), type: 'started',
+    passageId, day, contentVersion, ...(continuedFrom && { continuedFrom }), at: new Date().toISOString() };
 }
 
 export function 입력묶음(attemptId: string, seq: number, keys: 입력키[], elapsedMs: number): Extract<진행작업, { type: 'inputs' }> {
   ID확인(attemptId);
-  return { schema: 1, id: 새ID(), attemptId, type: 'inputs', seq,
+  return { schema: 2, id: 새ID(), attemptId, type: 'inputs', seq,
     keys: keys.map((키) => ({ ...키 })), elapsedMs, at: new Date().toISOString() };
 }
 
 export function 시도완료(attemptId: string, elapsedMs: number, totalInputs: number, correctInputs: number): Extract<진행작업, { type: 'completed' }> {
   ID확인(attemptId);
-  return { schema: 1, id: 새ID(), attemptId, type: 'completed',
+  return { schema: 2, id: 새ID(), attemptId, type: 'completed',
     elapsedMs, totalInputs, correctInputs, at: new Date().toISOString() };
 }
 
 export function 시도중단(attemptId: string): Extract<진행작업, { type: 'abandoned' }> {
   ID확인(attemptId);
-  return { schema: 1, id: 새ID(), attemptId, type: 'abandoned', at: new Date().toISOString() };
+  return { schema: 2, id: 새ID(), attemptId, type: 'abandoned', at: new Date().toISOString() };
 }
 
 export function 시도목록(작업들: readonly 진행작업[]): 필사시도[] {
@@ -190,7 +206,7 @@ export function 시도목록(작업들: readonly 진행작업[]): 필사시도[]
     if (원본) {
       const 부모 = 복원(원본.attemptId);
       if (!부모 || !부모.복원가능 || 부모.시작.passageId !== 시도.시작.passageId ||
-          부모.시작.part !== 시도.시작.part || 부모.시작.contentVersion !== 시도.시작.contentVersion ||
+          부모.시작.contentVersion !== 시도.시작.contentVersion ||
           부모.입력들.length < 원본.inputCount) {
         시도.복원가능 = false;
       } else {
