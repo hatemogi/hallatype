@@ -127,7 +127,7 @@
             <div class="마침내용">
               <p class="마침꼬리">한 편을 마쳤어요</p>
               <h3>문장을 따라 걸어온 시간이<br>잠시 마음에 남기를 바랍니다.</h3>
-              <p class="마침설명">여기서 마쳐도 좋고, 다음 편을 이어 써도 좋아요.</p>
+              <p class="마침설명">{{다음위치 ? '여기서 마쳐도 좋고, 다음 편을 이어 써도 좋아요.' : '모든 편을 마쳤어요. 첫 편부터 다시 써 볼 수도 있어요.'}}</p>
               <dl class="마침통계" aria-label="이번 필사 기록">
                 <div><dt>걸린 시간</dt><dd>{{걸린시간}}</dd></div>
                 <div><dt>정타 / 총입력</dt><dd>{{정타수}}/{{총입력타수}}</dd></div>
@@ -135,8 +135,8 @@
               </dl>
             </div>
             <div class="마침동작">
-              <button type="button" class="주버튼" @click="다음글">한 편 더 쓰기 <span aria-hidden="true">↗</span></button>
-              <span class="다음안내">다음: {{다음편안내}}</span>
+              <button type="button" class="주버튼" @click="다음글">{{다음위치 ? '한 편 더 쓰기' : '첫 편 다시 쓰기'}} <span aria-hidden="true">↗</span></button>
+              <span class="다음안내">{{다음편안내}}</span>
               <button type="button" class="글자버튼" @click="다시쓰기">한 번 더 쓰기</button>
             </div>
           </div>
@@ -165,6 +165,7 @@ import { 지문틀 } from '@/본문';
 import { 따라그리기틀 } from '@/따라그리기';
 import 그림판틀 from '@/그림판';
 import { 연습지문들, 필사편들 } from '@/practice-passages';
+import { 다음미완료편 } from '@/practice-selection';
 import { 본문버전, 브라우저저장소, 시도목록, 시도시작, 시도완료, 시도중단, 입력묶음,
   진행작업읽기, 진행작업저장, 작업합치기, type 입력키, type 진행작업,
   type 필사시도, type 이어쓰기원본 } from '@/practice-progress';
@@ -310,13 +311,10 @@ export default defineComponent({
     },
 
     다음글() {
-      if (this.선택된편 + 1 < this.현재편들.length) {
-        this.선택된편++;
-      } else {
-        this.선택된지문 = (this.선택된지문 + 1) % this.지문목록.length;
-        this.선택된편 = this.시작할편(this.선택된지문);
-      }
-      this.reset();
+      const 다음 = this.다음위치;
+      this.선택된지문 = 다음?.지문번호 ?? 0;
+      this.선택된편 = 다음?.편번호 ?? 0;
+      this.reset(다음 === null);
     },
 
     reset(새로시작 = false) {
@@ -447,7 +445,12 @@ export default defineComponent({
     if (최근시도) {
       this.선택된지문 = this.지문목록.findIndex((지문) => 지문.id === 최근시도.시작.passageId);
       this.선택된편 = 최근시도.시작.part - 1;
-    } else { this.선택된편 = this.시작할편(0); }
+    } else {
+      const 첫편 = 다음미완료편(this.지문목록.map((지문) => 필사편들(지문).length),
+        (지문번호, 편번호) => this.편완료(지문번호, 편번호));
+      this.선택된지문 = 첫편?.지문번호 ?? 0;
+      this.선택된편 = 첫편?.편번호 ?? 0;
+    }
     document.addEventListener('pointerdown', this.설정밖클릭);
     window.addEventListener('pagehide', this.입력기록저장);
     window.addEventListener('storage', this.다른탭기록반영);
@@ -469,11 +472,14 @@ export default defineComponent({
     현재편들() {
       return 필사편들(this.지문목록[this.선택된지문]);
     },
+    다음위치() {
+      return 다음미완료편(this.지문목록.map((지문) => 필사편들(지문).length),
+        (지문번호, 편번호) => this.편완료(지문번호, 편번호),
+        { 지문번호: this.선택된지문, 편번호: this.선택된편 });
+    },
     다음편안내() {
-      if (this.선택된편 + 1 < this.현재편들.length) {
-        return `${this.지문목록[this.선택된지문].제목} · ${this.선택된편 + 2}편`;
-      }
-      return `${this.지문목록[(this.선택된지문 + 1) % this.지문목록.length].제목} · 1편`;
+      const 다음 = this.다음위치;
+      return 다음 ? `다음: ${this.지문목록[다음.지문번호].제목} · ${다음.편번호 + 1}편` : '모든 편을 마쳤어요';
     },
     걸린시간() {
       return `${Math.floor(this.완료초 / 60)}분 ${this.완료초 % 60}초`;
