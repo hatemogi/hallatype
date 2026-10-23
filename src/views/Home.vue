@@ -562,6 +562,8 @@ export default defineComponent({
   --글: #38372f;
   --보조글: #777468;
   --옅은글: #958e81;
+  --출처링크: #6e675c;
+  --출처링크호버: #38372f;
   --강조: #82755f;
   --강조호버: #665b49;
   --역글: #fff;
@@ -593,6 +595,8 @@ export default defineComponent({
   --글: #30444f;
   --보조글: #647b85;
   --옅은글: #718892;
+  --출처링크: #526e7b;
+  --출처링크호버: #30444f;
   --강조: #607f8d;
   --강조호버: #456674;
   --역글: #fff;
@@ -615,6 +619,8 @@ export default defineComponent({
   --글: #e0e5df;
   --보조글: #b2bdb9;
   --옅은글: #9dacaa;
+  --출처링크: #b2bdb9;
+  --출처링크호버: #e0e5df;
   --강조: #b6c8be;
   --강조호버: #d1e0d3;
   --역글: #1e292e;
@@ -637,6 +643,8 @@ export default defineComponent({
   --글: #b2f7b9;
   --보조글: #8acb92;
   --옅은글: #75aa7d;
+  --출처링크: #8acb92;
+  --출처링크호버: #b2f7b9;
   --강조: #63f583;
   --강조호버: #a0ffb4;
   --역글: #061009;
@@ -659,6 +667,8 @@ export default defineComponent({
   --글: #fff;
   --보조글: #dbe5ff;
   --옅은글: #bbcdfa;
+  --출처링크: #dbe5ff;
+  --출처링크호버: #fff;
   --강조: #fff;
   --강조호버: #dbe5ff;
   --역글: #102287;
@@ -681,6 +691,8 @@ export default defineComponent({
   --글: #f8d79a;
   --보조글: #cfaa70;
   --옅은글: #ab8656;
+  --출처링크: #cfaa70;
+  --출처링크호버: #f8d79a;
   --강조: #ffbc55;
   --강조호버: #ffd98b;
   --역글: #231306;
@@ -829,6 +841,16 @@ button { font: inherit; }
   letter-spacing: -.04em;
 }
 .출처 { margin: 14px 0 0; color: var(--옅은글); font-size: 12px; }
+.출처 a,
+.출처 a:visited {
+  color: var(--출처링크);
+  text-decoration: underline;
+  text-decoration-color: var(--옅은글);
+  text-underline-offset: 3px;
+}
+.출처 a:hover,
+.출처 a:focus-visible { color: var(--출처링크호버); text-decoration-color: currentColor; }
+.출처 a:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
 .가는선 { width: 42px; height: 1px; margin: 34px auto 0; background: var(--진행선); }
 .캔버스영역 { display: flex; justify-content: center; max-width: 930px; margin: 26px auto 0; overflow: hidden; }
 #캔버스 { display: block; width: 100%; height: auto; image-rendering: auto; }
