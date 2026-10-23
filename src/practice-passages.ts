@@ -1,6 +1,7 @@
 import { 자기계발지문들 } from './practice-growth-passages';
 import { 명상지문들 } from './practice-meditation-passages';
 import { 자기확언지문들 } from './practice-affirmation-passages';
+import { 생활교양지문들 } from './practice-knowledge-passages';
 
 /** 하루에 한 번, 처음부터 끝까지 이어 쓰는 300자 안팎의 창작 지문. */
 export interface 연습지문 {
@@ -10,7 +11,7 @@ export interface 연습지문 {
   본문: string;
 }
 
-export type 지문테마 = '산문' | '자기계발' | '명상' | '자기확언';
+export type 지문테마 = '산문' | '자기계발' | '명상' | '자기확언' | '생활교양';
 
 /** 기존 산문 지문은 별도의 테마로 보존한다. */
 export const 연습지문들: readonly 연습지문[] = [
@@ -63,6 +64,7 @@ export const 테마별지문들: Record<지문테마, readonly 연습지문[]> =
   자기계발: 자기계발지문들,
   명상: 명상지문들,
   자기확언: 자기확언지문들,
+  생활교양: 생활교양지문들,
 };
 
 export function 날짜키(날짜: Date): string {
@@ -82,7 +84,7 @@ export function 지문선택읽기(저장소?: Pick<Storage, 'getItem'>):
     if (!선택 || typeof 선택 !== 'object') { return 기본; }
     const 기록 = 선택 as { 테마?: unknown; 지문ID?: unknown };
     if (기록.테마 !== '산문' && 기록.테마 !== '자기계발' &&
-        기록.테마 !== '명상' && 기록.테마 !== '자기확언') {
+        기록.테마 !== '명상' && 기록.테마 !== '자기확언' && 기록.테마 !== '생활교양') {
       return 기본;
     }
     const 테마 = 기록.테마;

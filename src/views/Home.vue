@@ -178,7 +178,7 @@ import { 기본필사설정, 필사설정, 필사설정읽기, 필사설정저�
 const 테마선택지: Array<{ 이름: 필사테마 }> = [{ 이름: '한지' }, { 이름: '새벽' }, { 이름: '밤' }];
 const 글자크기선택지: 지문크기[] = ['보통', '크게'];
 const 가장자리단계이름 = ['선명하게', '조금 선명하게', '보통', '조금 부드럽게', '부드럽게'];
-const 글테마선택지: 지문테마[] = ['산문', '자기계발', '명상', '자기확언'];
+const 글테마선택지: 지문테마[] = ['산문', '자기계발', '명상', '자기확언', '생활교양'];
 
 export default defineComponent({
   data() {
@@ -675,7 +675,7 @@ button { font: inherit; }
 .구역번호 span { padding: 0 5px; color: var(--옅은글); }
 .선택머리 h2 { margin: 9px 0 0; font-size: 18px; font-weight: 650; letter-spacing: -.045em; }
 .선택안내 { padding-bottom: 2px; color: var(--옅은글); font-size: 12px; }
-.글테마선택 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; width: min(100%, 432px); margin-top: 18px; }
+.글테마선택 { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; width: min(100%, 542px); margin-top: 18px; }
 .글테마선택 button {
   min-width: 0;
   padding: 10px 17px;
@@ -787,6 +787,7 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
 @media (max-width: 700px) {
   .페이지 { padding: 0 18px; }
   .글테마선택 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .글테마선택 button:last-child:nth-child(odd) { grid-column: span 2; }
   .상단 { height: 66px; }
   .상단문구, .선택안내 { display: none; }
   .소개 { display: block; padding: 41px 0 42px; }

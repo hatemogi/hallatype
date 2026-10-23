@@ -4,13 +4,14 @@ import { 따라그리기틀 } from '@/따라그리기';
 import { 날짜키, 연습지문들, 지문선택읽기, 지문선택저장,
   테마별지문들 } from '@/practice-passages';
 
-it('네 테마에 각각 14개의 입력 가능한 300자 지문을 둔다', () => {
+it('다섯 테마에 각각 14개의 입력 가능한 300자 지문을 둔다', () => {
   const 전체 = Object.values(테마별지문들).flat();
   expect(테마별지문들.산문).toBe(연습지문들);
   expect(테마별지문들.산문).toHaveLength(14);
   expect(테마별지문들.자기계발).toHaveLength(14);
   expect(테마별지문들.명상).toHaveLength(14);
   expect(테마별지문들.자기확언).toHaveLength(14);
+  expect(테마별지문들.생활교양).toHaveLength(14);
   expect(new Set(전체.map((지문) => 지문.id)).size).toBe(전체.length);
   for (const 선택 of 전체) {
     expect(선택.id).toMatch(/^[A-Za-z]{12}$/);
@@ -44,4 +45,7 @@ it('고른 지문을 날짜에 관계없이 보존하고 기존 저장 형식도
   const 확언지문 = 테마별지문들.자기확언[7];
   지문선택저장('자기확언', 확언지문.id, 저장소);
   expect(지문선택읽기(저장소)).toEqual({ 테마: '자기확언', 지문: 확언지문 });
+  const 교양지문 = 테마별지문들.생활교양[9];
+  지문선택저장('생활교양', 교양지문.id, 저장소);
+  expect(지문선택읽기(저장소)).toEqual({ 테마: '생활교양', 지문: 교양지문 });
 });
