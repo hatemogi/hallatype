@@ -16,6 +16,8 @@ it('필사 설정을 저장하고 잘못된 저장값은 기본값으로 복구�
     커서깜빡임: false, 안티앨리어싱단계: 4 as const };
   필사설정저장(설정, storage);
   expect(필사설정읽기(storage)).toEqual(설정);
+  필사설정저장({ ...설정, 글자크기: '작게' }, storage);
+  expect(필사설정읽기(storage).글자크기).toBe('작게');
   for (const 테마 of ['매트릭스', 'PC통신', '호박색 모니터'] as const) {
     필사설정저장({ ...설정, 테마 }, storage);
     expect(필사설정읽기(storage).테마).toBe(테마);

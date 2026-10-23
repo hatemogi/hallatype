@@ -168,7 +168,7 @@ const 테마선택지: Array<{ 이름: 필사테마 }> = [
   { 이름: '한지' }, { 이름: '새벽' }, { 이름: '밤' }, { 이름: '매트릭스' }, { 이름: 'PC통신' },
   { 이름: '호박색 모니터' },
 ];
-const 글자크기선택지: 지문크기[] = ['보통', '크게'];
+const 글자크기선택지: 지문크기[] = ['작게', '보통', '크게'];
 const 가장자리단계이름 = ['선명하게', '조금 선명하게', '보통', '조금 부드럽게', '부드럽게'];
 const 글테마선택지: 지문테마[] = ['산문', '자기계발', '명상', '자기확언', '생활교양', '요리레시피'];
 
@@ -333,9 +333,10 @@ export default defineComponent({
     },
     한줄칸수(): number {
       const 너비 = document.querySelector('.캔버스영역')?.clientWidth ?? window.innerWidth - 80;
-      const 기준크기 = window.innerWidth <= 850
-        ? (this.설정.글자크기 === '크게' ? 12 : 10)
-        : (this.설정.글자크기 === '크게' ? 14 : 12);
+      const 크기별기준: Record<지문크기, number> = window.innerWidth <= 850
+        ? { 작게: 8, 보통: 10, 크게: 12 }
+        : { 작게: 10, 보통: 12, 크게: 14 };
+      const 기준크기 = 크기별기준[this.설정.글자크기];
       return Math.max(22, Math.min(80, Math.floor(너비 / 기준크기)));
     },
     화면크기변경() {
