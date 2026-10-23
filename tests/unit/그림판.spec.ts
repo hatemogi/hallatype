@@ -49,6 +49,30 @@ describe('타자 연습 캔버스 글꼴', () => {
         expect(이미지들[0].data.some((값, i) => i % 4 === 3 && 값 === 255)).toBe(true);
     });
 
+    it('영어 지문은 고정폭 글꼴로 글자와 문장부호를 그리고 줄바꿈 표시는 유지한다', () => {
+        const fillText = vi.fn();
+        const putImageData = vi.fn();
+        const ctx = {
+            canvas: { width: 1286, height: 500 },
+            fillText,
+            getImageData: (_x: number, _y: number, w: number, h: number) =>
+                ({ width: w, height: h, data: new Uint8ClampedArray(w * h * 4).fill(255) } as ImageData),
+            putImageData,
+        } as unknown as CanvasRenderingContext2D;
+        const 그림판 = new 그림판틀(ctx, {} as 본문틀, { 영문글꼴: true });
+        for (const [i, 문자] of ['A', '.'].entries()) {
+            그림판.글자그리기(new 위치틀(0, i),
+                new 색칠할글자(글자틀.생성(문자.charCodeAt(0)), [검정], 흰색));
+        }
+        expect(fillText.mock.calls).toEqual([['A', 0, 1], ['.', 16, 1]]);
+        expect(ctx.font).toContain('monospace');
+        expect(putImageData).not.toHaveBeenCalled();
+
+        그림판.글자그리기(new 위치틀(0, 2),
+            new 색칠할글자(글자틀.생성('\n'.charCodeAt(0)), [검정], 흰색));
+        expect(putImageData).toHaveBeenCalledTimes(1);
+    });
+
     it.each(['A', '.', '\n'])('영문과 문장부호에도 같은 강도의 가장자리 처리를 적용한다: %s', (문자) => {
         const 그리기 = (강도: number) => {
             const { 그림판, 이미지들 } = 화면(true);

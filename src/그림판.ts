@@ -102,6 +102,7 @@ export default class 그림판틀 {
     private 팔레트: 필사팔레트;
     private 한줄칸수: number;
     private 깜빡임허용: boolean;
+    private readonly 영문글꼴: boolean;
     private 글자칸들 = new Map<string, 글자칸>();
     private 커서키?: string;
     private 커서보임 = true;
@@ -115,12 +116,13 @@ export default class 그림판틀 {
 
     constructor(ctx: CanvasRenderingContext2D, 본문: 그릴본문,
                 보기: { 팔레트?: 필사팔레트; 한줄칸수?: number; 커서깜빡임?: boolean;
-                    안티앨리어싱?: number } = {}) {
+                    안티앨리어싱?: number; 영문글꼴?: boolean } = {}) {
         this.ctx = ctx;
         this.본문 = 본문;
         this.팔레트 = 보기.팔레트 ?? 필사팔레트들.한지;
         this.한줄칸수 = 보기.한줄칸수 ?? 기본한줄칸수;
         this.깜빡임허용 = 보기.커서깜빡임 ?? true;
+        this.영문글꼴 = 보기.영문글꼴 ?? false;
         this.안티앨리어싱강도설정(보기.안티앨리어싱 ?? 100);
         let storage: Storage | undefined;
         try { storage = typeof window === 'undefined' ? undefined : window.localStorage; } catch (_) { /* 저장소 없이 실행 */ }
@@ -293,6 +295,14 @@ export default class 그림판틀 {
     public 글자그리기(위치: 위치틀, 글자: 색칠할글자, 칸너비 = 글자.자.전각 ? 32 : 16, 오타효과 = false) {
         const [x, y] = this.textToGraphic(위치);
         this.바탕칠하기(위치, 칸너비, 글자.배경색, 오타효과);
+        if (this.영문글꼴 && !글자.자.한글 && !글자.자.전각) {
+            const [r, g, b, a] = 글자.색[0];
+            this.ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${a / 255})`;
+            this.ctx.font = '25px ui-monospace, Menlo, Monaco, Consolas, monospace';
+            this.ctx.textBaseline = 'top';
+            this.ctx.fillText(String.fromCodePoint(글자.자.코드[0]), x, y + 1);
+            return;
+        }
         const 빗맵들: 비트맵[] = 글자.자.한글 ? 한글비트맵(글자) : 그외비트맵(글자);
         const 알파들 = this.안티앨리어싱강도 > 0
             ? 글자.자.한글 ? 한글비트맵(글자, 안티앨리어싱글꼴) : 그외비트맵(글자, true)
