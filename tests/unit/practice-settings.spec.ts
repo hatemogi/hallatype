@@ -16,6 +16,10 @@ it('필사 설정을 저장하고 잘못된 저장값은 기본값으로 복구�
     커서깜빡임: false, 안티앨리어싱단계: 4 as const };
   필사설정저장(설정, storage);
   expect(필사설정읽기(storage)).toEqual(설정);
+  for (const 테마 of ['매트릭스', 'PC통신'] as const) {
+    필사설정저장({ ...설정, 테마 }, storage);
+    expect(필사설정읽기(storage).테마).toBe(테마);
+  }
   값들.set([...값들.keys()][0], JSON.stringify({ 테마: '밤', 글자크기: '크게', 커서깜빡임: false }));
   expect(필사설정읽기(storage).안티앨리어싱단계).toBe(2);
 

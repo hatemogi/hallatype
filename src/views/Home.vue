@@ -164,7 +164,9 @@ import { 본문버전, 브라우저저장소, 시도목록, 시도시작, 시도
 import { 기본필사설정, 필사설정, 필사설정읽기, 필사설정저장,
   필사테마, 지문크기, 안티앨리어싱단계, 단계별안티앨리어싱강도, 필사팔레트들 } from '@/practice-settings';
 
-const 테마선택지: Array<{ 이름: 필사테마 }> = [{ 이름: '한지' }, { 이름: '새벽' }, { 이름: '밤' }];
+const 테마선택지: Array<{ 이름: 필사테마 }> = [
+  { 이름: '한지' }, { 이름: '새벽' }, { 이름: '밤' }, { 이름: '매트릭스' }, { 이름: 'PC통신' },
+];
 const 글자크기선택지: 지문크기[] = ['보통', '크게'];
 const 가장자리단계이름 = ['선명하게', '조금 선명하게', '보통', '조금 부드럽게', '부드럽게'];
 const 글테마선택지: 지문테마[] = ['산문', '자기계발', '명상', '자기확언', '생활교양', '요리레시피'];
@@ -616,6 +618,61 @@ export default defineComponent({
   --완료색: #9dbb9d;
 }
 
+.필사실[data-theme='매트릭스'] {
+  --화면: #061009;
+  --장식빛: rgba(43, 202, 82, .08);
+  --글: #b2f7b9;
+  --보조글: #8acb92;
+  --옅은글: #75aa7d;
+  --강조: #63f583;
+  --강조호버: #a0ffb4;
+  --역글: #061009;
+  --테두리: #315c3b;
+  --연테두리: #2b5735;
+  --종이: #08190e;
+  --선택바탕: #173923;
+  --선택안함: #0d2415;
+  --진행바탕: #0c2515;
+  --진행테두리: #376947;
+  --진행선: #34603d;
+  --진행활성: #63f583;
+  --오류색: #ffc18a;
+  --완료색: #8affac;
+}
+
+.필사실[data-theme='PC통신'] {
+  --화면: #081666;
+  --장식빛: rgba(168, 190, 255, .07);
+  --글: #fff;
+  --보조글: #dbe5ff;
+  --옅은글: #bbcdfa;
+  --강조: #fff;
+  --강조호버: #dbe5ff;
+  --역글: #102287;
+  --테두리: #7894e8;
+  --연테두리: #7793e9;
+  --종이: #102287;
+  --선택바탕: #2843a8;
+  --선택안함: #11267f;
+  --진행바탕: #132b91;
+  --진행테두리: #7894e8;
+  --진행선: #6885dc;
+  --진행활성: #fff;
+  --오류색: #ffd0ae;
+  --완료색: #e2fff0;
+}
+
+.필사실:is([data-theme='매트릭스'], [data-theme='PC통신']) .지문머리 h2 {
+  font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-weight: 700;
+  letter-spacing: -.02em;
+}
+.필사실:is([data-theme='매트릭스'], [data-theme='PC통신']) .브랜드문양,
+.필사실:is([data-theme='매트릭스'], [data-theme='PC통신']) .종이,
+.필사실:is([data-theme='매트릭스'], [data-theme='PC통신']) .진행판 {
+  border-radius: 0;
+}
+
 button { font: inherit; }
 .페이지 { max-width: 1100px; margin: 0 auto; padding: 0 34px; }
 
@@ -659,6 +716,8 @@ button { font: inherit; }
 .테마견본 { display: grid; place-items: center; width: 100%; height: 38px; background: #fff; color: #454037; font-family: 'AppleMyungjo', 'Batang', serif; font-size: 19px; }
 .테마견본[data-theme='새벽'] { background: #fafcfc; color: #30444f; }
 .테마견본[data-theme='밤'] { background: #222c31; color: #e2e7df; }
+.테마견본[data-theme='매트릭스'] { background: #08190e; color: #9affaa; text-shadow: 0 0 7px rgba(99, 245, 131, .65); }
+.테마견본[data-theme='PC통신'] { background: #102287; color: #fff; }
 .설정선택 { display: flex; gap: 7px; }
 .설정선택 button { min-width: 72px; padding: 8px 13px; border: 1px solid var(--테두리); border-radius: 3px; background: var(--선택안함); color: var(--글); font-size: 12px; cursor: pointer; }
 .가장자리선택 input { display: block; width: 100%; margin: 0; accent-color: var(--강조); cursor: pointer; }
@@ -809,6 +868,8 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
 .글목록 { display: flex; flex-direction: column; flex: 1; min-height: 0; gap: 6px; overflow-y: auto; overscroll-behavior: contain; padding-right: 3px; }
 .글목록 button { min-height: 51px; flex: none; padding: 9px 11px; }
 .필사패널 { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.필사실[data-theme='매트릭스'] .종이 { box-shadow: inset 0 0 38px rgba(43, 202, 82, .06); }
+.필사실[data-theme='PC통신'] .종이 { box-shadow: none; }
 .종이 {
   flex: 1;
   min-height: 0;
