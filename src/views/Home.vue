@@ -58,41 +58,38 @@
         </section>
       </header>
 
-      <section class="소개" aria-labelledby="소개제목">
-        <div>
-          <p class="작은제목"><span class="작은점" aria-hidden="true"></span> 천천히 읽고, 한 자씩 쓰기</p>
-          <h1 id="소개제목">고른 글을<br><em>손끝으로 읽는 시간.</em></h1>
-        </div>
-        <p class="소개글">원하는 한 단락을 골라 처음부터 끝까지 천천히 써 봅니다.<br>속도를 재지 않아도 괜찮아요. 지금의 글에만 집중해 보세요.</p>
-      </section>
-
       <section class="작업공간" aria-label="필사할 글">
-        <div class="선택머리">
-          <div>
-            <span class="구역번호">01 <span aria-hidden="true">/</span> 지문 선택</span>
-            <h2>입력할 글 고르기</h2>
-          </div>
-          <span class="선택안내">각 테마의 14편을 원하는 순서로 써 보세요.</span>
+        <div class="모바일선택줄">
+          <div><span>선택한 글</span><strong>{{글테마}} · {{오늘지문.제목}}</strong></div>
+          <button type="button" aria-controls="지문선택창" :aria-expanded="목록열림" @click="목록열기">글 고르기 <span aria-hidden="true">⌄</span></button>
         </div>
-
-        <div class="글테마선택" role="group" aria-label="지문 테마 선택">
-          <button v-for="테마 in 글테마선택지" :key="테마" type="button"
-            :class="{ 선택됨: 글테마 === 테마 }" :aria-pressed="글테마 === 테마"
-            @click="글테마바꾸기(테마, $event)">{{테마}}</button>
-        </div>
-
-        <section class="지문서랍" :aria-label="`${글테마} 지문 목록`">
-          <h3>전체 글 <span>{{현재지문들.length}}편</span></h3>
-          <div class="글목록" role="group" :aria-label="`${글테마} 지문 선택`">
-            <button v-for="지문 in 현재지문들" :key="지문.id" type="button"
-              :class="{ 선택됨: 오늘지문.id === 지문.id }" :aria-pressed="오늘지문.id === 지문.id"
-              @click="지문선택(지문, $event)">
-              <strong>{{지문.제목}}</strong>
-              <span>{{지문.주제}} · <em :class="{ 완료: 지문상태(지문) === '완료' }">{{지문상태(지문)}}</em></span>
-            </button>
+        <div v-if="모바일보기 && 목록열림" class="목록가림막" @click="목록닫기"></div>
+        <aside v-show="!모바일보기 || 목록열림" id="지문선택창" class="선택패널"
+          :role="모바일보기 ? 'dialog' : undefined" :aria-modal="모바일보기 ? 'true' : undefined"
+          aria-label="입력할 글 고르기">
+          <div class="선택머리">
+            <div><span class="구역번호">필사할 글</span><h2>입력할 글 고르기</h2></div>
+            <button type="button" class="목록닫기" aria-label="글 선택창 닫기" @click="목록닫기">×</button>
           </div>
-        </section>
+          <div class="글테마선택" role="group" aria-label="지문 테마 선택">
+            <button v-for="테마 in 글테마선택지" :key="테마" type="button"
+              :class="{ 선택됨: 글테마 === 테마 }" :aria-pressed="글테마 === 테마"
+              @click="글테마바꾸기(테마, $event)">{{테마}}</button>
+          </div>
+          <section class="지문서랍" :aria-label="`${글테마} 지문 목록`">
+            <h3>전체 글 <span>{{현재지문들.length}}편</span></h3>
+            <div class="글목록" role="group" :aria-label="`${글테마} 지문 선택`">
+              <button v-for="지문 in 현재지문들" :key="지문.id" type="button"
+                :class="{ 선택됨: 오늘지문.id === 지문.id }" :aria-pressed="오늘지문.id === 지문.id"
+                @click="지문선택(지문, $event)">
+                <strong>{{지문.제목}}</strong>
+                <span>{{지문.주제}} · <em :class="{ 완료: 지문상태(지문) === '완료' }">{{지문상태(지문)}}</em></span>
+              </button>
+            </div>
+          </section>
+        </aside>
 
+        <div class="필사패널">
         <article class="종이" aria-labelledby="지문제목">
           <div class="종이상단">
             <span>필사 노트 <span class="가운데점">·</span> {{오늘날짜}}</span>
@@ -127,11 +124,8 @@
           </div>
 
           <div v-if="결과화면보이기" class="마침">
-            <div class="마침문양" aria-hidden="true">✳</div>
             <div class="마침내용">
               <p class="마침꼬리">한 편을 마쳤어요</p>
-              <h3>문장을 따라 걸어온 시간이<br>잠시 마음에 남기를 바랍니다.</h3>
-              <p class="마침설명">이 글을 다시 쓰거나 다른 지문을 골라 볼 수 있어요.</p>
               <dl class="마침통계" aria-label="이번 필사 기록">
                 <div><dt>걸린 시간</dt><dd>{{걸린시간}}</dd></div>
                 <div><dt>정타 / 전체 타수</dt><dd>{{정타수}}/{{총입력타수}} ({{정타율}}%)</dd></div>
@@ -149,13 +143,8 @@
           </div>
         </section>
 
-        <p class="작은도움">키보드로 글을 따라 써 보세요. 글자의 획이 한 자씩 채워집니다. 각 테마의 14편을 모두 고를 수 있습니다.</p>
+        </div>
       </section>
-
-      <footer class="바닥">
-        <span>HALLATYPE</span>
-        <span>한 글자씩, 천천히.</span>
-      </footer>
     </div>
   </main>
 </template>
@@ -193,6 +182,8 @@ export default defineComponent({
       가장자리단계이름,
       설정: { ...기본필사설정 } as 필사설정,
       설정열림: false,
+      모바일보기: typeof window !== 'undefined' && window.innerWidth <= 850,
+      목록열림: false,
       날짜확인타이머: null as ReturnType<typeof setInterval> | null,
       현재한줄칸수: 0,
       진행률: 0,
@@ -217,6 +208,15 @@ export default defineComponent({
     };
   },
   methods: {
+    목록열기() {
+      this.목록열림 = true;
+      this.$nextTick(() => document.querySelector<HTMLElement>('.목록닫기')?.focus());
+    },
+    목록닫기() {
+      const 열려있음 = this.목록열림;
+      this.목록열림 = false;
+      if (열려있음) { (document.activeElement as HTMLElement | null)?.blur(); }
+    },
     다른탭기록반영(event: StorageEvent) {
       if (event.key?.startsWith('hallatype:progress:v2:op:')) {
         this.기록들 = 작업합치기(this.기록들, 진행작업읽기());
@@ -270,7 +270,7 @@ export default defineComponent({
       return 지문입력상태(this.시도들, 지문.id, 본문버전(지문.본문));
     },
     글테마바꾸기(테마: 지문테마, event?: MouseEvent) {
-      (event?.currentTarget as HTMLElement | undefined)?.blur();
+      if (!this.목록열림) { (event?.currentTarget as HTMLElement | undefined)?.blur(); }
       if (테마 === this.글테마) { return; }
       this.입력기록저장();
       this.글테마 = 테마;
@@ -280,6 +280,7 @@ export default defineComponent({
     },
     지문선택(지문: 연습지문, event?: MouseEvent) {
       (event?.currentTarget as HTMLElement | undefined)?.blur();
+      this.목록닫기();
       if (지문.id === this.오늘지문.id) { return; }
       this.입력기록저장();
       this.오늘지문 = 지문;
@@ -328,11 +329,15 @@ export default defineComponent({
         this.설정.커서깜빡임);
     },
     한줄칸수(): number {
-      return window.innerWidth <= 700
-        ? (this.설정.글자크기 === '크게' ? 42 : 50)
-        : (this.설정.글자크기 === '크게' ? 68 : 80);
+      const 너비 = document.querySelector('.캔버스영역')?.clientWidth ?? window.innerWidth - 80;
+      const 기준크기 = window.innerWidth <= 850
+        ? (this.설정.글자크기 === '크게' ? 12 : 10)
+        : (this.설정.글자크기 === '크게' ? 14 : 12);
+      return Math.max(22, Math.min(80, Math.floor(너비 / 기준크기)));
     },
     화면크기변경() {
+      this.모바일보기 = window.innerWidth <= 850;
+      if (!this.모바일보기) { this.목록닫기(); }
       const 칸수 = this.한줄칸수();
       if (칸수 === this.현재한줄칸수) { return; }
       this.현재한줄칸수 = 칸수;
@@ -341,7 +346,6 @@ export default defineComponent({
     },
 
     reset(새로시작 = false) {
-      const 다시시작 = this.그림판 !== null;
       this.입력기록저장();
       this.밀린기록저장();
       this.그림판?.종료();
@@ -397,11 +401,29 @@ export default defineComponent({
       }));
       this.그림판 = 그림판;
       그림판.그리기();
-      if (다시시작) {
-        this.$nextTick(() => document.querySelector('.지문머리')?.scrollIntoView({ block: 'start', behavior: 'smooth' }));
-      }
+      this.$nextTick(() => {
+        const 종이 = document.querySelector('.종이');
+        if (종이) { 종이.scrollTop = 0; }
+      });
       const self = this;
       window.onkeydown = (e: KeyboardEvent) => {
+        if (e.code === 'Escape' && self.목록열림) {
+          self.목록닫기();
+          return;
+        }
+        if (e.code === 'Tab' && self.목록열림) {
+          const 버튼들 = Array.from(document.querySelectorAll<HTMLElement>('.선택패널 button'));
+          const 첫버튼 = 버튼들[0];
+          const 끝버튼 = 버튼들[버튼들.length - 1];
+          if (e.shiftKey && document.activeElement === 첫버튼) {
+            e.preventDefault();
+            끝버튼?.focus();
+          } else if (!e.shiftKey && document.activeElement === 끝버튼) {
+            e.preventDefault();
+            첫버튼?.focus();
+          }
+          return;
+        }
         if (e.code === 'Escape' && self.설정열림) {
           self.설정열림 = false;
           return;
@@ -413,7 +435,7 @@ export default defineComponent({
             e.code.startsWith('Alt') || e.code.startsWith('Meta') ||
             e.getModifierState('Control') || e.getModifierState('Alt') || e.getModifierState('Meta') ||
             !/^(Key[A-Z]|Digit[0-9]|Space|Enter|Backspace|Backquote|Minus|Equal|BracketLeft|BracketRight|Backslash|Semicolon|Quote|Comma|Period|Slash)$/.test(e.code) ||
-            self.결과화면보이기) {
+            self.결과화면보이기 || self.목록열림) {
           return;
         }
         e.preventDefault();
@@ -448,13 +470,15 @@ export default defineComponent({
           self.입력기록저장();
           self.저장대기(시도완료(self.시도ID, 걸린밀리초, self.총입력타수, self.정타수));
           self.결과화면보이기 = true;
-          self.$nextTick(() => document.querySelector('.마침')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }));
         } else {
           const 커서세로 = 그림판.커서세로위치;
           if (커서세로 !== null) {
-            const 경계 = window.innerHeight - 100;
-            const 화면세로 = 캔버스.getBoundingClientRect().top + 커서세로 * 캔버스.clientHeight / 캔버스.height;
-            if (화면세로 > 경계) { window.scrollBy(0, 화면세로 - 경계); }
+            const 종이 = 캔버스.closest('.종이');
+            if (종이) {
+              const 화면세로 = 캔버스.getBoundingClientRect().top + 커서세로 * 캔버스.clientHeight / 캔버스.height;
+              const 경계 = 종이.getBoundingClientRect().bottom - 36;
+              if (화면세로 > 경계) { 종이.scrollTop += 화면세로 - 경계; }
+            }
           }
         }
       };
@@ -643,38 +667,17 @@ button { font: inherit; }
 .가장자리끝표시 { display: flex; justify-content: space-between; margin-top: 4px; color: var(--옅은글); font-size: 11px; }
 .설정안내 { margin: 3px 0 0; color: var(--옅은글); font-size: 11px; }
 
-.소개 {
-  display: flex;
-  align-items: end;
-  justify-content: space-between;
-  gap: 32px;
-  padding: 60px 0 58px;
-}
-.작은제목, .분류, .마침꼬리 {
+.분류, .마침꼬리 {
   color: var(--강조);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: .08em;
 }
-.작은제목 { display: flex; align-items: center; gap: 9px; margin: 0 0 18px; }
-.작은점 { width: 7px; height: 7px; border-radius: 50%; background: var(--강조); }
-.소개 h1 {
-  margin: 0;
-  font-family: 'AppleMyungjo', 'Nanum Myeongjo', 'Batang', serif;
-  font-size: clamp(35px, 4.2vw, 55px);
-  font-weight: 500;
-  letter-spacing: -.055em;
-  line-height: 1.38;
-}
-.소개 h1 em { color: var(--강조); font-style: normal; }
-.소개글 { margin: 0 2px 9px 0; color: var(--보조글); font-size: 14px; line-height: 2.05; }
-
 .작업공간 { padding-bottom: 84px; }
 .선택머리 { display: flex; justify-content: space-between; align-items: end; gap: 20px; }
 .구역번호 { color: var(--강조); font-size: 12px; font-weight: 700; letter-spacing: .08em; }
 .구역번호 span { padding: 0 5px; color: var(--옅은글); }
 .선택머리 h2 { margin: 9px 0 0; font-size: 18px; font-weight: 650; letter-spacing: -.045em; }
-.선택안내 { padding-bottom: 2px; color: var(--옅은글); font-size: 12px; }
 .글테마선택 { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; width: min(100%, 542px); margin-top: 18px; }
 .글테마선택 button {
   min-width: 0;
@@ -757,8 +760,6 @@ button { font: inherit; }
 .글자버튼 { padding: 4px 0; border: 0; background: none; color: var(--강조); font-size: 12px; cursor: pointer; }
 .글자버튼:hover { color: var(--글); text-decoration: underline; text-underline-offset: 4px; }
 .글자버튼 span { margin-left: 4px; font-size: 16px; }
-.작은도움 { margin: 21px 0 0; color: var(--옅은글); font-size: 12px; text-align: center; }
-
 .마침 {
   display: flex;
   align-items: center;
@@ -768,11 +769,8 @@ button { font: inherit; }
   padding: 23px 0 0;
   border-top: 1px solid var(--진행선);
 }
-.마침문양 { align-self: flex-start; color: var(--강조); font-size: 25px; }
 .마침꼬리 { margin: 0 0 10px; }
 .마침내용 { min-width: 0; }
-.마침 h3 { margin: 0; font-family: 'AppleMyungjo', 'Nanum Myeongjo', 'Batang', serif; font-size: 20px; font-weight: 500; line-height: 1.55; }
-.마침설명 { margin: 10px 0 0; color: var(--보조글); font-size: 12px; }
 .마침통계 { display: flex; flex-wrap: wrap; gap: 12px 26px; margin: 24px 0 0; padding: 15px 0 0; border-top: 1px solid var(--진행선); }
 .마침통계 div { display: flex; flex-direction: column; gap: 5px; }
 .마침통계 dt { color: var(--옅은글); font-size: 11px; }
@@ -782,25 +780,113 @@ button { font: inherit; }
 .주버튼:hover { background: var(--강조호버); }
 .주버튼 span { margin-left: 12px; }
 button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
-.바닥 { display: flex; justify-content: space-between; padding: 23px 0 34px; border-top: 1px solid var(--테두리); color: var(--옅은글); font-size: 11px; letter-spacing: .07em; }
+/* 글 선택, 입력, 결과가 같은 높이 안에서 이어지는 작업대 */
+.페이지 { display: flex; flex-direction: column; height: 100dvh; }
+.상단 { flex: none; height: 62px; }
+.작업공간 {
+  display: grid;
+  grid-template-columns: 252px minmax(0, 1fr);
+  gap: 18px;
+  flex: 1;
+  min-height: 0;
+  padding: 16px 0 20px;
+}
+.모바일선택줄, .목록가림막, .목록닫기 { display: none; }
+.선택패널 {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 20px 14px 14px;
+  border: 1px solid var(--테두리);
+  border-radius: 3px;
+  background: var(--선택안함);
+}
+.선택머리 { align-items: start; }
+.선택머리 h2 { margin-top: 6px; font-size: 17px; }
+.글테마선택 { grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; gap: 6px; margin-top: 18px; }
+.글테마선택 button { padding: 8px 5px; font-size: 12px; }
+.지문서랍 { display: flex; flex-direction: column; flex: 1; min-height: 0; margin-top: 20px; }
+.글목록 { display: flex; flex-direction: column; flex: 1; min-height: 0; gap: 6px; overflow-y: auto; overscroll-behavior: contain; padding-right: 3px; }
+.글목록 button { min-height: 51px; flex: none; padding: 9px 11px; }
+.필사패널 { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.종이 {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 18px clamp(18px, 3vw, 38px) 28px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.지문머리 { padding-top: 12px; }
+.분류 { margin-bottom: 8px; }
+.지문머리 h2 { font-size: clamp(24px, 2.5vw, 30px); }
+.출처 { margin-top: 7px; }
+.가는선 { margin-top: 18px; }
+.캔버스영역 { margin-top: 16px; }
+.진행판 { flex: none; max-width: none; margin: 8px 0 0; padding: 12px 19px; }
+.진행아래 { margin-top: 9px; }
+.마침 { max-width: none; gap: 18px; margin-top: 10px; padding-top: 11px; }
+.마침내용 { flex: 1; }
+.마침꼬리 { margin: 0; }
+.마침통계 { gap: 8px 22px; margin-top: 10px; padding-top: 10px; }
+.마침동작 { flex: none; }
 
-@media (max-width: 700px) {
-  .페이지 { padding: 0 18px; }
-  .글테마선택 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .글테마선택 button:last-child:nth-child(odd) { grid-column: span 2; }
-  .상단 { height: 66px; }
-  .상단문구, .선택안내 { display: none; }
-  .소개 { display: block; padding: 41px 0 42px; }
-  .소개글 { margin-top: 22px; font-size: 13px; }
-  .글목록 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .종이 { padding: 22px 17px 25px; }
-  .지문머리 { padding-top: 34px; }
-  .가는선 { margin-top: 27px; }
-  .캔버스영역 { margin-top: 18px; }
-  .진행판 { margin-top: 22px; padding: 18px 17px; }
-  .진행아래 { align-items: start; flex-direction: column; gap: 11px; }
-  .마침 { align-items: start; flex-wrap: wrap; gap: 14px; }
-  .마침동작 { align-items: start; flex-direction: row; flex-wrap: wrap; width: 100%; margin: 3px 0 0 0; }
+@media (max-width: 850px) {
+  .페이지 { padding: 0 14px; }
+  .상단 { height: 56px; }
+  .상단문구 { display: none; }
+  .작업공간 { display: flex; flex-direction: column; gap: 9px; padding: 9px 0 11px; }
+  .모바일선택줄 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex: none;
+    min-height: 44px;
+  }
+  .모바일선택줄 div { display: flex; flex-direction: column; min-width: 0; gap: 3px; }
+  .모바일선택줄 div span { color: var(--옅은글); font-size: 10px; }
+  .모바일선택줄 strong { overflow: hidden; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
+  .모바일선택줄 button { flex: none; padding: 8px 10px; border: 1px solid var(--테두리); border-radius: 3px; background: var(--선택안함); color: var(--글); font-size: 12px; cursor: pointer; }
+  .모바일선택줄 button span { margin-left: 7px; }
+  .목록가림막 { display: block; position: fixed; z-index: 19; inset: 0; background: rgba(0, 0, 0, .4); }
+  .선택패널 {
+    position: fixed;
+    z-index: 20;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    box-sizing: border-box;
+    height: min(90dvh, 800px);
+    padding: 20px 20px max(20px, env(safe-area-inset-bottom));
+    border-radius: 12px 12px 0 0;
+    background: var(--종이);
+    box-shadow: 0 -14px 40px rgba(0, 0, 0, .18);
+  }
+  .목록닫기 { display: block; border: 0; background: none; color: var(--보조글); font-size: 26px; line-height: 1; cursor: pointer; }
+  .글테마선택 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .글테마선택 button:last-child:nth-child(odd) { grid-column: auto; }
+  .글목록 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; }
+  .글목록 button { min-height: 56px; }
+  .필사패널 { flex: 1; }
+  .종이 { padding: 13px 16px 22px; }
+  .지문머리 { padding-top: 8px; }
+  .지문머리 h2 { font-size: 25px; }
+  .가는선 { margin-top: 15px; }
+  .캔버스영역 { margin-top: 14px; }
+  .진행판 { margin-top: 7px; padding: 10px 14px; }
+  .진행아래 { flex-direction: row; align-items: center; gap: 8px; margin-top: 8px; }
+  .마침 { align-items: start; flex-wrap: wrap; gap: 8px; }
+  .마침내용 { flex-basis: 100%; }
+  .마침통계 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+  .마침통계 dd { font-size: 11px; }
+  .마침동작 { width: auto; margin: 0; }
+  .주버튼 { padding: 8px 11px; }
+}
+
+@media (max-width: 380px) {
+  .진행아래 > span { display: none; }
+  .마침통계 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (prefers-reduced-motion: reduce) {
