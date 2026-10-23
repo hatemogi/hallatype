@@ -166,6 +166,7 @@ import { 기본필사설정, 필사설정, 필사설정읽기, 필사설정저�
 
 const 테마선택지: Array<{ 이름: 필사테마 }> = [
   { 이름: '한지' }, { 이름: '새벽' }, { 이름: '밤' }, { 이름: '매트릭스' }, { 이름: 'PC통신' },
+  { 이름: '호박색 모니터' },
 ];
 const 글자크기선택지: 지문크기[] = ['보통', '크게'];
 const 가장자리단계이름 = ['선명하게', '조금 선명하게', '보통', '조금 부드럽게', '부드럽게'];
@@ -662,14 +663,36 @@ export default defineComponent({
   --완료색: #e2fff0;
 }
 
-.필사실:is([data-theme='매트릭스'], [data-theme='PC통신']) .지문머리 h2 {
+.필사실[data-theme='호박색 모니터'] {
+  --화면: #120e08;
+  --장식빛: rgba(255, 166, 55, .08);
+  --글: #f8d79a;
+  --보조글: #cfaa70;
+  --옅은글: #ab8656;
+  --강조: #ffbc55;
+  --강조호버: #ffd98b;
+  --역글: #231306;
+  --테두리: #77512a;
+  --연테두리: #704a27;
+  --종이: #1b1209;
+  --선택바탕: #3b2712;
+  --선택안함: #24180c;
+  --진행바탕: #271a0d;
+  --진행테두리: #79552f;
+  --진행선: #654522;
+  --진행활성: #ffc15e;
+  --오류색: #ff9476;
+  --완료색: #f9d383;
+}
+
+.필사실:is([data-theme='매트릭스'], [data-theme='PC통신'], [data-theme='호박색 모니터']) .지문머리 h2 {
   font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
   font-weight: 700;
   letter-spacing: -.02em;
 }
-.필사실:is([data-theme='매트릭스'], [data-theme='PC통신']) .브랜드문양,
-.필사실:is([data-theme='매트릭스'], [data-theme='PC통신']) .종이,
-.필사실:is([data-theme='매트릭스'], [data-theme='PC통신']) .진행판 {
+.필사실:is([data-theme='매트릭스'], [data-theme='PC통신'], [data-theme='호박색 모니터']) .브랜드문양,
+.필사실:is([data-theme='매트릭스'], [data-theme='PC통신'], [data-theme='호박색 모니터']) .종이,
+.필사실:is([data-theme='매트릭스'], [data-theme='PC통신'], [data-theme='호박색 모니터']) .진행판 {
   border-radius: 0;
 }
 
@@ -718,6 +741,7 @@ button { font: inherit; }
 .테마견본[data-theme='밤'] { background: #222c31; color: #e2e7df; }
 .테마견본[data-theme='매트릭스'] { background: #08190e; color: #9affaa; text-shadow: 0 0 7px rgba(99, 245, 131, .65); }
 .테마견본[data-theme='PC통신'] { background: #102287; color: #fff; }
+.테마견본[data-theme='호박색 모니터'] { background: #1b1209; color: #ffdc94; text-shadow: 0 0 7px rgba(255, 191, 87, .65); }
 .설정선택 { display: flex; gap: 7px; }
 .설정선택 button { min-width: 72px; padding: 8px 13px; border: 1px solid var(--테두리); border-radius: 3px; background: var(--선택안함); color: var(--글); font-size: 12px; cursor: pointer; }
 .가장자리선택 input { display: block; width: 100%; margin: 0; accent-color: var(--강조); cursor: pointer; }
@@ -870,6 +894,7 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
 .필사패널 { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 .필사실[data-theme='매트릭스'] .종이 { box-shadow: inset 0 0 38px rgba(43, 202, 82, .06); }
 .필사실[data-theme='PC통신'] .종이 { box-shadow: none; }
+.필사실[data-theme='호박색 모니터'] .종이 { box-shadow: inset 0 0 38px rgba(255, 166, 55, .06); }
 .종이 {
   flex: 1;
   min-height: 0;
