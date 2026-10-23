@@ -6,6 +6,7 @@ import { 한글글꼴, 라틴글꼴, 특수문자 } from './fonts';
 import { antialiasFont, upscaleFont } from './font-editor';
 import { expandedMask, practiceMasks } from './practice-mask';
 import { MaskSet } from './key-mask';
+import { 필사팔레트, 필사팔레트들 } from './practice-settings';
 
 type 비트맵 = number[];
 type 글자칸 = { 화면위치: 위치틀; 너비: number };
@@ -18,10 +19,10 @@ type 그릴본문 = {
 const 연습글꼴 = upscaleFont(한글글꼴);
 const 안티앨리어싱글꼴 = antialiasFont(연습글꼴);
 const 픽셀배율 = 2;
-const 한줄칸수 = 80;
+const 기본한줄칸수 = 80;
 const 줄끝기호 = ' !,.:;?)]}';
 
-function 줄의공백넓히기(그릴칸들: 그릴칸[]) {
+function 줄의공백넓히기(그릴칸들: 그릴칸[], 한줄칸수: number) {
     const 행별칸들 = new Map<number, 그릴칸[]>();
     for (const 칸 of 그릴칸들) {
         const 행 = 칸.화면위치.행;
@@ -69,6 +70,9 @@ export default class 그림판틀 {
     private ctx!: CanvasRenderingContext2D;
     private 본문: 그릴본문;
     private 안티앨리어싱강도 = 100;
+    private 팔레트: 필사팔레트;
+    private 한줄칸수: number;
+    private 깜빡임허용: boolean;
     private 글자칸들 = new Map<string, 글자칸>();
     private 커서키?: string;
     private 커서보임 = true;
@@ -80,9 +84,13 @@ export default class 그림판틀 {
     // 본문의 어느 부분을 보일 것인가?
     private viewPort: [number, number, number, number] = [0, 0, 0, 0];
 
-    constructor(ctx: CanvasRenderingContext2D, 본문: 그릴본문) {
+    constructor(ctx: CanvasRenderingContext2D, 본문: 그릴본문,
+                보기: { 팔레트?: 필사팔레트; 한줄칸수?: number; 커서깜빡임?: boolean } = {}) {
         this.ctx = ctx;
         this.본문 = 본문;
+        this.팔레트 = 보기.팔레트 ?? 필사팔레트들.한지;
+        this.한줄칸수 = 보기.한줄칸수 ?? 기본한줄칸수;
+        this.깜빡임허용 = 보기.커서깜빡임 ?? true;
         let storage: Storage | undefined;
         try { storage = typeof window === 'undefined' ? undefined : window.localStorage; } catch (_) { /* 저장소 없이 실행 */ }
         this.마스크들 = practiceMasks(storage);
@@ -90,6 +98,14 @@ export default class 그림판틀 {
 
     public 안티앨리어싱강도설정(강도: number) {
         this.안티앨리어싱강도 = Math.max(0, Math.min(300, 강도));
+    }
+
+    public 보기설정(팔레트: 필사팔레트, 한줄칸수: number, 커서깜빡임: boolean) {
+        this.오타효과중지(false);
+        this.팔레트 = 팔레트;
+        this.한줄칸수 = 한줄칸수;
+        this.깜빡임허용 = 커서깜빡임;
+        this.그리기();
     }
 
     public 오타효과시작(위치: 위치틀) {
@@ -159,12 +175,12 @@ export default class 그림판틀 {
                 이전코드 !== 32 && 이전코드 !== 10;
             const 줄끝에남길글자 = 지문글자.다음행 || 줄끝기호.includes(String.fromCodePoint(코드)) || 닫는따옴표;
             // 문서 위치와 원문은 그대로 두고, 그리는 위치에서만 줄바꿈을 조정한다.
-            if (!줄끝에남길글자 && 화면위치.열 + 칸수 > 한줄칸수) {
+            if (!줄끝에남길글자 && 화면위치.열 + 칸수 > this.한줄칸수) {
                 화면위치 = 화면위치.다음행;
             }
             const 너비 = 지문글자.전각 ? 32 : 16;
             const 키 = this.위치키(문서위치);
-            if (색자.배경색 === color.필사커서) { this.커서키 = 키; }
+            if (색자.배경색 === this.팔레트.커서) { this.커서키 = 키; }
             그릴칸들.push({ 문서위치, 화면위치, 색자, 너비, 코드, 다음행: 지문글자.다음행 });
             마지막행 = Math.max(마지막행, 화면위치.행);
             이전코드 = 코드;
@@ -176,15 +192,15 @@ export default class 그림판틀 {
                 문서위치 = 문서위치.다음;
             }
         }
-        줄의공백넓히기(그릴칸들);
-        let 오른쪽끝 = 한줄칸수 * 16;
+        줄의공백넓히기(그릴칸들, this.한줄칸수);
+        let 오른쪽끝 = this.한줄칸수 * 16;
         for (const 칸 of 그릴칸들) {
             this.글자칸들.set(this.위치키(칸.문서위치), { 화면위치: 칸.화면위치, 너비: 칸.너비 });
             오른쪽끝 = Math.max(오른쪽끝, 칸.화면위치.열 * 16 + 칸.너비);
         }
-        this.ctx.canvas.width = Math.max(1286, 오른쪽끝 + 6);
+        this.ctx.canvas.width = Math.max(this.한줄칸수 * 16 + 6, 오른쪽끝 + 6);
         this.ctx.canvas.height = Math.max(500, (마지막행 + 1) * 44);
-        this.바탕지우기(color.흰색);
+        this.바탕지우기(this.팔레트.종이);
         for (const { 화면위치: 위치, 색자, 너비 } of 그릴칸들) {
             this.글자그리기(위치, 색자, 너비);
         }
@@ -202,10 +218,10 @@ export default class 그림판틀 {
             const 칸 = this.글자칸들.get(키);
             if (!칸) { continue; }
             const [x, y] = this.textToGraphic(칸.화면위치);
-            this.ctx.fillStyle = '#fff';
+            this.ctx.fillStyle = this.종이색();
             this.ctx.fillRect(x, y, 칸.너비, 44);
             const {value, done} = this.본문.글자스트림(문서위치).next();
-            if (done || value.배경색 !== color.필사커서) {
+            if (done || value.배경색 !== this.팔레트.커서) {
                 if (this.커서키 === 키) { this.커서키 = undefined; }
             } else {
                 this.커서키 = 키;
@@ -221,16 +237,16 @@ export default class 그림판틀 {
     }
 
     private 커서깜빡임시작() {
-        if (!this.커서키 || this.오타효과 || typeof window === 'undefined' ||
+        if (!this.깜빡임허용 || !this.커서키 || this.오타효과 || typeof window === 'undefined' ||
             !window.setInterval || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) { return; }
         this.깜빡임타이머 = window.setInterval(() => {
             const 칸 = this.커서키 && this.글자칸들.get(this.커서키);
             if (!칸) { return; }
             const [x, y] = this.textToGraphic(칸.화면위치);
             this.커서보임 = !this.커서보임;
-            this.ctx.fillStyle = '#fff';
+            this.ctx.fillStyle = this.종이색();
             this.ctx.fillRect(x, y + 32, 칸.너비, 4);
-            if (this.커서보임) { this.바탕칠하기(칸.화면위치, 칸.너비, color.필사커서, false); }
+            if (this.커서보임) { this.바탕칠하기(칸.화면위치, 칸.너비, this.팔레트.커서, false); }
         }, 500);
     }
 
@@ -277,12 +293,18 @@ export default class 그림판틀 {
         this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
     }
 
+    private 종이색(): string {
+        if (this.팔레트.종이 === color.흰색) { return '#fff'; }
+        const [r, g, b, a] = this.팔레트.종이;
+        return `rgba(${r}, ${g}, ${b}, ${a / 255.0})`;
+    }
+
     private 바탕칠하기(위치: 위치틀, 너비: number, 배경색: color.RGBA, 오타효과: boolean) {
         if (배경색 === color.흰색) {
             return;
         }
         const [x, y] = this.textToGraphic(위치);
-        const 색 = 오타효과 ? color.필사안내 : 배경색;
+        const 색 = 오타효과 ? this.팔레트.안내 : 배경색;
         const [r, g, b, a] = 색;
         this.ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${a / 255.0})`;
         const 이동 = 오타효과 && this.오타효과?.흔들림
@@ -295,9 +317,9 @@ export default class 그림판틀 {
         const 칸 = this.글자칸들.get(효과.키);
         if (!칸) { return; }
         const [x, y] = this.textToGraphic(칸.화면위치);
-        this.ctx.fillStyle = '#fff';
+        this.ctx.fillStyle = this.종이색();
         this.ctx.fillRect(x, y + 32, 칸.너비, 4);
-        this.바탕칠하기(칸.화면위치, 칸.너비, 활성 ? color.필사안내 : color.필사커서, 활성);
+        this.바탕칠하기(칸.화면위치, 칸.너비, 활성 ? this.팔레트.안내 : this.팔레트.커서, 활성);
     }
 
     // 좌표 변환

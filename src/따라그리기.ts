@@ -1,6 +1,7 @@
 import { 위치틀, 지문틀 } from './본문';
 import { 글자꼴, 색칠할글자 } from './글자';
 import * as 색상 from './색상';
+import { 필사팔레트, 필사팔레트들 } from './practice-settings';
 
 type 자소 = 0 | 1 | 2;
 type 키 = { code: string; shift: boolean };
@@ -49,12 +50,12 @@ function 자소키(글자: 글자꼴): Array<[자소, 키[]]> {
     return 결과;
 }
 
-function 상태색(값: 상태): 색상.RGBA {
+function 상태색(값: 상태, 팔레트: 필사팔레트): 색상.RGBA {
     switch (값) {
-        case '정타': return 색상.필사먹색;
-        case '오타': return 색상.필사안내;
-        case '정정': return 색상.필사먹색;
-        default: return 색상.필사바탕글;
+        case '정타': return 팔레트.먹색;
+        case '오타': return 팔레트.안내;
+        case '정정': return 팔레트.먹색;
+        default: return 팔레트.바탕글;
     }
 }
 
@@ -68,8 +69,10 @@ export class 따라그리기틀 {
     private 맞은타수 = 0;
     private 건너뛴타수 = 0;
     private 마지막오타 = false;
+    private 팔레트: 필사팔레트;
 
-    constructor(private readonly 지문: 지문틀) {
+    constructor(private readonly 지문: 지문틀, 팔레트: 필사팔레트 = 필사팔레트들.한지) {
+        this.팔레트 = 팔레트;
         let 위치 = new 위치틀();
         while (!지문.글자(위치).끝) {
             const 글자 = 지문.글자(위치);
@@ -89,6 +92,7 @@ export class 따라그리기틀 {
     }
 
     public 지문글자(위치: 위치틀): 글자꼴 { return this.지문.글자(위치); }
+    public 팔레트설정(팔레트: 필사팔레트) { this.팔레트 = 팔레트; }
     public get 위치(): 위치틀 {
         return this.글자들[this.획들[this.획번호]?.글자번호]?.위치 || this.지문.위치;
     }
@@ -140,10 +144,10 @@ export class 따라그리기틀 {
                     return { done: true, value: undefined };
                 }
                 const { 글자, 상태, 키상태 } = this.글자들[번호];
-                const 색 = 상태.map(상태색);
+                const 색 = 상태.map((값) => 상태색(값, this.팔레트));
                 const 키색 = 키상태.map((키들): [색상.RGBA, 색상.RGBA] | undefined =>
-                    키들.length === 2 ? [상태색(키들[0]), 상태색(키들[1])] : undefined);
-                const 배경색 = 번호 === this.획들[this.획번호]?.글자번호 ? 색상.필사커서 : 색상.흰색;
+                    키들.length === 2 ? [상태색(키들[0], this.팔레트), 상태색(키들[1], this.팔레트)] : undefined);
+                const 배경색 = 번호 === this.획들[this.획번호]?.글자번호 ? this.팔레트.커서 : 색상.흰색;
                 번호++;
                 return { done: false, value: new 색칠할글자(글자, 색, 배경색, 키색) };
             },
