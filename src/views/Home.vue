@@ -23,7 +23,7 @@
             <span class="구역번호">01 <span aria-hidden="true">/</span> 글 고르기</span>
             <h2>오늘 어떤 글에 머물까요?</h2>
           </div>
-          <span class="선택안내">마음에 드는 글을 골라 시작하세요</span>
+          <span class="선택안내">한 편 약 2분, 더 쓰고 싶을 때 이어가세요</span>
         </div>
         <div class="글선택" role="group" aria-label="필사할 글 선택">
           <button v-for="(지문, 번호) in 지문목록" :key="지문.제목" type="button" class="글버튼"
@@ -41,7 +41,7 @@
             <span class="종이장식" aria-hidden="true">✳</span>
           </div>
           <div class="지문머리">
-            <p class="분류">오늘의 문장</p>
+            <p class="분류">오늘의 문장 <span class="편표시">· {{선택된편 + 1}} / {{현재편들.length}}</span></p>
             <h2 id="지문제목">{{지문목록[선택된지문].제목}}</h2>
             <p class="출처">
               {{지문목록[선택된지문].출처}}
@@ -53,7 +53,7 @@
 
           <div class="캔버스영역">
             <canvas id="캔버스" width="1286" height="500"
-              :aria-label="`${지문목록[선택된지문].제목} 필사 지문. 키보드로 따라 입력하세요.`"></canvas>
+              :aria-label="`${지문목록[선택된지문].제목} ${선택된편 + 1}편 필사 지문. 키보드로 따라 입력하세요.`"></canvas>
           </div>
         </article>
 
@@ -65,7 +65,7 @@
               <span class="진행숫자">{{진행률}}%</span>
             </div>
             <div class="진행막대" role="progressbar" :aria-valuenow="진행률" aria-valuemin="0"
-              aria-valuemax="100" :aria-label="`${지문목록[선택된지문].제목} 필사 진행률`">
+              aria-valuemax="100" :aria-label="`${지문목록[선택된지문].제목} ${선택된편 + 1}편 필사 진행률`">
               <span :style="{ width: `${진행률}%` }"></span>
             </div>
           </div>
@@ -75,7 +75,7 @@
             <div class="마침내용">
               <p class="마침꼬리">한 편을 마쳤어요</p>
               <h3>문장을 따라 걸어온 시간이<br>잠시 마음에 남기를 바랍니다.</h3>
-              <p class="마침설명">조금 쉬었다가, 또 다른 글을 만나 보세요.</p>
+              <p class="마침설명">여기서 마쳐도 좋고, 다음 편을 이어 써도 좋아요.</p>
               <dl class="마침통계" aria-label="이번 필사 기록">
                 <div><dt>걸린 시간</dt><dd>{{걸린시간}}</dd></div>
                 <div><dt>정타 / 총입력</dt><dd>{{정타수}}/{{총입력타수}}</dd></div>
@@ -83,7 +83,8 @@
               </dl>
             </div>
             <div class="마침동작">
-              <button type="button" class="주버튼" @click="다음글">다른 글 쓰기 <span aria-hidden="true">↗</span></button>
+              <button type="button" class="주버튼" @click="다음글">한 편 더 쓰기 <span aria-hidden="true">↗</span></button>
+              <span class="다음안내">다음: {{다음편안내}}</span>
               <button type="button" class="글자버튼" @click="reset">한 번 더 쓰기</button>
             </div>
           </div>
@@ -111,13 +112,14 @@ import { 끝글자 } from '@/글자';
 import { 지문틀 } from '@/본문';
 import { 따라그리기틀 } from '@/따라그리기';
 import 그림판틀 from '@/그림판';
-import { 연습지문들 } from '@/practice-passages';
+import { 연습지문들, 필사편들 } from '@/practice-passages';
 
 export default defineComponent({
   data() {
     return {
       지문목록: 연습지문들,
       선택된지문: 0,
+      선택된편: 0,
       진행률: 0,
       입력상태: '대기' as '대기' | '진행' | '오타' | '정정',
       결과화면보이기: false,
@@ -132,13 +134,19 @@ export default defineComponent({
   methods: {
     지문선택(번호: number, event: MouseEvent) {
       (event.currentTarget as HTMLElement).blur();
-      if (this.선택된지문 === 번호) { return; }
+      if (this.선택된지문 === 번호 && this.선택된편 === 0) { return; }
       this.선택된지문 = 번호;
+      this.선택된편 = 0;
       this.reset();
     },
 
     다음글() {
-      this.선택된지문 = (this.선택된지문 + 1) % this.지문목록.length;
+      if (this.선택된편 + 1 < this.현재편들.length) {
+        this.선택된편++;
+      } else {
+        this.선택된지문 = (this.선택된지문 + 1) % this.지문목록.length;
+        this.선택된편 = 0;
+      }
       this.reset();
     },
 
@@ -154,7 +162,7 @@ export default defineComponent({
       this.정타수 = 0;
       this.분당타수 = 0;
       const 지문 = new 지문틀();
-      지문.글쓰기(this.지문목록[this.선택된지문].본문);
+      지문.글쓰기(this.현재편들[this.선택된편]);
       지문.쓰기(지문.위치, 끝글자);
       const 본문 = new 따라그리기틀(지문);
       const 캔버스 = document.getElementById('캔버스') as HTMLCanvasElement;
@@ -218,6 +226,15 @@ export default defineComponent({
     this.그림판?.종료();
   },
   computed: {
+    현재편들() {
+      return 필사편들(this.지문목록[this.선택된지문]);
+    },
+    다음편안내() {
+      if (this.선택된편 + 1 < this.현재편들.length) {
+        return `${this.지문목록[this.선택된지문].제목} · ${this.선택된편 + 2}편`;
+      }
+      return `${this.지문목록[(this.선택된지문 + 1) % this.지문목록.length].제목} · 1편`;
+    },
     걸린시간() {
       return `${Math.floor(this.완료초 / 60)}분 ${this.완료초 % 60}초`;
     },
@@ -343,6 +360,7 @@ button { font: inherit; }
 .종이장식 { color: #b39d7b; font-size: 20px; }
 .지문머리 { padding-top: 43px; text-align: center; }
 .분류 { margin: 0 0 13px; }
+.편표시 { color: #a99a83; font-weight: 500; }
 .지문머리 h2 {
   margin: 0;
   font-family: 'AppleMyungjo', 'Nanum Myeongjo', 'Batang', serif;
@@ -398,6 +416,7 @@ button { font: inherit; }
 .마침통계 dt { color: #a19a8d; font-size: 11px; }
 .마침통계 dd { margin: 0; color: #716b60; font-size: 12px; font-variant-numeric: tabular-nums; }
 .마침동작 { display: flex; flex-direction: column; align-items: center; gap: 9px; margin-left: auto; }
+.다음안내 { max-width: 180px; color: #958f83; font-size: 11px; text-align: center; line-height: 1.5; }
 .주버튼 { min-width: 132px; padding: 11px 14px; border: 1px solid #82755f; border-radius: 2px; background: #82755f; color: #fff; font-size: 12px; cursor: pointer; }
 .주버튼:hover { background: #665b49; }
 .주버튼 span { margin-left: 12px; }
@@ -423,6 +442,7 @@ button:focus-visible { outline: 2px solid #947c5e; outline-offset: 3px; }
   .진행아래 { align-items: start; flex-direction: column; gap: 11px; }
   .마침 { align-items: start; flex-wrap: wrap; gap: 14px; }
   .마침동작 { align-items: start; flex-direction: row; flex-wrap: wrap; width: 100%; margin: 3px 0 0 0; }
+  .다음안내 { align-self: center; text-align: left; }
 }
 
 @media (prefers-reduced-motion: reduce) {
