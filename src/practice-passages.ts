@@ -1,5 +1,6 @@
 /** 필사 화면에서 고를 수 있는 지문. */
 export interface 연습지문 {
+  id: string;
   제목: string;
   출처: string;
   본문: string;
@@ -10,6 +11,7 @@ export interface 연습지문 {
 
 export const 연습지문들: readonly 연습지문[] = [
   {
+    id: 'eTKxFMoijNJD',
     제목: '동백꽃',
     출처: '김유정 · 동백꽃',
     첫편문단수: 2,
@@ -33,6 +35,7 @@ export const 연습지문들: readonly 연습지문[] = [
       + '서로 만나도 본체 만 척하고 이렇게 점잖게 지내던 터이련만 오늘로 갑작스레 대견해졌음은 웬일인가.',
   },
   {
+    id: 'WTUxCpJcxExF',
     제목: '비 오는 오후',
     출처: '창작 지문',
     첫편문단수: 3,
@@ -54,6 +57,7 @@ export const 연습지문들: readonly 연습지문[] = [
       + '나는 차가 식기 전에 한 모금 마시고, 빗소리가 멎은 자리의 소리에 가만히 귀를 기울였다.',
   },
   {
+    id: 'tQLRtXMVnPav',
     제목: '첫 기차',
     출처: '창작 지문',
     첫편문단수: 3,
@@ -79,6 +83,7 @@ export const 연습지문들: readonly 연습지문[] = [
   // 원문: https://ko.wikisource.org/wiki/메밀꽃_필_무렵
   // 입력 가능한 문장부호로만 바꾸었으며, 표기와 어휘는 원문을 따른다.
   {
+    id: 'jMcAdtmEruzN',
     제목: '메밀꽃 · 장터의 불빛',
     출처: '이효석 · 메밀꽃 필 무렵 (발췌)',
     첫편문단수: 2,
@@ -106,6 +111,7 @@ export const 연습지문들: readonly 연습지문[] = [
       + '봉평에 다니기 시작한 젊은 시절의 일이었으나 그것을 생각할 적만은 그도 산 보람을 느꼈다.',
   },
   {
+    id: 'pbKuPVUcrksL',
     제목: '메밀꽃 · 달빛',
     출처: '이효석 · 메밀꽃 필 무렵 (발췌)',
     첫편문단수: 3,
@@ -131,6 +137,7 @@ export const 연습지문들: readonly 연습지문[] = [
       + '구수한 자주빛 연기가 밤 기운 속에 흘러서는 녹았다.',
   },
   {
+    id: 'HEmhAKljbcsl',
     제목: '메밀꽃 · 밤길',
     출처: '이효석 · 메밀꽃 필 무렵 (발췌)',
     첫편문단수: 3,
@@ -156,6 +163,7 @@ export const 연습지문들: readonly 연습지문[] = [
       + '걸음도 해깝고 방울소리가 밤 벌판에 한층 청청하게 울렸다. 달이 어지간히 기울어졌다.',
   },
   {
+    id: 'vkEyHahDkupD',
     제목: 'A Quiet Morning',
     출처: '창작 지문 · 영어',
     언어: 'en',
@@ -166,6 +174,7 @@ export const 연습지문들: readonly 연습지문[] = [
       + 'There will be messages to answer and work to finish. For now, I leave the notebook open. I breathe in, look at the leaf once more, and choose one small task to begin. A quiet start is enough for this morning.',
   },
   {
+    id: 'TUhOqAKiPFFd',
     제목: 'The Longer Way Home',
     출처: '창작 지문 · 영어',
     언어: 'en',
@@ -176,6 +185,7 @@ export const 연습지문들: readonly 연습지문[] = [
       + 'At last I turn toward my building. I can see a light in the kitchen window. I have taken no grand journey, yet the familiar door looks different. I carry the cool evening air inside with me and set my keys gently on the table.',
   },
   {
+    id: 'JHzaisymjkGw',
     제목: 'A Lamp at Dusk',
     출처: '창작 지문 · 영어',
     언어: 'en',

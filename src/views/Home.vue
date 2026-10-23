@@ -79,7 +79,8 @@
             :class="{ 선택됨: 선택된지문 === 번호 }" :aria-pressed="선택된지문 === 번호"
             @click="지문선택(번호, $event)">
             <span class="글번호">{{String(번호 + 1).padStart(2, '0')}}</span>
-            <span class="글제목">{{지문.제목}}</span>
+            <span class="글정보"><span class="글제목">{{지문.제목}}</span>
+              <span v-if="지문기록(번호)" class="글기록">{{지문기록(번호)}}</span></span>
             <span class="선택표시" aria-hidden="true">↗</span>
           </button>
         </div>
@@ -117,6 +118,8 @@
               aria-valuemax="100" :aria-label="`${지문목록[선택된지문].제목} ${선택된편 + 1}편 필사 진행률`">
               <span :style="{ width: `${진행률}%` }"></span>
             </div>
+            <p v-if="기록오류" class="기록안내" role="alert">진행 기록을 저장하지 못했어요. 브라우저 저장 공간을 확인해 주세요.</p>
+            <p v-else-if="이어쓰기복원됨" class="기록안내">이 브라우저에 저장된 지점부터 이어 씁니다.</p>
           </div>
 
           <div v-if="결과화면보이기" class="마침">
@@ -134,13 +137,13 @@
             <div class="마침동작">
               <button type="button" class="주버튼" @click="다음글">한 편 더 쓰기 <span aria-hidden="true">↗</span></button>
               <span class="다음안내">다음: {{다음편안내}}</span>
-              <button type="button" class="글자버튼" @click="reset">한 번 더 쓰기</button>
+              <button type="button" class="글자버튼" @click="다시쓰기">한 번 더 쓰기</button>
             </div>
           </div>
 
           <div v-else class="진행아래">
             <span>띄어쓰기와 줄바꿈은 건너뛰어도 괜찮아요.</span>
-            <button type="button" class="글자버튼" @click="reset">처음부터 다시 쓰기 <span aria-hidden="true">↺</span></button>
+            <button type="button" class="글자버튼" @click="다시쓰기">처음부터 다시 쓰기 <span aria-hidden="true">↺</span></button>
           </div>
         </section>
 
@@ -162,6 +165,9 @@ import { 지문틀 } from '@/본문';
 import { 따라그리기틀 } from '@/따라그리기';
 import 그림판틀 from '@/그림판';
 import { 연습지문들, 필사편들 } from '@/practice-passages';
+import { 본문버전, 브라우저저장소, 시도목록, 시도시작, 시도완료, 시도중단, 입력묶음,
+  진행작업읽기, 진행작업저장, 작업합치기, type 입력키, type 진행작업,
+  type 필사시도, type 이어쓰기원본 } from '@/practice-progress';
 import { 기본필사설정, 필사설정, 필사설정읽기, 필사설정저장,
   필사테마, 지문크기, 안티앨리어싱단계, 단계별안티앨리어싱강도, 필사팔레트들 } from '@/practice-settings';
 
@@ -188,11 +194,94 @@ export default defineComponent({
       총입력타수: 0,
       정타수: 0,
       분당타수: 0,
+      기록들: [] as 진행작업[],
+      시도ID: null as string | null,
+      이어쓰기원본: null as 이어쓰기원본 | null,
+      다음기록순서: 0,
+      미기록입력: [] as 입력키[],
+      미저장작업: [] as 진행작업[],
+      기록타이머: null as ReturnType<typeof setTimeout> | null,
+      기록오류: false,
+      이어쓰기복원됨: false,
       그림판: null as 그림판틀 | null,
       본문: null as 따라그리기틀 | null,
     };
   },
   methods: {
+    다른탭기록반영(event: StorageEvent) {
+      if (event.key?.startsWith('hallatype:progress:v1:op:')) {
+        this.기록들 = 작업합치기(this.기록들, 진행작업읽기());
+      }
+    },
+    저장대기(작업: 진행작업) {
+      this.미저장작업.push(작업);
+      this.밀린기록저장();
+    },
+    밀린기록저장() {
+      const 저장소 = 브라우저저장소();
+      while (this.미저장작업.length) {
+        const 작업 = this.미저장작업[0];
+        if (!진행작업저장(작업, 저장소)) { this.기록오류 = true; return; }
+        this.기록들 = 작업합치기(this.기록들, [작업]);
+        this.미저장작업.shift();
+      }
+      this.기록오류 = false;
+    },
+    입력기록저장() {
+      if (this.기록타이머 !== null) { clearTimeout(this.기록타이머); this.기록타이머 = null; }
+      if (!this.시도ID || !this.미기록입력.length) { this.밀린기록저장(); return; }
+      const 걸린밀리초 = Math.max(0, performance.now() - (this.시작시각 ?? performance.now()));
+      this.저장대기(입력묶음(this.시도ID, this.다음기록순서++, this.미기록입력, 걸린밀리초));
+      this.미기록입력 = [];
+    },
+    입력기록추가(키: 입력키) {
+      this.미기록입력.push(키);
+      if (this.미기록입력.length >= 20) { this.입력기록저장(); }
+      else if (this.기록타이머 === null) {
+        this.기록타이머 = setTimeout(() => this.입력기록저장(), 2000);
+      }
+    },
+    복원할시도(지문번호: number, 편번호: number): 필사시도 | undefined {
+      if (this.편완료(지문번호, 편번호)) { return undefined; }
+      const 지문 = this.지문목록[지문번호];
+      const 버전 = 본문버전(필사편들(지문)[편번호]);
+      return this.시도들
+        .filter((시도) => 시도.시작.passageId === 지문.id && 시도.시작.part === 편번호 + 1 &&
+          시도.시작.contentVersion === 버전 && 시도.복원가능 && !시도.완료 &&
+          !시도.중단됨 && 시도.입력들.length)
+        .sort((a, b) => b.마지막시각.localeCompare(a.마지막시각) ||
+          b.시작.attemptId.localeCompare(a.시작.attemptId))[0];
+    },
+    편완료(지문번호: number, 편번호: number): boolean {
+      const 지문 = this.지문목록[지문번호];
+      const 버전 = 본문버전(필사편들(지문)[편번호]);
+      return this.시도들.some((시도) => 시도.시작.passageId === 지문.id &&
+        시도.시작.part === 편번호 + 1 && 시도.시작.contentVersion === 버전 && !!시도.완료);
+    },
+    지문기록(지문번호: number): string {
+      const 완료 = [0, 1].filter((편번호) => this.편완료(지문번호, 편번호)).length;
+      return `${완료}/2편 완료${[0, 1].some((편번호) => this.복원할시도(지문번호, 편번호)) ? ' · 이어쓰기' : ''}`;
+    },
+    시작할편(지문번호: number): number {
+      const 이어쓸편 = [0, 1].find((편번호) => this.복원할시도(지문번호, 편번호));
+      if (이어쓸편 !== undefined) { return 이어쓸편; }
+      return [0, 1].find((편번호) => !this.편완료(지문번호, 편번호)) ?? 0;
+    },
+    다시쓰기() {
+      this.입력기록저장();
+      if (!this.결과화면보이기) {
+        const 기록지도 = new Map(this.시도들.map((시도) => [시도.시작.attemptId, 시도]));
+        const 확인 = new Set<string>();
+        let 중단할ID = this.시도ID ?? this.이어쓰기원본?.attemptId;
+        while (중단할ID && !확인.has(중단할ID)) {
+          확인.add(중단할ID);
+          const 시도 = 기록지도.get(중단할ID);
+          if (시도 && !시도.완료 && !시도.중단됨) { this.저장대기(시도중단(중단할ID)); }
+          중단할ID = 시도?.시작.continuedFrom?.attemptId;
+        }
+      }
+      this.reset(true);
+    },
     가장자리변경(event: Event) {
       this.설정변경({ 안티앨리어싱단계: Number((event.target as HTMLInputElement).value) as 안티앨리어싱단계 });
     },
@@ -214,9 +303,9 @@ export default defineComponent({
 
     지문선택(번호: number, event: MouseEvent) {
       (event.currentTarget as HTMLElement).blur();
-      if (this.선택된지문 === 번호 && this.선택된편 === 0) { return; }
+      if (this.선택된지문 === 번호) { return; }
       this.선택된지문 = 번호;
-      this.선택된편 = 0;
+      this.선택된편 = this.시작할편(번호);
       this.reset();
     },
 
@@ -225,13 +314,15 @@ export default defineComponent({
         this.선택된편++;
       } else {
         this.선택된지문 = (this.선택된지문 + 1) % this.지문목록.length;
-        this.선택된편 = 0;
+        this.선택된편 = this.시작할편(this.선택된지문);
       }
       this.reset();
     },
 
-    reset() {
+    reset(새로시작 = false) {
       const 다시시작 = this.그림판 !== null;
+      this.입력기록저장();
+      this.밀린기록저장();
       this.그림판?.종료();
       this.결과화면보이기 = false;
       this.진행률 = 0;
@@ -241,12 +332,34 @@ export default defineComponent({
       this.총입력타수 = 0;
       this.정타수 = 0;
       this.분당타수 = 0;
+      this.시도ID = null;
+      this.이어쓰기원본 = null;
+      this.다음기록순서 = 0;
+      this.이어쓰기복원됨 = false;
       const 지문 = new 지문틀();
       지문.글쓰기(this.현재편들[this.선택된편]);
       지문.쓰기(지문.위치, 끝글자);
       const 팔레트 = 필사팔레트들[this.설정.테마];
       const 본문 = markRaw(new 따라그리기틀(지문, 팔레트));
       this.본문 = 본문;
+      const 복원 = 새로시작 ? undefined : this.복원할시도(this.선택된지문, this.선택된편);
+      if (복원) {
+        this.이어쓰기원본 = { attemptId: 복원.시작.attemptId,
+          inputCount: 복원.입력들.length, elapsedMs: 복원.걸린밀리초 };
+        for (const 키 of 복원.입력들) { 본문.입력(키.code, 키.shift); }
+        this.진행률 = 본문.진행률;
+        this.입력상태 = 본문.방금오타 ? '오타' : '진행';
+        this.이어쓰기복원됨 = true;
+        if (본문.끝) {
+          const 걸린밀리초 = Math.max(1000, 복원.걸린밀리초);
+          this.완료초 = Math.max(1, Math.round(걸린밀리초 / 1000));
+          this.총입력타수 = 본문.입력타수;
+          this.정타수 = 본문.유효타수;
+          this.분당타수 = Math.round(this.정타수 * 60000 / 걸린밀리초);
+          this.결과화면보이기 = true;
+          this.저장대기(시도완료(복원.시작.attemptId, 걸린밀리초, this.총입력타수, this.정타수));
+        }
+      }
       const 캔버스 = document.getElementById('캔버스') as HTMLCanvasElement;
       const ctx = 캔버스.getContext('2d', { alpha: false }) as CanvasRenderingContext2D;
       const 그림판 = markRaw(new 그림판틀(ctx, 본문, {
@@ -277,9 +390,20 @@ export default defineComponent({
           return;
         }
         e.preventDefault();
-        if (self.시작시각 === null) { self.시작시각 = performance.now(); }
+        if (self.시작시각 === null) {
+          self.시작시각 = performance.now() - (self.이어쓰기원본?.elapsedMs ?? 0);
+        }
+        if (self.시도ID === null) {
+          const 시작 = 시도시작(self.지문목록[self.선택된지문].id,
+            (self.선택된편 + 1) as 1 | 2, 본문버전(self.현재편들[self.선택된편]),
+            self.이어쓰기원본 ?? undefined);
+          self.시도ID = 시작.attemptId;
+          self.이어쓰기원본 = null;
+          self.저장대기(시작);
+        }
         const 직전오타 = self.입력상태 === '오타';
         const 바뀐위치 = 본문.입력(e.code, e.shiftKey);
+        self.입력기록추가({ code: e.code, shift: e.shiftKey });
         self.입력상태 = 본문.방금오타 ? '오타' : 직전오타 ? '정정' : '진행';
         if (본문.방금오타) {
           그림판.오타효과시작(본문.위치);
@@ -294,6 +418,8 @@ export default defineComponent({
           self.총입력타수 = 본문.입력타수;
           self.정타수 = 본문.유효타수;
           self.분당타수 = Math.round(self.정타수 * 60000 / 걸린밀리초);
+          self.입력기록저장();
+          self.저장대기(시도완료(self.시도ID, 걸린밀리초, self.총입력타수, self.정타수));
           self.결과화면보이기 = true;
           self.$nextTick(() => document.querySelector('.마침')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }));
         } else {
@@ -310,16 +436,36 @@ export default defineComponent({
   mounted() {
     document.title = 'HALLATYPE · 한글 필사';
     this.설정 = 필사설정읽기();
+    this.기록들 = 진행작업읽기();
+    const 최근시도 = this.시도들
+      .filter((시도) => 시도.복원가능 && !시도.완료 && !시도.중단됨 && 시도.입력들.length &&
+        this.지문목록.some((지문, 번호) => 지문.id === 시도.시작.passageId &&
+          본문버전(필사편들(지문)[시도.시작.part - 1]) === 시도.시작.contentVersion &&
+          !this.편완료(번호, 시도.시작.part - 1)))
+      .sort((a, b) => b.마지막시각.localeCompare(a.마지막시각) ||
+        b.시작.attemptId.localeCompare(a.시작.attemptId))[0];
+    if (최근시도) {
+      this.선택된지문 = this.지문목록.findIndex((지문) => 지문.id === 최근시도.시작.passageId);
+      this.선택된편 = 최근시도.시작.part - 1;
+    } else { this.선택된편 = this.시작할편(0); }
     document.addEventListener('pointerdown', this.설정밖클릭);
+    window.addEventListener('pagehide', this.입력기록저장);
+    window.addEventListener('storage', this.다른탭기록반영);
     this.reset();
   },
   beforeUnmount() {
     document.title = '한글 비트맵 스튜디오';
     document.removeEventListener('pointerdown', this.설정밖클릭);
+    window.removeEventListener('pagehide', this.입력기록저장);
+    window.removeEventListener('storage', this.다른탭기록반영);
+    this.입력기록저장();
     window.onkeydown = null;
     this.그림판?.종료();
   },
   computed: {
+    시도들(): 필사시도[] {
+      return 시도목록(this.기록들);
+    },
     현재편들() {
       return 필사편들(this.지문목록[this.선택된지문]);
     },
@@ -527,7 +673,9 @@ button { font: inherit; }
 .글버튼:hover { transform: translateY(-2px); border-color: var(--강조); background: var(--호버바탕); }
 .글버튼.선택됨 { border-color: var(--강조); background: var(--선택바탕); color: var(--글); }
 .글번호 { color: var(--옅은글); font-size: 11px; font-weight: 700; letter-spacing: .08em; }
+.글정보 { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .글제목 { font-size: 14px; font-weight: 650; }
+.글기록 { color: var(--보조글); font-size: 10px; }
 .선택표시 { margin-left: auto; color: var(--강조); font-size: 16px; }
 .글버튼.선택됨 .선택표시 { color: var(--글); }
 
@@ -574,6 +722,8 @@ button { font: inherit; }
 .진행숫자 { margin-left: auto; font-size: 11px; font-variant-numeric: tabular-nums; }
 .진행막대 { height: 2px; margin-top: 13px; overflow: hidden; background: var(--진행선); }
 .진행막대 span { display: block; height: 100%; background: var(--진행활성); transition: width .2s ease; }
+.기록안내 { margin: 10px 0 0; color: var(--보조글); font-size: 11px; }
+.기록안내[role="alert"] { color: var(--오류색); }
 .진행아래 { display: flex; justify-content: space-between; align-items: center; gap: 20px; max-width: 800px; margin: 19px auto 0; color: var(--보조글); font-size: 11px; }
 .글자버튼 { padding: 4px 0; border: 0; background: none; color: var(--강조); font-size: 12px; cursor: pointer; }
 .글자버튼:hover { color: var(--글); text-decoration: underline; text-underline-offset: 4px; }
