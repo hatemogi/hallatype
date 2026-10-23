@@ -33,6 +33,7 @@ describe('타자 연습 캔버스 글꼴', () => {
 
     it('라틴 8×16 글꼴은 16×32로 확대해 같은 행에 배치한다', () => {
         const { 그림판, 요청, 이미지들 } = 화면();
+        그림판.안티앨리어싱강도설정(0);
         const 글자 = new 색칠할글자(글자틀.생성('A'.charCodeAt(0)), [검정], 흰색);
 
         그림판.글자그리기(new 위치틀(1, 3), 글자);
@@ -46,6 +47,20 @@ describe('타자 연습 캔버스 글꼴', () => {
             }
         }
         expect(이미지들[0].data.some((값, i) => i % 4 === 3 && 값 === 255)).toBe(true);
+    });
+
+    it.each(['A', '.', '\n'])('영문과 문장부호에도 같은 강도의 가장자리 처리를 적용한다: %s', (문자) => {
+        const 그리기 = (강도: number) => {
+            const { 그림판, 이미지들 } = 화면(true);
+            그림판.안티앨리어싱강도설정(강도);
+            그림판.글자그리기(new 위치틀(),
+                new 색칠할글자(글자틀.생성(문자.charCodeAt(0)), [검정], 흰색));
+            return 이미지들[0].data;
+        };
+        const 선명 = 그리기(0);
+        const 부드러움 = 그리기(100);
+        expect(부드러움.some((값, i) => i % 4 === 0 && 값 < 선명[i] && 선명[i] === 255)).toBe(true);
+        expect(부드러움.every((값, i) => i % 4 !== 0 || 선명[i] !== 0 || 값 === 0)).toBe(true);
     });
 
     it('안티앨리어싱 강도를 올리면 중심 획은 유지되고 가장자리만 진해진다', () => {
@@ -178,6 +193,27 @@ describe('타자 연습 캔버스 글꼴', () => {
             expect(ctx.canvas.width).toBeGreaterThanOrEqual(1302);
             expect(지문.줄(0).map((글자) => 글자.코드)).toEqual(원문글자들);
         }
+    });
+
+    it('영어 단어는 화면에서만 통째로 다음 줄에 옮긴다', () => {
+        const 글 = 'a'.repeat(75) + ' longword';
+        const 지문 = new 지문틀();
+        지문.글쓰기(글);
+        지문.쓰기(지문.위치, 끝글자);
+        const ctx = {
+            canvas: { width: 1286, height: 500 },
+            fillRect: () => undefined,
+        } as unknown as CanvasRenderingContext2D;
+        const 그림판 = new 그림판틀(ctx, new 따라그리기틀(지문));
+        const 그린글자 = vi.spyOn(그림판, '글자그리기').mockImplementation(() => undefined);
+
+        그림판.그리기();
+
+        expect(그린글자.mock.calls[75][0]).toEqual(new 위치틀(0, 75));
+        expect(그린글자.mock.calls.slice(76).map(([위치]) => 위치)).toEqual(
+            Array.from({ length: 8 }, (_, 열) => new 위치틀(1, 열)));
+        expect(지문.줄(0).filter((글자) => !글자.끝)
+            .map((글자) => String.fromCharCode(글자.코드[0])).join('')).toBe(글);
     });
 
     it('자동 줄바꿈의 남은 폭만 단어 사이 공백에 나누고 원문과 입력 위치를 보존한다', () => {

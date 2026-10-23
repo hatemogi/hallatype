@@ -36,6 +36,16 @@
             </div>
           </fieldset>
           <fieldset>
+            <legend>글자 가장자리</legend>
+            <div class="가장자리선택">
+              <input type="range" min="0" max="4" step="1" :value="설정.안티앨리어싱단계"
+                aria-label="글자 가장자리 부드러움" :aria-valuetext="가장자리단계이름[설정.안티앨리어싱단계]"
+                @input="가장자리변경">
+              <div class="가장자리눈금" aria-hidden="true"><span v-for="눈금 in 5" :key="눈금"></span></div>
+              <div class="가장자리끝표시" aria-hidden="true"><span>선명하게</span><span>부드럽게</span></div>
+            </div>
+          </fieldset>
+          <fieldset>
             <legend>커서 깜빡임</legend>
             <div class="설정선택">
               <button type="button" :class="{ 선택됨: 설정.커서깜빡임 }" :aria-pressed="설정.커서깜빡임"
@@ -153,10 +163,11 @@ import { 따라그리기틀 } from '@/따라그리기';
 import 그림판틀 from '@/그림판';
 import { 연습지문들, 필사편들 } from '@/practice-passages';
 import { 기본필사설정, 필사설정, 필사설정읽기, 필사설정저장,
-  필사테마, 지문크기, 필사팔레트들 } from '@/practice-settings';
+  필사테마, 지문크기, 안티앨리어싱단계, 단계별안티앨리어싱강도, 필사팔레트들 } from '@/practice-settings';
 
 const 테마선택지: Array<{ 이름: 필사테마 }> = [{ 이름: '한지' }, { 이름: '새벽' }, { 이름: '밤' }];
 const 글자크기선택지: 지문크기[] = ['보통', '크게'];
+const 가장자리단계이름 = ['선명하게', '조금 선명하게', '보통', '조금 부드럽게', '부드럽게'];
 
 export default defineComponent({
   data() {
@@ -164,6 +175,7 @@ export default defineComponent({
       지문목록: 연습지문들,
       테마선택지,
       글자크기선택지,
+      가장자리단계이름,
       설정: { ...기본필사설정 } as 필사설정,
       설정열림: false,
       선택된지문: 0,
@@ -181,6 +193,9 @@ export default defineComponent({
     };
   },
   methods: {
+    가장자리변경(event: Event) {
+      this.설정변경({ 안티앨리어싱단계: Number((event.target as HTMLInputElement).value) as 안티앨리어싱단계 });
+    },
     설정밖클릭(event: PointerEvent) {
       if (this.설정열림 && event.target instanceof Element && !event.target.closest('.상단')) {
         this.설정열림 = false;
@@ -192,6 +207,7 @@ export default defineComponent({
       필사설정저장(this.설정);
       const 팔레트 = 필사팔레트들[this.설정.테마];
       this.본문?.팔레트설정(팔레트);
+      this.그림판?.안티앨리어싱강도설정(단계별안티앨리어싱강도[this.설정.안티앨리어싱단계]);
       this.그림판?.보기설정(팔레트, this.설정.글자크기 === '크게' ? 68 : 80,
         this.설정.커서깜빡임);
     },
@@ -236,6 +252,7 @@ export default defineComponent({
       const 그림판 = markRaw(new 그림판틀(ctx, 본문, {
         팔레트, 한줄칸수: this.설정.글자크기 === '크게' ? 68 : 80,
         커서깜빡임: this.설정.커서깜빡임,
+        안티앨리어싱: 단계별안티앨리어싱강도[this.설정.안티앨리어싱단계],
       }));
       this.그림판 = 그림판;
       그림판.그리기();
@@ -453,6 +470,10 @@ button { font: inherit; }
 .테마견본[data-theme='밤'] { background: #222c31; color: #e2e7df; }
 .설정선택 { display: flex; gap: 7px; }
 .설정선택 button { min-width: 72px; padding: 8px 13px; border: 1px solid var(--테두리); border-radius: 3px; background: var(--선택안함); color: var(--글); font-size: 12px; cursor: pointer; }
+.가장자리선택 input { display: block; width: 100%; margin: 0; accent-color: var(--강조); cursor: pointer; }
+.가장자리눈금 { display: flex; justify-content: space-between; margin: 2px 7px 0; }
+.가장자리눈금 span { width: 2px; height: 4px; background: var(--테두리); }
+.가장자리끝표시 { display: flex; justify-content: space-between; margin-top: 4px; color: var(--옅은글); font-size: 11px; }
 .설정안내 { margin: 3px 0 0; color: var(--옅은글); font-size: 11px; }
 
 .소개 {

@@ -2,7 +2,7 @@ import { 끝글자 } from '@/글자';
 import { 지문틀 } from '@/본문';
 import { 따라그리기틀 } from '@/따라그리기';
 import 그림판틀 from '@/그림판';
-import { 기본필사설정, 필사설정읽기, 필사설정저장, 필사팔레트들 } from '@/practice-settings';
+import { 기본필사설정, 단계별안티앨리어싱강도, 필사설정읽기, 필사설정저장, 필사팔레트들 } from '@/practice-settings';
 
 it('필사 설정을 저장하고 잘못된 저장값은 기본값으로 복구한다', () => {
   const 값들 = new Map<string, string>();
@@ -12,15 +12,29 @@ it('필사 설정을 저장하고 잘못된 저장값은 기본값으로 복구�
   };
   expect(필사설정읽기(storage)).toEqual(기본필사설정);
 
-  const 설정 = { 테마: '밤' as const, 글자크기: '크게' as const, 커서깜빡임: false };
+  const 설정 = { 테마: '밤' as const, 글자크기: '크게' as const,
+    커서깜빡임: false, 안티앨리어싱단계: 4 as const };
   필사설정저장(설정, storage);
   expect(필사설정읽기(storage)).toEqual(설정);
+  값들.set([...값들.keys()][0], JSON.stringify({ 테마: '밤', 글자크기: '크게', 커서깜빡임: false }));
+  expect(필사설정읽기(storage).안티앨리어싱단계).toBe(2);
 
   const 키 = [...값들.keys()][0];
   값들.set(키, '{');
   expect(필사설정읽기(storage)).toEqual(기본필사설정);
+  값들.set(키, JSON.stringify({ 안티앨리어싱단계: 6 }));
+  expect(필사설정읽기(storage).안티앨리어싱단계).toBe(2);
+  값들.set(키, JSON.stringify({ 안티앨리어싱: 300 }));
+  expect(필사설정읽기(storage).안티앨리어싱단계).toBe(4);
+  값들.set(키, JSON.stringify({ 안티앨리어싱단계: 5 }));
+  expect(필사설정읽기(storage).안티앨리어싱단계).toBe(4);
   값들.set(키, JSON.stringify({ 테마: '알 수 없음', 글자크기: '매우 크게', 커서깜빡임: 1 }));
   expect(필사설정읽기(storage)).toEqual(기본필사설정);
+});
+
+it('슬라이더 다섯 눈금의 가운데가 기존 보통 강도다', () => {
+  expect(단계별안티앨리어싱강도).toEqual([0, 50, 100, 200, 300]);
+  expect(단계별안티앨리어싱강도[기본필사설정.안티앨리어싱단계]).toBe(100);
 });
 
 it('테마를 바꿔도 이미 입력한 자소와 진행 위치가 유지된다', () => {

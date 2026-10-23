@@ -3,7 +3,7 @@ import { 끝글자, 글자꼴, 색칠할글자 } from './글자';
 import { 위치틀 } from './본문';
 import * as color from './색상';
 import { 한글글꼴, 라틴글꼴, 특수문자 } from './fonts';
-import { antialiasFont, upscaleFont } from './font-editor';
+import { antialiasBitmap, antialiasFont, upscaleFont } from './font-editor';
 import { expandedMask, practiceMasks } from './practice-mask';
 import { MaskSet } from './key-mask';
 import { 필사팔레트, 필사팔레트들 } from './practice-settings';
@@ -18,9 +18,38 @@ type 그릴본문 = {
 };
 const 연습글꼴 = upscaleFont(한글글꼴);
 const 안티앨리어싱글꼴 = antialiasFont(연습글꼴);
+function 두배비트맵(원본: 비트맵, 너비: 8 | 16): 비트맵 {
+    const 확대: 비트맵 = [];
+    for (const 행 of 원본) {
+        let 두배행 = 0;
+        for (let x = 0; x < 너비; x++) {
+            if (행 & (1 << (너비 - x - 1))) {
+                두배행 = (두배행 | (3 << ((너비 - x - 1) * 2))) >>> 0;
+            }
+        }
+        확대.push(두배행, 두배행);
+    }
+    return 확대;
+}
+const 라틴연습글꼴 = 라틴글꼴.map((비트맵) => 두배비트맵(비트맵, 8));
+const 특수연습글꼴 = 특수문자.map((비트맵) => 두배비트맵(비트맵, 16));
+const 라틴안티앨리어싱 = 라틴연습글꼴.map((비트맵) => antialiasBitmap(비트맵, 16));
+const 특수안티앨리어싱 = 특수연습글꼴.map((비트맵) => antialiasBitmap(비트맵, 32));
 const 픽셀배율 = 2;
 const 기본한줄칸수 = 80;
 const 줄끝기호 = ' !,.:;?)]}';
+
+function 영어단어길이(본문: 그릴본문, 시작: 위치틀): number {
+    let 위치 = 시작;
+    let 길이 = 0;
+    while (true) {
+        const 글자 = 본문.지문글자(위치);
+        const 코드 = 글자.코드[0];
+        if (!((코드 >= 65 && 코드 <= 90) || (코드 >= 97 && 코드 <= 122))) { return 길이; }
+        길이++;
+        위치 = 위치.다음;
+    }
+}
 
 function 줄의공백넓히기(그릴칸들: 그릴칸[], 한줄칸수: number) {
     const 행별칸들 = new Map<number, 그릴칸[]>();
@@ -85,12 +114,14 @@ export default class 그림판틀 {
     private viewPort: [number, number, number, number] = [0, 0, 0, 0];
 
     constructor(ctx: CanvasRenderingContext2D, 본문: 그릴본문,
-                보기: { 팔레트?: 필사팔레트; 한줄칸수?: number; 커서깜빡임?: boolean } = {}) {
+                보기: { 팔레트?: 필사팔레트; 한줄칸수?: number; 커서깜빡임?: boolean;
+                    안티앨리어싱?: number } = {}) {
         this.ctx = ctx;
         this.본문 = 본문;
         this.팔레트 = 보기.팔레트 ?? 필사팔레트들.한지;
         this.한줄칸수 = 보기.한줄칸수 ?? 기본한줄칸수;
         this.깜빡임허용 = 보기.커서깜빡임 ?? true;
+        this.안티앨리어싱강도설정(보기.안티앨리어싱 ?? 100);
         let storage: Storage | undefined;
         try { storage = typeof window === 'undefined' ? undefined : window.localStorage; } catch (_) { /* 저장소 없이 실행 */ }
         this.마스크들 = practiceMasks(storage);
@@ -174,8 +205,13 @@ export default class 그림판틀 {
             const 닫는따옴표 = (코드 === 34 || 코드 === 39) && 이전코드 !== null &&
                 이전코드 !== 32 && 이전코드 !== 10;
             const 줄끝에남길글자 = 지문글자.다음행 || 줄끝기호.includes(String.fromCodePoint(코드)) || 닫는따옴표;
+            const 영어단어시작 = ((코드 >= 65 && 코드 <= 90) || (코드 >= 97 && 코드 <= 122)) &&
+                (이전코드 === null || !((이전코드 >= 65 && 이전코드 <= 90) ||
+                    (이전코드 >= 97 && 이전코드 <= 122)));
             // 문서 위치와 원문은 그대로 두고, 그리는 위치에서만 줄바꿈을 조정한다.
-            if (!줄끝에남길글자 && 화면위치.열 + 칸수 > this.한줄칸수) {
+            if (!줄끝에남길글자 && (화면위치.열 + 칸수 > this.한줄칸수 ||
+                (영어단어시작 && 화면위치.열 > 0 &&
+                    화면위치.열 + 영어단어길이(this.본문, 문서위치) > this.한줄칸수))) {
                 화면위치 = 화면위치.다음행;
             }
             const 너비 = 지문글자.전각 ? 32 : 16;
@@ -258,10 +294,11 @@ export default class 그림판틀 {
         const [x, y] = this.textToGraphic(위치);
         this.바탕칠하기(위치, 칸너비, 글자.배경색, 오타효과);
         const 빗맵들: 비트맵[] = 글자.자.한글 ? 한글비트맵(글자) : 그외비트맵(글자);
-        const 알파들 = 글자.자.한글 && this.안티앨리어싱강도 > 0
-            ? 한글비트맵(글자, 안티앨리어싱글꼴) : [];
-        const 원본너비 = 글자.자.한글 ? 32 : 글자.자.전각 ? 16 : 8;
-        const 배율 = 글자.자.한글 ? 1 : 픽셀배율;
+        const 알파들 = this.안티앨리어싱강도 > 0
+            ? 글자.자.한글 ? 한글비트맵(글자, 안티앨리어싱글꼴) : 그외비트맵(글자, true)
+            : [];
+        const 원본너비 = 글자.자.한글 || 글자.자.전각 ? 32 : 16;
+        const 배율 = 1;
         빗맵들.forEach((빗맵: 비트맵, i: number) => {
             if (빗맵 && 빗맵.length > 0) {
                 const 키색 = 글자.키색[i];
@@ -336,7 +373,7 @@ export default class 그림판틀 {
         for (let py = 0; py < 빗맵.length; py++) {
             for (let px = 0; px < 원본너비; px++) {
                 const 불투명도 = (빗맵[py] & (1 << (원본너비 - px - 1))) !== 0 ? 255
-                    : 알파 ? Math.min(255, Math.round(알파[py * 32 + px] * this.안티앨리어싱강도 / 100)) : 0;
+                    : 알파 ? Math.min(255, Math.round(알파[py * 원본너비 + px] * this.안티앨리어싱강도 / 100)) : 0;
                 if (불투명도 > 0) {
                     const 픽셀색 = 키분리
                         ? 키분리.색[(키분리.영역[py] & (1 << (원본너비 - px - 1))) !== 0 ? 0 : 1]
@@ -377,13 +414,13 @@ function 한글비트맵(글자: 색칠할글자, 글꼴들: 비트맵[] = 연�
 }
 
 // 그 외 문자는 비트맵 한 개만 배열에 담아 반환
-function 그외비트맵(글자: 색칠할글자): 비트맵[] {
+function 그외비트맵(글자: 색칠할글자, 알파 = false): 비트맵[] {
     const 코드 = 글자.자.코드[0] || 0;
     if (글자.자.다음행) {
-        return [특수문자[0]];
+        return [알파 ? 특수안티앨리어싱[0] : 특수연습글꼴[0]];
     } else if (글자.자 === 끝글자) {
-        return [특수문자[1]];
+        return [알파 ? 특수안티앨리어싱[1] : 특수연습글꼴[1]];
     } else {
-        return [라틴글꼴[코드]];
+        return [알파 ? 라틴안티앨리어싱[코드] : 라틴연습글꼴[코드]];
     }
 }

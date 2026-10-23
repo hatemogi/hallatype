@@ -4,6 +4,7 @@ export interface 연습지문 {
   출처: string;
   본문: string;
   첫편문단수: number;
+  언어?: 'en';
   원문?: string;
 }
 
@@ -153,6 +154,36 @@ export const 연습지문들: readonly 연습지문[] = [
       + '나귀가 걷기 시작하였을 때, 동이의 채찍은 왼손에 있었다. 오랫동안 아둑시니같이 눈이 어둡던 '
       + '허 생원도 요번만은 동이의 왼손잡이가 눈에 띄지 않을 수 없었다. '
       + '걸음도 해깝고 방울소리가 밤 벌판에 한층 청청하게 울렸다. 달이 어지간히 기울어졌다.',
+  },
+  {
+    제목: 'A Quiet Morning',
+    출처: '창작 지문 · 영어',
+    언어: 'en',
+    첫편문단수: 2,
+    본문: 'The morning begins before the street is busy. I open the window and let the cool air enter the room. A cup rests beside the notebook, and the first light reaches the edge of the table. Nothing asks me to hurry yet.\n'
+      + 'I write down one thing I can see: a small leaf turning in the breeze. Then I write down one thing I can hear: water moving through a pipe behind the wall. The words are simple, but they bring me back to this place.\n'
+      + 'When the kettle is ready, I pour the water slowly. Steam rises, then disappears. I do not need to hold on to it. I take a sip, feel the warmth in my hands, and watch the sky grow a little brighter above the roofs.\n'
+      + 'There will be messages to answer and work to finish. For now, I leave the notebook open. I breathe in, look at the leaf once more, and choose one small task to begin. A quiet start is enough for this morning.',
+  },
+  {
+    제목: 'The Longer Way Home',
+    출처: '창작 지문 · 영어',
+    언어: 'en',
+    첫편문단수: 2,
+    본문: 'On the way home, I turn down a street I usually pass. The shops are closing, but a bakery still has its lights on. Warm air slips through the open door. I keep walking, with no reason to reach the next corner quickly.\n'
+      + 'A bicycle leans against a low wall. Across the road, someone waters a row of plants in old metal cans. The water darkens the soil and runs toward the curb. I notice how many little things can happen while I stand still.\n'
+      + 'The longer road leads past a park. Children have gone home, and the swings move only when the wind reaches them. I sit for a moment and listen to their soft creak. The day feels wide again, even though the sun is low.\n'
+      + 'At last I turn toward my building. I can see a light in the kitchen window. I have taken no grand journey, yet the familiar door looks different. I carry the cool evening air inside with me and set my keys gently on the table.',
+  },
+  {
+    제목: 'A Lamp at Dusk',
+    출처: '창작 지문 · 영어',
+    언어: 'en',
+    첫편문단수: 2,
+    본문: 'The room grows dim while I am reading. I reach for the lamp and a circle of light settles over the page. Outside, the last bus moves along the road. Its sound fades before I can look up from the book.\n'
+      + 'I turn a page and find a pressed flower between the lines. I cannot remember when I placed it there. Its color has softened, but the shape of each petal is still clear. I leave it on the desk where I can see it.\n'
+      + 'There are dishes in the sink and a list of things to do tomorrow. I will come back to them soon. First, I close the book and listen to the room. The clock ticks, a floorboard settles, and the wind touches the window.\n'
+      + 'I put the flower back between the pages. Then I stand, stretch my shoulders, and switch on the kitchen light. The evening is ordinary, and that is part of its comfort. I have time to wash a cup and make a little space for rest.',
   },
 ];
 

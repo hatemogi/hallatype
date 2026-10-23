@@ -97,24 +97,31 @@ export function alphaAt(glyph: AlphaGlyph, x: number, y: number): number {
 
 /** Keep solid pixels opaque and add a faint 8-bit edge fringe. */
 export function antialiasGlyph(source: Bitmap): AlphaGlyph {
+    return antialiasBitmap(source, 32);
+}
+
+/** 32행짜리 16픽셀 또는 32픽셀 비트맵의 가장자리에 옅은 알파를 더한다. */
+export function antialiasBitmap(source: Bitmap, width: 16 | 32): AlphaGlyph {
     if (source.length !== 32) { throw new Error('32행 비트맵이 필요합니다.'); }
     const weights = [1, 2, 1];
-    const result: AlphaGlyph = Array(1024).fill(0);
+    const result: AlphaGlyph = Array(width * 32).fill(0);
+    const filled = (x: number, y: number) => x >= 0 && x < width && y >= 0 && y < 32 &&
+        !!(source[y] & (1 << (width - 1 - x)));
     for (let y = 0; y < 32; y++) {
-        for (let x = 0; x < 32; x++) {
-            if (hasPixel(source, 32, x, y)) {
-                result[y * 32 + x] = 255;
+        for (let x = 0; x < width; x++) {
+            if (filled(x, y)) {
+                result[y * width + x] = 255;
                 continue;
             }
             let sum = 0;
             for (let dy = -1; dy <= 1; dy++) {
                 for (let dx = -1; dx <= 1; dx++) {
-                    if (hasPixel(source, 32, x + dx, y + dy)) {
+                    if (filled(x + dx, y + dy)) {
                         sum += weights[dy + 1] * weights[dx + 1];
                     }
                 }
             }
-            result[y * 32 + x] = Math.round(sum * 255 / 64);
+            result[y * width + x] = Math.round(sum * 255 / 64);
         }
     }
     return result;
