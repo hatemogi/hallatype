@@ -311,7 +311,9 @@ export default class 그림판틀 {
             : [];
         const 원본너비 = 글자.자.한글 || 글자.자.전각 ? 32 : 16;
         const 배율 = 1;
-        빗맵들.forEach((빗맵: 비트맵, i: number) => {
+        // 먼저 입력하는 자소가 겹친 획에서도 보이도록 종성부터 역순으로 쌓는다.
+        for (let i = 빗맵들.length - 1; i >= 0; i--) {
+            const 빗맵 = 빗맵들[i];
             if (빗맵 && 빗맵.length > 0) {
                 const 키색 = 글자.키색[i];
                 const 영역 = 키색 ? this.키영역(글자.자, i, 빗맵) : undefined;
@@ -319,7 +321,7 @@ export default class 그림판틀 {
                     키색 && 영역 ? { 색: 키색, 영역 } : undefined);
                 this.ctx.putImageData(이미지, x, y, 0, 0, Math.min(칸너비, 이미지.width), 이미지.height);
             }
-        });
+        }
     }
 
     private 키영역(글자: 글자꼴, 자소: number, 빗맵: 비트맵): 비트맵 | undefined {

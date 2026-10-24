@@ -1,4 +1,4 @@
-import { alphaAt, antialiasFont, antialiasGlyph, cloneFont, exportAlphaFont, exportFnt, glyphForSyllable, glyphIndex, hasPixel, importAlphaFont, importFnt, previewSyllable, regenerateAutomaticFonts, setPixel, syllableSelection, upscaleFont, upscaleGlyph } from '@/font-editor';
+import { alphaAt, antialiasFont, antialiasGlyph, cloneFont, exportAlphaFont, exportFnt, glyphForSyllable, glyphIndex, hasPixel, importAlphaFont, importFnt, paintAlphaText, paintText, previewSyllable, regenerateAutomaticFonts, setPixel, syllableSelection, upscaleFont, upscaleGlyph } from '@/font-editor';
 declare const require: (id: string) => any;
 declare const __dirname: string;
 
@@ -22,6 +22,32 @@ describe('조합형 글꼴 편집 데이터', () => {
             font[glyphIndex('jong', 0, 3)],
         ]);
         expect(glyphForSyllable(font, 'A')).toBeNull();
+    });
+
+    it('글꼴 미리보기에서도 겹친 초성을 가장 앞에 그린다', () => {
+        const 선택 = syllableSelection('가')!;
+        const 초성위치 = glyphIndex('cho', ...선택.cho);
+        const 중성위치 = glyphIndex('jung', ...선택.jung);
+        const 글자색 = ['red', 'green', 'blue'] as [string, string, string];
+        const 색칠순서: string[] = [];
+        let 현재색 = '';
+        const ctx = {
+            set fillStyle(색: string) { 현재색 = 색; },
+            globalAlpha: 1,
+            fillRect: (_x: number, _y: number, _w: number, _h: number) => 색칠순서.push(현재색),
+        } as unknown as CanvasRenderingContext2D;
+        const 비트맵 = Array.from({ length: 348 }, () => Array<number>(16).fill(0));
+        setPixel(비트맵[초성위치], 16, 0, 0, true);
+        setPixel(비트맵[중성위치], 16, 0, 0, true);
+        paintText(ctx, 비트맵, '가', 글자색, 1, 16);
+        expect(색칠순서).toEqual(['green', 'red']);
+
+        색칠순서.length = 0;
+        const 알파글꼴 = Array.from({ length: 348 }, () => Array<number>(1024).fill(0));
+        알파글꼴[초성위치][0] = 255;
+        알파글꼴[중성위치][0] = 255;
+        paintAlphaText(ctx, 알파글꼴, '가', 글자색, 1, 32);
+        expect(색칠순서).toEqual(['green', 'red']);
     });
 
     it('모든 편집 자소에 대해 실제 그 자소를 쓰는 미리보기 글자를 찾는다', () => {

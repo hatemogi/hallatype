@@ -38,7 +38,7 @@ describe('편집한 키 마스크의 타자 연습 반영', () => {
         const 중성색 = () => {
             이미지들.length = 0;
             그림판.글자그리기(new 위치틀(), 본문.글자스트림().next().value);
-            const pixels = 이미지들[1].data;
+            const pixels = 이미지들[0].data; // 역순 합성에서는 중성이 초성보다 먼저 그려진다.
             const count = (color: 색상.RGBA) => {
                 let total = 0;
                 for (let i = 0; i < pixels.length; i += 4) {

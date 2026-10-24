@@ -199,7 +199,9 @@ export function paintAlphaText(ctx: CanvasRenderingContext2D, font: AlphaGlyph[]
         const width = syllable ? 32 : 16;
         if (x + width * scale > maxWidth && x > 0) { x = 0; y += 42 * scale; }
         if (syllable) {
-            syllable.forEach((glyph, part) => paintAlphaBitmap(ctx, glyph, x, y, colors[part], scale));
+            for (let part = syllable.length - 1; part >= 0; part--) {
+                paintAlphaBitmap(ctx, syllable[part], x, y, colors[part], scale);
+            }
         } else {
             const code = character.charCodeAt(0);
             const latin = 라틴글꼴[code];
@@ -263,7 +265,9 @@ export function paintText(ctx: CanvasRenderingContext2D, font: Bitmap[], text: s
         const width = syllable ? fontSize : fontSize / 2;
         if (x + width * scale > maxWidth && x > 0) { x = 0; y += lineHeight; }
         if (syllable) {
-            syllable.forEach((rows, part) => paintBitmap(ctx, rows, x, y, colors[part], scale, fontSize));
+            for (let part = syllable.length - 1; part >= 0; part--) {
+                paintBitmap(ctx, syllable[part], x, y, colors[part], scale, fontSize);
+            }
         } else {
             const code = character.charCodeAt(0);
             if (code < 라틴글꼴.length) {
