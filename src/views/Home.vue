@@ -61,17 +61,17 @@
       <section class="작업공간" aria-label="필사할 글">
         <div class="모바일선택줄">
           <div><span>선택한 글</span><strong>{{글테마}} · {{오늘지문.제목}}</strong></div>
-          <button type="button" aria-controls="지문선택창" :aria-expanded="목록열림" @click="목록열기">글 고르기 <span aria-hidden="true">⌄</span></button>
+          <button type="button" aria-controls="지문선택창" :aria-expanded="목록열림" @click="목록열기">주제 고르기 <span aria-hidden="true">⌄</span></button>
         </div>
         <div v-if="모바일보기 && 목록열림" class="목록가림막" @click="목록닫기"></div>
         <aside v-show="!모바일보기 || 목록열림" id="지문선택창" class="선택패널"
           :role="모바일보기 ? 'dialog' : undefined" :aria-modal="모바일보기 ? 'true' : undefined"
-          aria-label="입력할 글 고르기">
+          aria-label="필사 주제와 지문 고르기">
           <div class="선택머리">
-            <div><span class="구역번호">필사할 글</span><h2>입력할 글 고르기</h2></div>
-            <button type="button" class="목록닫기" aria-label="글 선택창 닫기" @click="목록닫기">×</button>
+            <div><span class="구역번호">필사할 주제</span><h2>주제 고르기</h2></div>
+            <button type="button" class="목록닫기" aria-label="주제 선택창 닫기" @click="목록닫기">×</button>
           </div>
-          <div class="글테마선택" role="group" aria-label="지문 테마 선택">
+          <div class="글테마선택" role="group" aria-label="필사 주제 선택">
             <button v-for="테마 in 글테마선택지" :key="테마" type="button"
               :class="{ 선택됨: 글테마 === 테마 }" :aria-pressed="글테마 === 테마"
               @click="글테마바꾸기(테마, $event)">{{테마}}</button>
@@ -803,7 +803,7 @@ button { font: inherit; }
   letter-spacing: .08em;
 }
 .작업공간 { padding-bottom: 84px; }
-.선택머리 { display: flex; justify-content: space-between; align-items: end; gap: 20px; }
+.선택머리 { display: flex; justify-content: space-between; align-items: end; gap: 20px; text-align: left; }
 .구역번호 { color: var(--강조); font-size: 12px; font-weight: 700; letter-spacing: .08em; }
 .구역번호 span { padding: 0 5px; color: var(--옅은글); }
 .선택머리 h2 { margin: 9px 0 0; font-size: 18px; font-weight: 650; letter-spacing: -.045em; }
