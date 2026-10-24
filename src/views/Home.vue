@@ -135,8 +135,8 @@
                 <div><dt>분당 정타</dt><dd>{{분당타수}}/분</dd></div>
               </dl>
               <p v-if="종전최고정타율 !== null" class="정타율비교">
-                종전 최고 {{종전최고정타율.toFixed(2)}}% 대비
-                <strong>{{정타율차이 > 0 ? '+' : ''}}{{정타율차이.toFixed(2)}}%p</strong>
+                종전 최고 {{종전최고표시}}% 대비
+                <strong>{{정타율차이표시}}%p</strong>
               </p>
             </div>
             <div class="마침동작">
@@ -168,7 +168,7 @@ import 그림판틀 from '@/그림판';
 import { 날짜키, 지문선택읽기, 지문선택저장, 테마별지문들,
   type 연습지문, type 지문테마 } from '@/practice-passages';
 import { 본문버전, 브라우저저장소, 시도목록, 시도시작, 시도완료, 시도중단, 입력묶음,
-  지문입력상태, 지문최고정타율, 정타율,
+  지문입력상태, 지문최고정타율, 정타율, 정타율표시,
   진행작업읽기, 진행작업저장, 작업합치기, type 입력키, type 진행작업,
   type 필사시도, type 이어쓰기원본 } from '@/practice-progress';
 import { 기본필사설정, 필사설정, 필사설정읽기, 필사설정저장,
@@ -286,7 +286,8 @@ export default defineComponent({
       return 지문입력상태(this.시도들, 지문.id, 본문버전(지문.본문));
     },
     지문최고(지문: 연습지문): string {
-      return 지문최고정타율(this.시도들, 지문.id, 본문버전(지문.본문))?.toFixed(2) ?? '0.00';
+      const 최고 = 지문최고정타율(this.시도들, 지문.id, 본문버전(지문.본문));
+      return 최고 === null ? '0.00' : 정타율표시(최고);
     },
     글테마바꾸기(테마: 지문테마, event?: MouseEvent) {
       if (!this.목록열림) { (event?.currentTarget as HTMLElement | undefined)?.blur(); }
@@ -454,11 +455,20 @@ export default defineComponent({
         if ((e.target as HTMLElement | null)?.closest('button, input, select, textarea, summary, a, [contenteditable="true"]')) {
           return;
         }
+        if (self.결과화면보이기) {
+          if (e.key === 'Enter' && !e.repeat && !e.isComposing && !e.defaultPrevented &&
+              !e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey &&
+              !self.목록열림 && !self.설정열림 && self.다음편) {
+            e.preventDefault();
+            self.지문선택(self.다음편);
+          }
+          return;
+        }
         if (e.code.startsWith('Shift') || e.code.startsWith('Control') ||
             e.code.startsWith('Alt') || e.code.startsWith('Meta') ||
             e.getModifierState('Control') || e.getModifierState('Alt') || e.getModifierState('Meta') ||
             !/^(Key[A-Z]|Digit[0-9]|Space|Enter|Backspace|Backquote|Minus|Equal|BracketLeft|BracketRight|Backslash|Semicolon|Quote|Comma|Period|Slash)$/.test(e.code) ||
-            self.결과화면보이기 || self.목록열림) {
+            self.목록열림) {
           return;
         }
         e.preventDefault();
@@ -555,9 +565,16 @@ export default defineComponent({
     정타율(): string {
       return 정타율(this.정타수, this.총입력타수);
     },
+    종전최고표시(): string {
+      return this.종전최고정타율 === null ? '' : 정타율표시(this.종전최고정타율);
+    },
     정타율차이(): number {
       return this.종전최고정타율 === null ? 0
         : Math.round((Number(this.정타율) - this.종전최고정타율) * 100) / 100;
+    },
+    정타율차이표시(): string {
+      const 차이 = this.정타율차이;
+      return `${차이 > 0 ? '+' : 차이 < 0 ? '-' : ''}${정타율표시(Math.abs(차이))}`;
     },
     상태문구() {
       if (this.결과화면보이기) { return '이 글의 필사를 마쳤어요'; }

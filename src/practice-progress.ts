@@ -45,7 +45,12 @@ export function 지문입력상태(시도들: readonly 필사시도[], passageId
 }
 
 export function 정타율(정타수: number, 전체타수: number): string {
-  return 전체타수 > 0 ? (정타수 / 전체타수 * 100).toFixed(2) : '0.00';
+  return 전체타수 > 0 ? 정타율표시(정타수 / 전체타수 * 100) : '0.00';
+}
+
+export function 정타율표시(비율: number): string {
+  const 표시 = 비율.toFixed(2);
+  return 표시 === '100.00' ? '100' : 표시;
 }
 
 /** 같은 본문의 완료 기록 중 가장 높은 정타율을 반환한다. */
