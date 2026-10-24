@@ -53,7 +53,7 @@ function 주소반영() {
 
 onMounted(() => {
   저장된테마반영();
-  document.title = 필사시작됨.value ? '글숨 · 한글 필사' : '글숨 · 한 글자씩, 마음을 고르다.';
+  document.title = 필사시작됨.value ? '글숨 · 한글 타이핑 필사' : '글숨 · 한 글자씩, 마음을 고르다.';
   window.addEventListener('hashchange', 주소반영);
   window.addEventListener('storage', 저장된테마반영);
   window.addEventListener('keydown', 첫화면엔터);

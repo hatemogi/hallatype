@@ -4,7 +4,7 @@
       <header class="상단">
         <a class="브랜드" href="#" aria-label="글숨 첫 화면으로 이동">
           <GeulsumMark class="브랜드문양" />
-          <span class="브랜드글자">글숨 <small>한글 필사</small></span>
+          <span class="브랜드글자">글숨 <small>한글 타이핑 필사</small></span>
         </a>
         <div class="상단동작">
           <span class="상단문구">한 글자씩, 마음을 고르다.</span>
@@ -519,7 +519,7 @@ export default defineComponent({
     },
   },
   mounted() {
-    document.title = '글숨 · 한글 필사';
+    document.title = '글숨 · 한글 타이핑 필사';
     this.설정 = 필사설정읽기();
     this.기록들 = 진행작업읽기();
     const 선택 = 지문선택읽기();
