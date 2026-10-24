@@ -167,7 +167,7 @@ import 그림판틀 from '@/그림판';
 import { 날짜키, 다음지문찾기, 지문선택읽기, 지문선택저장, 테마별지문들,
   type 연습지문, type 지문테마 } from '@/practice-passages';
 import { 본문버전, 브라우저저장소, 시도목록, 시도시작, 시도완료, 시도중단, 입력묶음,
-  지문입력상태, 지문최근시도, 지문재개시도, 지문최고정타율, 정타율, 정타율표시,
+  지문입력상태, 지문재개시도, 지문최고정타율, 정타율, 정타율표시,
   진행기록키인가, 진행작업읽기, 진행작업저장, 작업합치기, type 입력키, type 진행작업,
   type 필사시도, type 이어쓰기원본 } from '@/practice-progress';
 import { 기본필사설정, 필사설정, 필사설정읽기, 필사설정저장,
@@ -266,11 +266,6 @@ export default defineComponent({
     },
     복원할시도(): 필사시도 | undefined {
       return 지문재개시도(this.시도들, this.오늘지문.id, 본문버전(this.오늘지문.본문));
-    },
-    완료한시도(): 필사시도 | undefined {
-      const 최근 = 지문최근시도(this.시도들, this.오늘지문.id,
-        본문버전(this.오늘지문.본문));
-      return 최근?.복원가능 && 최근.완료 ? 최근 : undefined;
     },
     지문상태(지문: 연습지문): string {
       return 지문입력상태(this.시도들, 지문.id, 본문버전(지문.본문));
@@ -383,28 +378,24 @@ export default defineComponent({
       const 팔레트 = 필사팔레트들[this.설정.테마];
       const 본문 = markRaw(new 따라그리기틀(지문, 팔레트));
       this.본문 = 본문;
-      const 복원 = 새로시작 ? undefined : (this.복원할시도() ?? this.완료한시도());
+      const 복원 = 새로시작 ? undefined : this.복원할시도();
       if (복원) {
-        if (!복원.완료) {
-          this.이어쓰기원본 = { attemptId: 복원.시작.attemptId,
-            inputCount: 복원.입력들.length, elapsedMs: 복원.걸린밀리초 };
-          this.이어쓰기복원됨 = true;
-        }
+        this.이어쓰기원본 = { attemptId: 복원.시작.attemptId,
+          inputCount: 복원.입력들.length, elapsedMs: 복원.걸린밀리초 };
+        this.이어쓰기복원됨 = true;
         for (const 키 of 복원.입력들) { 본문.입력(키.code, 키.shift); }
         this.진행률 = 본문.진행률;
         this.입력상태 = 본문.방금오타 ? '오타' : '진행';
         if (본문.끝) {
-          const 걸린밀리초 = Math.max(1000, 복원.완료?.elapsedMs ?? 복원.걸린밀리초);
+          const 걸린밀리초 = Math.max(1000, 복원.걸린밀리초);
           this.완료초 = Math.max(1, Math.round(걸린밀리초 / 1000));
           this.총입력타수 = 본문.입력타수;
           this.정타수 = 본문.유효타수;
           this.분당타수 = Math.round(this.정타수 * 60000 / 걸린밀리초);
           this.종전최고정타율 = 지문최고정타율(this.시도들, this.오늘지문.id,
-            본문버전(this.오늘지문.본문), 복원.완료 ? 복원.시작.attemptId : undefined);
+            본문버전(this.오늘지문.본문));
           this.결과화면보이기 = true;
-          if (!복원.완료) {
-            this.저장대기(시도완료(복원.시작.attemptId, 걸린밀리초, this.총입력타수, this.정타수));
-          }
+          this.저장대기(시도완료(복원.시작.attemptId, 걸린밀리초, this.총입력타수, this.정타수));
         }
       }
       const 캔버스 = document.getElementById('캔버스') as HTMLCanvasElement;

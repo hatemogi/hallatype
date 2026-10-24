@@ -1,7 +1,8 @@
 import { customAlphabet } from 'nanoid';
 
-const STORAGE_PREFIX = 'tf:p:';
-const LEGACY_STORAGE_PREFIX = 'hallatype:progress:v2:op:';
+const STORAGE_PREFIX = 'dt:p:';
+const LEGACY_STORAGE_PREFIXES = ['tf:p:', 'hallatype:progress:v2:op:'] as const;
+const STORAGE_PREFIXES = [STORAGE_PREFIX, ...LEGACY_STORAGE_PREFIXES];
 const 새ID = customAlphabet('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', 12);
 const ID_PATTERN = /^[A-Za-z]{12}$/;
 const 버전캐시 = new Map<string, string>();
@@ -137,7 +138,7 @@ function 작업복원(값: unknown): 진행작업 | undefined {
 export type 저장소 = Pick<Storage, 'length' | 'key' | 'getItem' | 'setItem' | 'removeItem'>;
 
 export function 진행기록키인가(키: string | null): boolean {
-  return 키 !== null && (키.startsWith(STORAGE_PREFIX) || 키.startsWith(LEGACY_STORAGE_PREFIX));
+  return 키 !== null && STORAGE_PREFIXES.some((접두사) => 키.startsWith(접두사));
 }
 
 export interface 필사시도 {
@@ -268,7 +269,7 @@ function 같은저장작업(원문: string, 짧은원문: string): boolean {
 
 export function 진행작업읽기(저장소: 저장소 | undefined = 브라우저저장소()): 진행작업[] {
   if (!저장소) { return []; }
-  const 발견: { 키: string; 작업: 진행작업; 짧은원문?: string; 이전키: boolean }[] = [];
+  const 발견: { 키: string; 접두사: string; 작업: 진행작업; 짧은원문?: string }[] = [];
   try {
     const 키들 = Array.from({ length: 저장소.length }, (_, 번호) => 저장소.key(번호));
     for (const 키 of 키들) {
@@ -278,11 +279,11 @@ export function 진행작업읽기(저장소: 저장소 | undefined = 브라우�
         if (!원문) { continue; }
         const 값: unknown = JSON.parse(원문);
         const 작업 = 작업복원(값);
-        const 이전키 = 키.startsWith(LEGACY_STORAGE_PREFIX);
-        if (!작업 || 키 !== (이전키 ? LEGACY_STORAGE_PREFIX : STORAGE_PREFIX) + 작업.id) { continue; }
+        const 접두사 = STORAGE_PREFIXES.find((후보) => 키.startsWith(후보));
+        if (!작업 || !접두사 || 키 !== 접두사 + 작업.id) { continue; }
         const 짧은작업 = 작업압축(작업);
         const 짧은원문 = 짧은작업 && JSON.stringify(짧은작업);
-        발견.push({ 키, 작업, 짧은원문, 이전키 });
+        발견.push({ 키, 접두사, 작업, 짧은원문 });
         if (짧은원문 && 짧은원문 !== 원문) {
           try { 저장소.setItem(키, 짧은원문); }
           catch (_) { /* 압축 갱신에 실패해도 기존 기록은 읽는다. */ }
@@ -291,11 +292,17 @@ export function 진행작업읽기(저장소: 저장소 | undefined = 브라우�
     }
   } catch (_) { /* 저장소 접근이 막힌 경우 이미 읽은 작업만 사용한다. */ }
   const 결과 = new Map<string, 진행작업>();
+  const 우선순위 = new Map<string, number>();
   for (const 항목 of 발견) {
-    if (!항목.이전키 || !결과.has(항목.작업.id)) { 결과.set(항목.작업.id, 항목.작업); }
+    const 순위 = STORAGE_PREFIXES.indexOf(항목.접두사);
+    if (순위 < (우선순위.get(항목.작업.id) ?? Infinity)) {
+      결과.set(항목.작업.id, 항목.작업);
+      우선순위.set(항목.작업.id, 순위);
+    }
   }
-  for (const 항목 of 발견) {
-    if (!항목.이전키 || !항목.짧은원문) { continue; }
+  for (const 항목 of 발견.sort((a, b) => STORAGE_PREFIXES.indexOf(a.접두사) -
+    STORAGE_PREFIXES.indexOf(b.접두사))) {
+    if (항목.접두사 === STORAGE_PREFIX || !항목.짧은원문) { continue; }
     try {
       const 새키 = STORAGE_PREFIX + 항목.작업.id;
       const 기존 = 저장소.getItem(새키);
@@ -322,10 +329,11 @@ export function 진행작업저장(작업: 진행작업, 저장소: 저장소 | 
       if (기존 === 원문) { return true; }
       if (!같은저장작업(기존, 원문)) { return false; }
     } else {
-      const 이전키 = LEGACY_STORAGE_PREFIX + 작업.id;
-      const 이전 = 저장소.getItem(이전키);
-      if (이전 && !같은저장작업(이전, 원문)) { return false; }
-      if (이전) {
+      for (const 접두사 of LEGACY_STORAGE_PREFIXES) {
+        const 이전키 = 접두사 + 작업.id;
+        const 이전 = 저장소.getItem(이전키);
+        if (!이전) { continue; }
+        if (!같은저장작업(이전, 원문)) { return false; }
         try { 저장소.setItem(키, 원문); 저장소.removeItem(이전키); }
         catch (_) { return true; /* 이전 키에 같은 기록이 남아 있다. */ }
         return true;

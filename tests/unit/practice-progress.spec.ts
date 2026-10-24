@@ -79,11 +79,11 @@ it('키 입력과 시각을 짧게 저장하고 모든 키 조합을 그대로 �
   for (const 작업 of [시작, 입력, 완료, 중단, 이어시작]) {
     expect(진행작업저장(작업, 저장소)).toBe(true);
     expect(진행작업저장(작업, 저장소)).toBe(true);
-    const 저장값 = JSON.parse(저장소.getItem(`tf:p:${작업.id}`)!);
+    const 저장값 = JSON.parse(저장소.getItem(`dt:p:${작업.id}`)!);
     expect(저장값.v).toBe(4);
     expect(저장값.d).toBe(Date.parse(작업.at));
   }
-  const 입력저장값 = JSON.parse(저장소.getItem(`tf:p:${입력.id}`)!);
+  const 입력저장값 = JSON.parse(저장소.getItem(`dt:p:${입력.id}`)!);
   expect(입력저장값.keys).toBe("AB+C7␠↵⌫`-=[]\\;',./+/+~8:Unmapped");
   expect(진행작업읽기(저장소)).toEqual([시작, 입력, 완료, 중단, 이어시작]);
   expect(JSON.stringify(입력저장값).length).toBeLessThan(JSON.stringify(입력).length / 2);
@@ -100,7 +100,7 @@ it('이전 상세 기록을 읽으면서 같은 키의 압축 형식으로 갱�
   }
   expect(진행작업읽기(저장소)).toEqual(이전);
   for (const 작업 of 이전) {
-    const 저장값 = JSON.parse(저장소.getItem(`tf:p:${작업.id}`)!);
+    const 저장값 = JSON.parse(저장소.getItem(`dt:p:${작업.id}`)!);
     expect(저장값.v).toBe(4);
     expect(저장소.getItem(`hallatype:progress:v2:op:${작업.id}`)).toBeNull();
     expect(진행작업저장(작업, 저장소)).toBe(true);
@@ -118,38 +118,67 @@ it('이전 키 배열 형식도 문자열로 바꾸며 입력을 잃지 않는�
   저장소.setItem(이전키, JSON.stringify({ v: 3, i: 입력.id, a: 입력.attemptId,
     d: Date.parse(입력.at), t: 'i', n: 0, keys: ['A', 'B', '+C', '+~Unmapped'], e: 1000 }));
   expect(진행작업읽기(저장소)).toEqual([입력]);
-  const 저장값 = JSON.parse(저장소.getItem(`tf:p:${입력.id}`)!);
+  const 저장값 = JSON.parse(저장소.getItem(`dt:p:${입력.id}`)!);
   expect(저장값.v).toBe(4);
   expect(저장값.keys).toBe('AB+C+~8:Unmapped');
   expect(저장소.getItem(이전키)).toBeNull();
 });
 
-it('새 키에 쓸 공간이 없으면 이전 키를 보존하고 기록을 계속 읽는다', () => {
+it('tf 키의 압축 기록과 더 오래된 중복 기록을 dt 키로 옮긴다', () => {
   const 작업 = 시도시작(연습지문들[0].id, '2026-10-24', 'v1');
-  const 이전키 = `hallatype:progress:v2:op:${작업.id}`;
-  const 원본저장소 = 메모리저장소();
-  원본저장소.setItem(이전키, JSON.stringify(작업));
-  const 저장소: 저장소 = {
-    get length() { return 원본저장소.length; },
-    key: (번호) => 원본저장소.key(번호),
-    getItem: (키) => 원본저장소.getItem(키),
-    setItem: (키, 값) => {
-      if (키.startsWith('tf:p:')) { throw new Error('QuotaExceededError'); }
-      원본저장소.setItem(키, 값);
-    },
-    removeItem: (키) => 원본저장소.removeItem(키),
-  };
+  const 임시저장소 = 메모리저장소();
+  expect(진행작업저장(작업, 임시저장소)).toBe(true);
+  const 저장소 = 메모리저장소();
+  const 이전키 = `tf:p:${작업.id}`;
+  const 옛키 = `hallatype:progress:v2:op:${작업.id}`;
+  저장소.setItem(이전키, 임시저장소.getItem(`dt:p:${작업.id}`)!);
+  저장소.setItem(옛키, JSON.stringify(작업));
   expect(진행작업읽기(저장소)).toEqual([작업]);
-  expect(저장소.getItem(이전키)).not.toBeNull();
-  expect(저장소.getItem(`tf:p:${작업.id}`)).toBeNull();
+  expect(저장소.getItem(`dt:p:${작업.id}`)).not.toBeNull();
+  expect(저장소.getItem(이전키)).toBeNull();
+  expect(저장소.getItem(옛키)).toBeNull();
+  expect(진행기록키인가(이전키)).toBe(true);
   expect(진행작업저장(작업, 저장소)).toBe(true);
+
+  const 입력 = 입력묶음(작업.attemptId, 0, [{ code: 'KeyA', shift: false }], 100);
+  expect(진행작업저장(입력, 임시저장소)).toBe(true);
+  저장소.setItem(`tf:p:${입력.id}`, 임시저장소.getItem(`dt:p:${입력.id}`)!);
+  expect(진행작업저장(입력, 저장소)).toBe(true);
+  expect(저장소.getItem(`dt:p:${입력.id}`)).not.toBeNull();
+  expect(저장소.getItem(`tf:p:${입력.id}`)).toBeNull();
 });
+
+it.each(['tf:p:', 'hallatype:progress:v2:op:'])(
+  '새 키에 쓸 공간이 없으면 %s 기록을 보존하고 계속 읽는다', (접두사) => {
+    const 작업 = 시도시작(연습지문들[0].id, '2026-10-24', 'v1');
+    const 이전키 = `${접두사}${작업.id}`;
+    const 원본저장소 = 메모리저장소();
+    const 임시저장소 = 메모리저장소();
+    expect(진행작업저장(작업, 임시저장소)).toBe(true);
+    원본저장소.setItem(이전키, 접두사 === 'tf:p:'
+      ? 임시저장소.getItem(`dt:p:${작업.id}`)! : JSON.stringify(작업));
+    const 저장소: 저장소 = {
+      get length() { return 원본저장소.length; },
+      key: (번호) => 원본저장소.key(번호),
+      getItem: (키) => 원본저장소.getItem(키),
+      setItem: (키, 값) => {
+        if (키.startsWith('dt:p:')) { throw new Error('QuotaExceededError'); }
+        원본저장소.setItem(키, 값);
+      },
+      removeItem: (키) => 원본저장소.removeItem(키),
+    };
+    expect(진행작업읽기(저장소)).toEqual([작업]);
+    expect(저장소.getItem(이전키)).not.toBeNull();
+    expect(저장소.getItem(`dt:p:${작업.id}`)).toBeNull();
+    expect(진행작업저장(작업, 저장소)).toBe(true);
+  },
+);
 
 it('새 키와 이전 키에 같은 작업이 함께 있으면 한 번만 읽고 이전 키를 지운다', () => {
   const 저장소 = 메모리저장소();
   const 작업 = 시도시작(연습지문들[0].id, '2026-10-24', 'v1');
   const 이전키 = `hallatype:progress:v2:op:${작업.id}`;
-  const 새키 = `tf:p:${작업.id}`;
+  const 새키 = `dt:p:${작업.id}`;
   expect(새키.length).toBeLessThan(이전키.length);
   저장소.setItem(이전키, JSON.stringify(작업));
   expect(진행작업저장(작업, 저장소)).toBe(true);
@@ -168,7 +197,7 @@ it('기존 기록 때문에 저장 공간이 부족해도 읽으면서 공간을
   const 이전 = 입력묶음(시작.attemptId, 0, 키들, 2100);
   const 새입력 = 입력묶음(시작.attemptId, 1, 키들, 4200);
   const 이전키 = `hallatype:progress:v2:op:${이전.id}`;
-  const 새키 = `tf:p:${새입력.id}`;
+  const 새키 = `dt:p:${새입력.id}`;
   const 임시저장소 = 메모리저장소();
   expect(진행작업저장(새입력, 임시저장소)).toBe(true);
   const 새길이 = 임시저장소.getItem(새키)!.length;

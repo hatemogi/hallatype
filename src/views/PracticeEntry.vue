@@ -3,7 +3,7 @@
   <main v-else class="첫화면" :data-theme="테마">
     <div class="첫화면안쪽">
       <header class="첫화면상단">
-        <div class="첫화면브랜드"><GeulsumMark /><span class="도메인">TYPINGFLOW.COM</span></div>
+        <div class="첫화면브랜드"><GeulsumMark /><span class="도메인">DAILYTYPING.COM</span></div>
         <span class="상단장식" aria-hidden="true">✳</span>
       </header>
 
@@ -16,7 +16,7 @@
         <a ref="시작버튼" href="#practice" class="시작버튼">오늘의 타이핑 시작하기 <span aria-hidden="true">→</span></a>
       </section>
 
-      <footer class="첫화면하단"><span>천천히, 나의 속도로</span><span>글숨 · TYPINGFLOW</span></footer>
+      <footer class="첫화면하단"><span>천천히, 나의 속도로</span><span>글숨 · DAILYTYPING</span></footer>
     </div>
   </main>
 </template>
