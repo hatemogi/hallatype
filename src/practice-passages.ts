@@ -1,3 +1,4 @@
+import { 시작하기지문들 } from './practice-intro-passages';
 import { 자기계발지문들 } from './practice-growth-passages';
 import { 명상지문들 } from './practice-meditation-passages';
 import { 자기확언지문들 } from './practice-affirmation-passages';
@@ -15,7 +16,7 @@ export interface 연습지문 {
   원문URL?: string;
 }
 
-export type 지문테마 = '산문' | '자기계발' | '명상' | '자기확언' | '생활교양' | '요리레시피'
+export type 지문테마 = '시작하기' | '산문' | '자기계발' | '명상' | '자기확언' | '생활교양' | '요리레시피'
   | '메밀꽃 필 무렵' | '봄봄';
 
 /** 기존 산문 지문은 별도의 테마로 보존한다. */
@@ -65,6 +66,7 @@ export const 연습지문들: readonly 연습지문[] = [
 ];
 
 export const 테마별지문들: Record<지문테마, readonly 연습지문[]> = {
+  시작하기: 시작하기지문들,
   산문: 연습지문들,
   자기계발: 자기계발지문들,
   명상: 명상지문들,
@@ -90,7 +92,7 @@ const 선택저장키 = 'hallatype:passage-selection:v1';
 
 export function 지문선택읽기(저장소?: Pick<Storage, 'getItem'>):
     { 테마: 지문테마; 지문: 연습지문 } {
-  const 기본 = { 테마: '산문' as 지문테마, 지문: 연습지문들[0] };
+  const 기본 = { 테마: '시작하기' as 지문테마, 지문: 시작하기지문들[0] };
   try {
     const 값 = (저장소 ?? (typeof window === 'undefined' ? undefined : window.localStorage))
       ?.getItem(선택저장키);

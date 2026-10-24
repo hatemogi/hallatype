@@ -4,8 +4,10 @@ import { 따라그리기틀 } from '@/따라그리기';
 import { 날짜키, 다음지문찾기, 연습지문들, 지문선택읽기, 지문선택저장,
   테마별지문들 } from '@/practice-passages';
 
-it('창작 테마와 두 단편에 입력 가능한 지문을 둔다', () => {
+it('시작하기 맛보기와 기존 테마에 입력 가능한 지문을 둔다', () => {
   const 전체 = Object.values(테마별지문들).flat();
+  expect(Object.keys(테마별지문들)[0]).toBe('시작하기');
+  expect(테마별지문들.시작하기).toHaveLength(5);
   expect(테마별지문들.산문).toBe(연습지문들);
   expect(테마별지문들.산문).toHaveLength(14);
   expect(테마별지문들.자기계발).toHaveLength(14);
@@ -18,8 +20,13 @@ it('창작 테마와 두 단편에 입력 가능한 지문을 둔다', () => {
   expect(new Set(전체.map((지문) => 지문.id)).size).toBe(전체.length);
   for (const 선택 of 전체) {
     expect(선택.id).toMatch(/^[A-Za-z]{12}$/);
-    expect(선택.본문.length).toBeGreaterThanOrEqual(260);
-    expect(선택.본문.length).toBeLessThanOrEqual(330);
+    if (테마별지문들.시작하기.includes(선택)) {
+      expect(선택.본문.length).toBeGreaterThanOrEqual(90);
+      expect(선택.본문.length).toBeLessThanOrEqual(125);
+    } else {
+      expect(선택.본문.length).toBeGreaterThanOrEqual(260);
+      expect(선택.본문.length).toBeLessThanOrEqual(330);
+    }
     expect(선택.본문).not.toMatch(/[.!?][가-힣]/);
     expect(선택.본문).toMatch(/^[\uAC00-\uD7A3\x20-\x7E]+$/);
     const 지문 = new 지문틀();
@@ -48,7 +55,7 @@ it('고른 지문을 날짜에 관계없이 보존하고 기존 저장 형식도
   const 저장소 = { getItem: (키: string) => 값들.get(키) ?? null,
     setItem: (키: string, 값: string) => { 값들.set(키, 값); } };
   expect(날짜키(new Date(2026, 9, 23, 12))).toBe('2026-10-23');
-  expect(지문선택읽기(저장소)).toEqual({ 테마: '산문', 지문: 연습지문들[0] });
+  expect(지문선택읽기(저장소)).toEqual({ 테마: '시작하기', 지문: 테마별지문들.시작하기[0] });
   const 다른지문 = 테마별지문들.자기계발[5];
   저장소.setItem('hallatype:passage-selection:v1', JSON.stringify({
     날짜: '2026-10-23', 테마: '자기계발', 지문ID: 다른지문.id,

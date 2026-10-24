@@ -179,8 +179,7 @@ const 테마선택지: Array<{ 이름: 필사테마 }> = [
 ];
 const 글자크기선택지: 지문크기[] = ['작게', '보통', '크게'];
 const 가장자리단계이름 = ['선명하게', '조금 선명하게', '보통', '조금 부드럽게', '부드럽게'];
-const 글테마선택지: 지문테마[] = ['산문', '자기계발', '명상', '자기확언', '생활교양', '요리레시피',
-  '메밀꽃 필 무렵', '봄봄'];
+const 글테마선택지 = Object.keys(테마별지문들) as 지문테마[];
 
 export default defineComponent({
   components: { GeulsumMark },
@@ -622,7 +621,7 @@ export default defineComponent({
   --화면: #e9f0f2;
   --장식빛: rgba(171, 199, 208, .26);
   --글: #30444f;
-  --보조글: #647b85;
+  --보조글: #5e7580;
   --옅은글: #718892;
   --출처링크: #526e7b;
   --출처링크호버: #30444f;
@@ -942,6 +941,7 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
 .선택머리 { align-items: start; }
 .선택머리 h2 { margin-top: 6px; font-size: 17px; }
 .글테마선택 { grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; gap: 6px; margin-top: 18px; }
+.글테마선택 button:first-child { grid-column: 1 / -1; }
 .글테마선택 button { padding: 8px 5px; font-size: 12px; }
 .지문서랍 { display: flex; flex-direction: column; flex: 1; min-height: 0; margin-top: 20px; }
 .글목록 { display: flex; flex-direction: column; flex: 1; min-height: 0; gap: 6px; overflow-y: auto; overscroll-behavior: contain; padding-right: 3px; }
@@ -1006,6 +1006,7 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
   }
   .목록닫기 { display: block; border: 0; background: none; color: var(--보조글); font-size: 26px; line-height: 1; cursor: pointer; }
   .글테마선택 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .글테마선택 button:first-child { grid-column: auto; }
   .글테마선택 button:last-child:nth-child(odd) { grid-column: auto; }
   .글목록 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; }
   .글목록 button { min-height: 56px; }
