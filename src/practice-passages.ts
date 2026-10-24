@@ -77,42 +77,6 @@ export const 테마별지문들: Record<지문테마, readonly 연습지문[]> =
   봄봄: 봄봄지문들,
 };
 
-/** 선택한 테마 안에서 다음 지문으로 이어 가고, 마지막이면 첫 지문으로 돌아간다. */
-export function 다음지문찾기(테마: 지문테마, 현재ID: string): 연습지문 {
-  const 지문들 = 테마별지문들[테마];
-  const 순서 = 지문들.findIndex((지문) => 지문.id === 현재ID);
-  return 지문들[(순서 + 1) % 지문들.length];
-}
-
 export function 날짜키(날짜: Date): string {
   return `${날짜.getFullYear()}-${String(날짜.getMonth() + 1).padStart(2, '0')}-${String(날짜.getDate()).padStart(2, '0')}`;
-}
-
-const 선택저장키 = 'hallatype:passage-selection:v1';
-
-export function 지문선택읽기(저장소?: Pick<Storage, 'getItem'>):
-    { 테마: 지문테마; 지문: 연습지문 } {
-  const 기본 = { 테마: '시작하기' as 지문테마, 지문: 시작하기지문들[0] };
-  try {
-    const 값 = (저장소 ?? (typeof window === 'undefined' ? undefined : window.localStorage))
-      ?.getItem(선택저장키);
-    if (!값) { return 기본; }
-    const 선택: unknown = JSON.parse(값);
-    if (!선택 || typeof 선택 !== 'object') { return 기본; }
-    const 기록 = 선택 as { 테마?: unknown; 지문ID?: unknown };
-    if (typeof 기록.테마 !== 'string' || !(기록.테마 in 테마별지문들)) {
-      return 기본;
-    }
-    const 테마 = 기록.테마 as 지문테마;
-    return { 테마, 지문: 테마별지문들[테마].find((지문) => 지문.id === 기록.지문ID)
-      ?? 테마별지문들[테마][0] };
-  } catch (_) { return 기본; }
-}
-
-export function 지문선택저장(테마: 지문테마, 지문ID: string,
-  저장소?: Pick<Storage, 'setItem'>): void {
-  try {
-    (저장소 ?? (typeof window === 'undefined' ? undefined : window.localStorage))
-      ?.setItem(선택저장키, JSON.stringify({ 테마, 지문ID }));
-  } catch (_) { /* 저장소 없이도 지문을 고를 수 있다. */ }
 }

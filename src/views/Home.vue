@@ -139,7 +139,7 @@
               </p>
             </div>
             <div class="마침동작">
-              <button type="button" class="주버튼" @click="지문선택(다음지문)">다음 지문 시작 <span aria-hidden="true">→</span></button>
+              <button type="button" class="주버튼" @click="다음글시작">다음 지문 시작 <span aria-hidden="true">→</span></button>
               <button type="button" class="글자버튼" @click="다시쓰기">이 글 다시 쓰기 <span aria-hidden="true">↺</span></button>
             </div>
           </div>
@@ -163,8 +163,9 @@ import { 끝글자 } from '@/글자';
 import { 지문틀 } from '@/본문';
 import { 따라그리기틀 } from '@/따라그리기';
 import 그림판틀 from '@/그림판';
-import { 날짜키, 다음지문찾기, 지문선택읽기, 지문선택저장, 테마별지문들,
+import { 날짜키, 테마별지문들,
   type 연습지문, type 지문테마 } from '@/practice-passages';
+import { 다음미완료지문, 첫진입지문선택, 주제지문선택 } from '@/practice-selection';
 import { 본문버전, 브라우저저장소, 시도목록, 시도시작, 시도완료, 시도중단, 입력묶음,
   지문입력상태, 지문재개시도, 지문최고정타율, 정타율, 정타율표시,
   진행기록키인가, 진행작업읽기, 진행작업저장, 작업합치기, type 입력키, type 진행작업,
@@ -183,11 +184,10 @@ const 글테마선택지 = Object.keys(테마별지문들) as 지문테마[];
 export default defineComponent({
   components: { GeulsumMark },
   data() {
-    const 선택 = 지문선택읽기();
     return {
       오늘날짜: 날짜키(new Date()),
-      오늘지문: 선택.지문,
-      글테마: 선택.테마,
+      오늘지문: 테마별지문들.시작하기[0],
+      글테마: '시작하기' as 지문테마,
       글테마선택지,
       테마선택지,
       글자크기선택지,
@@ -274,12 +274,12 @@ export default defineComponent({
     },
     글테마바꾸기(테마: 지문테마, event?: MouseEvent) {
       if (!this.목록열림) { (event?.currentTarget as HTMLElement | undefined)?.blur(); }
-      if (테마 === this.글테마) { return; }
       this.입력기록저장();
-      this.글테마 = 테마;
-      this.오늘지문 = 테마별지문들[테마][0];
-      지문선택저장(테마, this.오늘지문.id);
-      const 새로시작 = this.지문상태(this.오늘지문) === '완료' || !this.복원할시도();
+      const 선택 = 주제지문선택(테마, this.시도들);
+      if (테마 === this.글테마 && 선택.지문.id === this.오늘지문.id && !this.결과화면보이기) { return; }
+      this.글테마 = 선택.테마;
+      this.오늘지문 = 선택.지문;
+      const 새로시작 = this.지문상태(선택.지문) === '완료' || !this.복원할시도();
       this.reset(새로시작);
     },
     지문선택(지문: 연습지문, event?: MouseEvent) {
@@ -290,9 +290,13 @@ export default defineComponent({
       if (같은지문 && !this.결과화면보이기 && !완료된지문) { return; }
       this.입력기록저장();
       this.오늘지문 = 지문;
-      지문선택저장(this.글테마, 지문.id);
       const 새로시작 = 완료된지문 || (같은지문 && this.결과화면보이기) || !this.복원할시도();
       this.reset(새로시작);
+    },
+    다음글시작() {
+      const 선택 = 다음미완료지문(this.오늘지문.id, this.시도들);
+      this.글테마 = 선택.테마;
+      this.지문선택(선택.지문);
     },
     날짜변경확인() {
       const 오늘날짜 = 날짜키(new Date());
@@ -441,7 +445,7 @@ export default defineComponent({
               !e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey &&
               !self.목록열림 && !self.설정열림) {
             e.preventDefault();
-            self.지문선택(self.다음지문);
+            self.다음글시작();
           }
           return;
         }
@@ -503,7 +507,7 @@ export default defineComponent({
     document.title = '글숨 · 한글 타이핑 필사';
     this.설정 = 필사설정읽기();
     this.기록들 = 진행작업읽기();
-    const 선택 = 지문선택읽기();
+    const 선택 = 첫진입지문선택(this.시도들);
     this.오늘날짜 = 날짜키(new Date());
     this.글테마 = 선택.테마;
     this.오늘지문 = 선택.지문;
@@ -533,9 +537,6 @@ export default defineComponent({
     },
     현재지문들(): readonly 연습지문[] {
       return 테마별지문들[this.글테마];
-    },
-    다음지문(): 연습지문 {
-      return 다음지문찾기(this.글테마, this.오늘지문.id);
     },
     걸린시간() {
       return `${Math.floor(this.완료초 / 60)}분 ${this.완료초 % 60}초`;
