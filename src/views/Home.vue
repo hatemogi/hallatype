@@ -60,6 +60,23 @@
             </div>
           </fieldset>
           <fieldset>
+            <legend>비트맵 글꼴 확대</legend>
+            <div class="설정선택 글꼴선택">
+              <button type="button" :class="{ 선택됨: 설정.글꼴확대방식 === '기존' }"
+                :aria-pressed="설정.글꼴확대방식 === '기존'"
+                @click="설정변경({ 글꼴확대방식: '기존' })">기존</button>
+              <button type="button" :class="{ 선택됨: 설정.글꼴확대방식 === '윤곽' }"
+                :aria-pressed="설정.글꼴확대방식 === '윤곽'"
+                @click="설정변경({ 글꼴확대방식: '윤곽' })">윤곽 32×32</button>
+              <button type="button" :class="{ 선택됨: 설정.글꼴확대방식 === '윤곽48' }"
+                :aria-pressed="설정.글꼴확대방식 === '윤곽48'"
+                @click="설정변경({ 글꼴확대방식: '윤곽48' })">윤곽 48×48</button>
+              <button type="button" :class="{ 선택됨: 설정.글꼴확대방식 === '윤곽64' }"
+                :aria-pressed="설정.글꼴확대방식 === '윤곽64'"
+                @click="설정변경({ 글꼴확대방식: '윤곽64' })">윤곽 64×64</button>
+            </div>
+          </fieldset>
+          <fieldset>
             <legend>글자 가장자리</legend>
             <div class="가장자리선택">
               <input type="range" min="0" max="4" step="1" :value="설정.안티앨리어싱단계"
@@ -496,6 +513,7 @@ export default defineComponent({
       const 팔레트 = 필사팔레트들[this.설정.테마];
       this.본문?.팔레트설정(팔레트);
       this.그림판?.안티앨리어싱강도설정(단계별안티앨리어싱강도[this.설정.안티앨리어싱단계]);
+      this.그림판?.글꼴확대방식설정(this.설정.글꼴확대방식);
       this.현재한줄칸수 = this.한줄칸수();
       this.그림판?.보기설정(팔레트, this.현재한줄칸수,
         this.설정.커서깜빡임);
@@ -568,6 +586,7 @@ export default defineComponent({
         최소높이: 210,
         커서깜빡임: this.설정.커서깜빡임,
         안티앨리어싱: 단계별안티앨리어싱강도[this.설정.안티앨리어싱단계],
+        글꼴확대방식: this.설정.글꼴확대방식,
         영문글꼴: false,
       }));
       this.그림판 = 그림판;
@@ -662,7 +681,10 @@ export default defineComponent({
           if (커서세로 !== null) {
             const 종이 = 캔버스.closest('.종이');
             if (종이) {
-              const 화면세로 = 캔버스.getBoundingClientRect().top + 커서세로 * 캔버스.clientHeight / 캔버스.height;
+              const 해상도배율 = self.설정.글꼴확대방식 === '윤곽64' ? 2
+                : self.설정.글꼴확대방식 === '윤곽48' ? 1.5 : 1;
+              const 화면세로 = 캔버스.getBoundingClientRect().top +
+                커서세로 * 해상도배율 * 캔버스.clientHeight / 캔버스.height;
               const 경계 = 종이.getBoundingClientRect().bottom - 36;
               if (화면세로 > 경계) { 종이.scrollTop += 화면세로 - 경계; }
             }
@@ -842,6 +864,7 @@ button { font: inherit; }
 .테마견본[data-theme='서가'] { background: linear-gradient(135deg, #16404d 67%, #dda853 67%); color: #fbf5dd; }
 .테마견본[data-theme='모과'] { background: linear-gradient(135deg, #f5efe3 67%, #b8892d 67%); color: #2f391c; }
 .설정선택 { display: flex; gap: 7px; }
+.글꼴선택 { flex-wrap: wrap; }
 .설정선택 button { min-width: 72px; padding: 8px 13px; border: 1px solid var(--테두리); border-radius: 3px; background: var(--선택안함); color: var(--글); font-size: 12px; cursor: pointer; }
 .가장자리선택 input { display: block; width: 100%; margin: 0; accent-color: var(--강조); cursor: pointer; }
 .가장자리눈금 { display: flex; justify-content: space-between; margin: 2px 7px 0; }

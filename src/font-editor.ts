@@ -3,7 +3,7 @@ import { 벌식, 분리 } from './한글';
 
 export type Part = 'cho' | 'jung' | 'jong';
 export type Bitmap = number[];
-/** Row-major 32×32 alpha values, each in the range 0–255. */
+/** Row-major alpha values, each in the range 0–255. */
 export type AlphaGlyph = number[];
 
 export const INITIALS = Array.from('ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ');
@@ -125,6 +125,323 @@ export function antialiasBitmap(source: Bitmap, width: 16 | 32): AlphaGlyph {
         }
     }
     return result;
+}
+
+/** Reconstruct the edge between bitmap pixel centres and measure its coverage at 8× resolution. */
+export function contourAlphaBitmap(source: Bitmap, width: 16 | 32): AlphaGlyph {
+    if (source.length !== 32) { throw new Error('32행 비트맵이 필요합니다.'); }
+    const samples = 8;
+    const result: AlphaGlyph = Array(width * 32).fill(0);
+    const filled = (x: number, y: number) => x >= 0 && x < width && y >= 0 && y < 32 &&
+        !!(source[y] & (1 << (width - 1 - x)));
+    for (let y = 0; y < 32; y++) {
+        for (let x = 0; x < width; x++) {
+            const centre = filled(x, y);
+            let edge = false;
+            for (let dy = -1; dy <= 1 && !edge; dy++) {
+                for (let dx = -1; dx <= 1; dx++) {
+                    if (filled(x + dx, y + dy) !== centre) { edge = true; break; }
+                }
+            }
+            if (!edge) { result[y * width + x] = centre ? 255 : 0; continue; }
+            let covered = 0;
+            for (let sy = 0; sy < samples; sy++) {
+                const sampleY = y - 0.5 + (sy + 0.5) / samples;
+                const y0 = Math.floor(sampleY);
+                const fy = sampleY - y0;
+                for (let sx = 0; sx < samples; sx++) {
+                    const sampleX = x - 0.5 + (sx + 0.5) / samples;
+                    const x0 = Math.floor(sampleX);
+                    const fx = sampleX - x0;
+                    const upper = Number(filled(x0, y0)) * (1 - fx) + Number(filled(x0 + 1, y0)) * fx;
+                    const lower = Number(filled(x0, y0 + 1)) * (1 - fx) + Number(filled(x0 + 1, y0 + 1)) * fx;
+                    if (upper * (1 - fy) + lower * fy >= 0.4) { covered++; }
+                }
+            }
+            result[y * width + x] = Math.round(covered * 255 / (samples * samples));
+        }
+    }
+    return result;
+}
+
+type TracedEdge = { start: number; side: -1 | 1; positions: number[] };
+
+/** Follow each run boundary across rows, retaining only long, gently changing paths. */
+function traceLongContours(source: Bitmap, width: 8 | 16, horizontal: boolean): TracedEdge[] {
+    const axisLength = horizontal ? width : 16;
+    const crossLength = horizontal ? 16 : width;
+    const filled = (axis: number, cross: number) => {
+        const x = horizontal ? axis : cross;
+        const y = horizontal ? cross : axis;
+        return !!(source[y] & (1 << (width - 1 - x)));
+    };
+    const chains: TracedEdge[] = [];
+    let active: TracedEdge[] = [];
+    for (let axis = 0; axis < axisLength; axis++) {
+        const edges: Array<{ side: -1 | 1; position: number }> = [];
+        for (let cross = 0; cross < crossLength; cross++) {
+            if (!filled(axis, cross)) { continue; }
+            if (cross === 0 || !filled(axis, cross - 1)) {
+                edges.push({ side: -1, position: cross - 0.5 });
+            }
+            if (cross === crossLength - 1 || !filled(axis, cross + 1)) {
+                edges.push({ side: 1, position: cross + 0.5 });
+            }
+        }
+        const next: TracedEdge[] = [];
+        for (const edge of edges) {
+            let match: TracedEdge | undefined;
+            let distance = 1.5;
+            for (const chain of active) {
+                if (chain.side !== edge.side || next.includes(chain)) { continue; }
+                const gap = Math.abs(chain.positions[chain.positions.length - 1] - edge.position);
+                if (gap <= distance) { match = chain; distance = gap; }
+            }
+            if (match) {
+                match.positions.push(edge.position);
+                next.push(match);
+            } else {
+                const chain = { start: axis, side: edge.side, positions: [edge.position] };
+                chains.push(chain);
+                next.push(chain);
+            }
+        }
+        active = next;
+    }
+    return chains.filter(({ positions }) => positions.length >= 5 &&
+        Math.max(...positions) - Math.min(...positions) >= 1.5 &&
+        positions.some((value, index) => index > 1 &&
+            Math.abs(value - 2 * positions[index - 1] + positions[index - 2]) > 0.01));
+}
+
+type FittedContour = { position: number; tangentX: number; tangentY: number };
+
+/** Fit long boundaries while keeping them within 0.35 source pixels of the traced edge. */
+function traceFittedContours(source: Bitmap, width: 8 | 16, horizontal: boolean,
+                             scale: 2 | 3 | 4, samples: number): FittedContour[][] {
+    const chains = traceLongContours(source, width, horizontal);
+    if (!chains.length) { return []; }
+    const axisLength = (horizontal ? width : 16) * scale * samples;
+    const contours: FittedContour[][] = Array.from({ length: axisLength }, () => []);
+    for (const { start, positions } of chains) {
+        const fitted = positions.map((value, index) => index === 0 || index === positions.length - 1
+            ? value : Math.max(value - 0.25, Math.min(value + 0.25,
+                (positions[index - 1] + 2 * value + positions[index + 1]) / 4)));
+        for (let axis = 0; axis < axisLength; axis++) {
+            const sourceAxis = (axis + 0.5) / (scale * samples) - 0.5 - start;
+            // The first and last source rows may contain a junction or a square end.
+            if (sourceAxis < 1 || sourceAxis >= positions.length - 2) { continue; }
+            const segment = Math.floor(sourceAxis);
+            const t = sourceAxis - segment;
+            const linear = positions[segment] * (1 - t) + positions[segment + 1] * t;
+            const curve = cubicInterpolate(
+                fitted[Math.max(0, segment - 1)], fitted[segment], fitted[segment + 1],
+                fitted[Math.min(fitted.length - 1, segment + 2)], t);
+            const position = Math.max(linear - 0.35, Math.min(linear + 0.35, curve));
+            const before = cubicInterpolate(
+                fitted[Math.max(0, segment - 1)], fitted[segment], fitted[segment + 1],
+                fitted[Math.min(fitted.length - 1, segment + 2)], Math.max(0, t - 0.05));
+            const after = cubicInterpolate(
+                fitted[Math.max(0, segment - 1)], fitted[segment], fitted[segment + 1],
+                fitted[Math.min(fitted.length - 1, segment + 2)], Math.min(1, t + 0.05));
+            const slope = (after - before) / (Math.min(1, t + 0.05) - Math.max(0, t - 0.05));
+            const norm = Math.hypot(1, slope);
+            contours[axis].push({ position, tangentX: horizontal ? 1 / norm : slope / norm,
+                tangentY: horizontal ? slope / norm : 1 / norm });
+        }
+    }
+    return contours;
+}
+
+function nearbyContour(curves: FittedContour[] | undefined, coordinate: number):
+    { contour: FittedContour; distance: number } | undefined {
+    if (!curves) { return undefined; }
+    let closest = 0.65;
+    let match: FittedContour | undefined;
+    for (const curve of curves) {
+        const distance = Math.abs(coordinate - curve.position);
+        if (distance < closest) {
+            closest = distance;
+            match = curve;
+        }
+    }
+    return match ? { contour: match, distance: closest } : undefined;
+}
+
+function cubicInterpolate(a: number, b: number, c: number, d: number, t: number): number {
+    return b + 0.5 * t * (c - a + t * (2 * a - 5 * b + 4 * c - d + t * (3 * (b - c) + d - a)));
+}
+
+/** Reconstruct a continuous contour from the 16-row source, then measure pixel coverage. */
+export function smoothSourceAlphaBitmap(source: Bitmap, width: 8 | 16 = 16, scale: 2 | 3 | 4 = 2): AlphaGlyph {
+    if (source.length !== 16) { throw new Error('16행 원본 비트맵이 필요합니다.'); }
+    const samples = 8;
+    const targetWidth = width * scale;
+    const targetHeight = 16 * scale;
+    const result: AlphaGlyph = Array(targetWidth * targetHeight).fill(0);
+    const filled = (x: number, y: number) => x >= 0 && x < width && y >= 0 && y < 16 &&
+        !!(source[y] & (1 << (width - 1 - x)));
+    const weights = (t: number): [number, number, number, number] => {
+        const t2 = t * t;
+        const t3 = t2 * t;
+        return [-0.5 * t + t2 - 0.5 * t3, 1 - 2.5 * t2 + 1.5 * t3,
+            0.5 * t + 2 * t2 - 1.5 * t3, -0.5 * t2 + 0.5 * t3];
+    };
+    const positions = (length: number) => Array.from({ length: length * samples }, (_, index) => {
+        const coordinate = (index + 0.5) / (scale * samples) - 0.5;
+        const base = Math.floor(coordinate);
+        return { coordinate, base, weight: weights(coordinate - base) };
+    });
+    const xPositions = positions(targetWidth);
+    const yPositions = positions(targetHeight);
+    const verticalCurves = traceFittedContours(source, width, false, scale, samples);
+    const horizontalCurves = traceFittedContours(source, width, true, scale, samples);
+    const hasLongCurves = verticalCurves.length > 0 || horizontalCurves.length > 0;
+    const interpolate = (x: number, y: number) => {
+        const x0 = Math.floor(x);
+        const y0 = Math.floor(y);
+        const wx = weights(x - x0);
+        const wy = weights(y - y0);
+        let value = 0;
+        for (let dy = 0; dy < 4; dy++) {
+            let row = 0;
+            for (let dx = 0; dx < 4; dx++) {
+                row += Number(filled(x0 + dx - 1, y0 + dy - 1)) * wx[dx];
+            }
+            value += row * wy[dy];
+        }
+        return value;
+    };
+    // Horizontal interpolation is shared by every vertical sample of the glyph.
+    const horizontal = new Float32Array(16 * xPositions.length);
+    for (let row = 0; row < 16; row++) {
+        for (let p = 0; p < xPositions.length; p++) {
+            const { base, weight } = xPositions[p];
+            horizontal[row * xPositions.length + p] =
+                Number(filled(base - 1, row)) * weight[0] + Number(filled(base, row)) * weight[1] +
+                Number(filled(base + 1, row)) * weight[2] + Number(filled(base + 2, row)) * weight[3];
+        }
+    }
+    for (let y = 0; y < targetHeight; y++) {
+        for (let x = 0; x < targetWidth; x++) {
+            const centre = filled(Math.floor(x / scale), Math.floor(y / scale));
+            let edge = false;
+            for (let dy = -1; dy <= 1 && !edge; dy++) {
+                for (let dx = -1; dx <= 1; dx++) {
+                    if (filled(Math.floor(x / scale) + dx, Math.floor(y / scale) + dy) !== centre) {
+                        edge = true;
+                        break;
+                    }
+                }
+            }
+            if (!edge) { result[y * targetWidth + x] = centre ? 255 : 0; continue; }
+            let covered = 0;
+            for (let sy = 0; sy < samples; sy++) {
+                const sampleY = y * samples + sy;
+                const { coordinate: sourceY, base, weight } = yPositions[sampleY];
+                for (let sx = 0; sx < samples; sx++) {
+                    const sampleX = x * samples + sx;
+                    let value = 0;
+                    for (let dy = 0; dy < 4; dy++) {
+                        const row = base + dy - 1;
+                        if (row >= 0 && row < 16) {
+                            value += horizontal[row * xPositions.length + sampleX] * weight[dy];
+                        }
+                    }
+                    if (hasLongCurves) {
+                        const sourceX = xPositions[sampleX].coordinate;
+                        const vertical = nearbyContour(verticalCurves[sampleY], sourceX);
+                        const horizontalCurve = nearbyContour(horizontalCurves[sampleX], sourceY);
+                        const curve = vertical && (!horizontalCurve || vertical.distance <= horizontalCurve.distance)
+                            ? vertical.contour : horizontalCurve?.contour;
+                        if (curve) {
+                            const dx = curve.tangentX * 0.6;
+                            const dy = curve.tangentY * 0.6;
+                            value = 0.5 * value + 0.25 * interpolate(sourceX - dx, sourceY - dy)
+                                + 0.25 * interpolate(sourceX + dx, sourceY + dy);
+                        }
+                    }
+                    if (value >= 0.4) { covered++; }
+                }
+            }
+            result[y * targetWidth + x] = Math.round(covered * 255 / (samples * samples));
+        }
+    }
+    return result;
+}
+
+/** Draw the ring in ㅇ and ㅎ as an actual ellipse; retain ㅎ's upper strokes. */
+export function roundedRingAlphaGlyph(source: Bitmap, hieuh = false, scale: 2 | 3 | 4 = 2): AlphaGlyph {
+    if (source.length !== 16) { throw new Error('16행 원본 비트맵이 필요합니다.'); }
+    let firstSplit = 16;
+    let lastSplit = -1;
+    let holeLeft = 16;
+    let holeRight = -1;
+    for (let y = 0; y < 16; y++) {
+        let previous = -1;
+        for (let x = 0; x < 16; x++) {
+            if (!hasPixel(source, 16, x, y)) { continue; }
+            if (previous >= 0 && x - previous > 1) {
+                firstSplit = Math.min(firstSplit, y);
+                lastSplit = Math.max(lastSplit, y);
+                holeLeft = Math.min(holeLeft, previous + 1);
+                holeRight = Math.max(holeRight, x - 1);
+            }
+            previous = x;
+        }
+    }
+    if (lastSplit < 0) { return smoothSourceAlphaBitmap(source, 16, scale); }
+    const top = firstSplit - 1;
+    let bottom = lastSplit;
+    for (let y = lastSplit + 1; y < 16; y++) {
+        if (source[y]) { bottom = y; }
+    }
+    let left = 16;
+    let right = -1;
+    for (let y = top; y <= bottom; y++) {
+        for (let x = 0; x < 16; x++) {
+            if (hasPixel(source, 16, x, y)) {
+                left = Math.min(left, x);
+                right = Math.max(right, x);
+            }
+        }
+    }
+    const upper = hieuh
+        ? smoothSourceAlphaBitmap(source.map((row, y) => y < top ? row : 0), 16, scale)
+        : Array<number>(16 * scale * 16 * scale).fill(0);
+    const ellipse = (x: number, y: number, minX: number, maxX: number, minY: number, maxY: number) => {
+        const cx = (minX + maxX) / 2;
+        const cy = (minY + maxY) / 2;
+        const nx = (x - cx) / ((maxX - minX) / 2);
+        const ny = (y - cy) / ((maxY - minY) / 2);
+        return nx * nx + ny * ny <= 1;
+    };
+    const samples = 8;
+    // The binary enlargement thickens corners; keep a similar stroke weight after rounding them.
+    const outerPadding = 0.15;
+    const innerInset = 0.2;
+    for (let y = Math.max(0, Math.floor((top - outerPadding) * scale));
+        y < Math.min(16 * scale, Math.ceil((bottom + 1 + outerPadding) * scale)); y++) {
+        for (let x = Math.max(0, Math.floor((left - outerPadding) * scale));
+            x < Math.min(16 * scale, Math.ceil((right + 1 + outerPadding) * scale)); x++) {
+            let covered = 0;
+            for (let sy = 0; sy < samples; sy++) {
+                for (let sx = 0; sx < samples; sx++) {
+                    const sampleX = (x + (sx + 0.5) / samples) / scale;
+                    const sampleY = (y + (sy + 0.5) / samples) / scale;
+                    if (ellipse(sampleX, sampleY, left - outerPadding, right + 1 + outerPadding,
+                        top - outerPadding, bottom + 1 + outerPadding) &&
+                        !ellipse(sampleX, sampleY, holeLeft + innerInset, holeRight + 1 - innerInset,
+                            firstSplit + innerInset, lastSplit + 1 - innerInset)) {
+                        covered++;
+                    }
+                }
+            }
+            const index = y * 16 * scale + x;
+            upper[index] = Math.max(upper[index], Math.round(covered * 255 / (samples * samples)));
+        }
+    }
+    return upper;
 }
 
 export function antialiasFont(font: Bitmap[]): AlphaGlyph[] {

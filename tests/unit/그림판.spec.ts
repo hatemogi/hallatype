@@ -31,6 +31,88 @@ describe('타자 연습 캔버스 글꼴', () => {
         expect(이미지들.every((이미지) => 이미지.data.some((값, i) => i % 4 === 3 && 값 === 255))).toBe(true);
     });
 
+    it.each(['아', '하', '사', '싸', '자', '짜', '차', 'A', '.'])('확대 방식을 바꾸면 %s의 윤곽을 다시 그리고 0단계에서는 원본 픽셀을 유지한다', (문자) => {
+        const { 그림판, 이미지들 } = 화면(true);
+        const 글자 = new 색칠할글자(글자틀.생성(문자.charCodeAt(0)), [검정, 검정], 흰색);
+        그림판.글자그리기(new 위치틀(), 글자);
+        const 기존 = 이미지들.map(이미지 => Array.from(이미지.data));
+
+        이미지들.length = 0;
+        그림판.글꼴확대방식설정('윤곽');
+        그림판.글자그리기(new 위치틀(), 글자);
+        expect(이미지들.map(이미지 => Array.from(이미지.data))).not.toEqual(기존);
+
+        그림판.안티앨리어싱강도설정(0);
+        이미지들.length = 0;
+        그림판.글자그리기(new 위치틀(), 글자);
+        const 선명한윤곽 = 이미지들.map(이미지 => Array.from(이미지.data));
+        그림판.글꼴확대방식설정('기존');
+        이미지들.length = 0;
+        그림판.글자그리기(new 위치틀(), 글자);
+        expect(이미지들.map(이미지 => Array.from(이미지.data))).toEqual(선명한윤곽);
+    });
+
+    it.each(([
+        ['윤곽48', 1.5], ['윤곽64', 2],
+    ] as const).flatMap(([방식, 배율]) =>
+        ['아', '하', '사', '자', '앙', '항', 'A', '.'].map(문자 => [방식, 배율, 문자] as const)))(
+        '%s(%s배) 모드에서 %s를 실제 고해상도 이미지로 그린다', (방식, 배율, 문자) => {
+        const { 그림판, 요청, 이미지들 } = 화면(true);
+        const 글자 = new 색칠할글자(글자틀.생성(문자.charCodeAt(0)), [검정, 검정, 검정], 흰색);
+        그림판.글꼴확대방식설정(방식);
+        그림판.글자그리기(new 위치틀(1, 2), 글자);
+        const 너비 = (글자.자.전각 ? 32 : 16) * 배율;
+        expect(요청.every(([x, y, w, h]) => x === 32 * 배율 && y === 44 * 배율 &&
+            w === 너비 && h === 32 * 배율)).toBe(true);
+        expect(이미지들.some(이미지 => 이미지.data.some((값, index) => index % 4 === 3 && 값 === 255))).toBe(true);
+    });
+
+    it('48×48과 64×64 모드는 캔버스 내부 해상도를 높이고 논리적 글자 배치를 유지한다', () => {
+        const 지문 = new 지문틀();
+        지문.글쓰기('아A');
+        지문.쓰기(지문.위치, 끝글자);
+        const 칠한영역: number[][] = [];
+        const ctx = {
+            canvas: { width: 0, height: 0 },
+            setTransform: vi.fn(),
+            fillRect: (x: number, y: number, w: number, h: number) => 칠한영역.push([x, y, w, h]),
+            getImageData: (_x: number, _y: number, w: number, h: number) =>
+                ({ width: w, height: h, data: new Uint8ClampedArray(w * h * 4).fill(255) } as ImageData),
+            putImageData: () => undefined,
+        } as unknown as CanvasRenderingContext2D;
+        const 그림판 = new 그림판틀(ctx, new 본문틀(지문),
+            { 한줄칸수: 22, 최소높이: 210, 글꼴확대방식: '윤곽48', 커서깜빡임: false });
+        그림판.그리기();
+        expect(ctx.canvas.width).toBe(537);
+        expect(ctx.canvas.height).toBe(315);
+        expect(ctx.setTransform).toHaveBeenLastCalledWith(1, 0, 0, 1, 0, 0);
+        expect(칠한영역[0]).toEqual([0, 0, 537, 315]);
+        칠한영역.length = 0;
+        그림판.글자그리기(new 위치틀(0, 0),
+            new 색칠할글자(글자틀.생성('아'.charCodeAt(0)), [검정, 검정], 빨강));
+        expect(칠한영역).toContainEqual([0, 48, 48, 6]);
+        칠한영역.length = 0;
+        그림판.변경그리기([new 위치틀(0, 0)]);
+        expect(칠한영역).toContainEqual([0, 0, 48, 66]);
+        그림판.글꼴확대방식설정('윤곽');
+        그림판.그리기();
+        expect(ctx.canvas.width).toBe(358);
+        expect(ctx.canvas.height).toBe(210);
+        expect(ctx.setTransform).toHaveBeenLastCalledWith(1, 0, 0, 1, 0, 0);
+        그림판.글꼴확대방식설정('윤곽64');
+        그림판.그리기();
+        expect(ctx.canvas.width).toBe(716);
+        expect(ctx.canvas.height).toBe(420);
+        expect(칠한영역).toContainEqual([0, 0, 716, 420]);
+        칠한영역.length = 0;
+        그림판.글자그리기(new 위치틀(0, 0),
+            new 색칠할글자(글자틀.생성('아'.charCodeAt(0)), [검정, 검정], 빨강));
+        expect(칠한영역).toContainEqual([0, 64, 64, 8]);
+        칠한영역.length = 0;
+        그림판.변경그리기([new 위치틀(0, 0)]);
+        expect(칠한영역).toContainEqual([0, 0, 64, 88]);
+    });
+
     it('한 글자 안에서는 종성, 중성, 초성 순서로 그리되 각 자소의 색을 유지한다', () => {
         const { 그림판, 이미지들 } = 화면();
         그림판.안티앨리어싱강도설정(0);
@@ -103,7 +185,7 @@ describe('타자 연습 캔버스 글꼴', () => {
         expect(부드러움.every((값, i) => i % 4 !== 0 || 선명[i] !== 0 || 값 === 0)).toBe(true);
     });
 
-    it('안티앨리어싱 강도를 올리면 중심 획은 유지되고 가장자리만 진해진다', () => {
+    it('기존 확대에서 안티앨리어싱 강도를 올리면 중심 획은 유지되고 가장자리만 진해진다', () => {
         const 그리기 = (강도?: number) => {
             const { 그림판, 이미지들 } = 화면(true);
             if (강도 !== undefined) { 그림판.안티앨리어싱강도설정(강도); }
@@ -113,8 +195,8 @@ describe('타자 연습 캔버스 글꼴', () => {
         };
         const 선명 = 그리기(0);
         const 기본 = 그리기();
-        const 강함 = 그리기(300);
-        expect(기본).toEqual(그리기(100));
+        const 강함 = 그리기(150);
+        expect(기본).toEqual(그리기(50));
         let 부드러운가장자리 = false;
         for (let i = 0; i < 선명.length; i += 4) {
             if (선명[i] === 0) {
@@ -125,6 +207,25 @@ describe('타자 연습 캔버스 글꼴', () => {
             }
         }
         expect(부드러운가장자리).toBe(true);
+    });
+
+    it.each(['아', '사', '장', 'A'])('64×64의 강한 부드러움에서도 %s의 획 무게를 유지한다', (문자) => {
+        const 그리기 = (강도: number) => {
+            const { 그림판, 이미지들 } = 화면(true);
+            그림판.글꼴확대방식설정('윤곽64');
+            그림판.안티앨리어싱강도설정(강도);
+            그림판.글자그리기(new 위치틀(),
+                new 색칠할글자(글자틀.생성(문자.charCodeAt(0)), [검정, 검정, 검정], 흰색));
+            return 이미지들.flatMap(이미지 => Array.from(이미지.data).filter((_값, i) => i % 4 === 0));
+        };
+        const 보통 = 그리기(100);
+        const 잉크량 = (픽셀: number[]) => 픽셀.reduce((합, 값) => 합 + 255 - 값, 0);
+        const 부드럽게 = 그리기(150);
+        expect(그리기(300)).toEqual(부드럽게);
+        expect(부드럽게).not.toEqual(보통);
+        expect(부드럽게.some((값, i) => 보통[i] === 0 && 값 === 0)).toBe(true);
+        expect(잉크량(부드럽게) / 잉크량(보통)).toBeGreaterThan(0.98);
+        expect(잉크량(부드럽게) / 잉크량(보통)).toBeLessThan(1.02);
     });
 
     it('입력과 커서 이동 때 바뀐 칸만 지우고 다시 그린다', () => {

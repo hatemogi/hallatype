@@ -8,13 +8,15 @@ export const 필사테마순서 = [
 export type 필사테마 = typeof 필사테마순서[number];
 export type 지문크기 = '작게' | '보통' | '크게';
 export type 안티앨리어싱단계 = 0 | 1 | 2 | 3 | 4;
-export const 단계별안티앨리어싱강도 = [0, 50, 100, 200, 300] as const;
+export type 글꼴확대방식 = '기존' | '윤곽' | '윤곽48' | '윤곽64';
+export const 단계별안티앨리어싱강도 = [0, 25, 50, 100, 150] as const;
 
 export interface 필사설정 {
   테마: 필사테마;
   글자크기: 지문크기;
   커서깜빡임: boolean;
   안티앨리어싱단계: 안티앨리어싱단계;
+  글꼴확대방식: 글꼴확대방식;
 }
 
 export interface 필사팔레트 {
@@ -30,6 +32,7 @@ export const 기본필사설정: 필사설정 = {
   글자크기: '보통',
   커서깜빡임: true,
   안티앨리어싱단계: 2,
+  글꼴확대방식: '기존',
 };
 
 export const 필사팔레트들: Record<필사테마, 필사팔레트> = {
@@ -205,6 +208,9 @@ export function 필사설정읽기(storage?: Pick<Storage, 'getItem'>): 필사�
         ? Number.isInteger(단계) && 단계 !== undefined && 단계 >= 0 && 단계 <= 4 ? 단계 : 2
         : Number.isInteger(단계) && 단계 !== undefined && 단계 >= 0 && 단계 <= 5
           ? 이전슬라이더단계[단계] : 이전강도단계[설정.안티앨리어싱 ?? -1] ?? 2,
+      글꼴확대방식: 설정.글꼴확대방식 === '윤곽64' ? '윤곽64'
+        : 설정.글꼴확대방식 === '윤곽48' ? '윤곽48'
+        : 설정.글꼴확대방식 === '윤곽' ? '윤곽' : '기존',
     };
   } catch (_) {
     return { ...기본필사설정 };
