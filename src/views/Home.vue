@@ -112,10 +112,11 @@
             <h3>{{글테마 === '즐겨찾기' ? '모아 둔 글' : '전체 글'}} <span>{{현재지문들.length}}편</span></h3>
             <div class="글목록" role="group" :aria-label="`${글테마} 지문 선택`" @keydown="선택버튼화살표">
               <button v-for="지문 in 현재지문들" :key="지문.id" type="button" class="지문선택버튼"
-                :class="{ 선택됨: 오늘지문.id === 지문.id }" :aria-pressed="오늘지문.id === 지문.id"
+                :class="{ 선택됨: 오늘지문.id === 지문.id, 도장있음: !!지문도장(지문) }" :aria-pressed="오늘지문.id === 지문.id"
                 @click="지문선택(지문, $event)">
-                <span class="지문목록머리"><strong>{{지문.제목}}</strong><PraiseStamp v-if="지문도장(지문)" :grade="지문도장(지문)!" compact /></span>
+                <span class="지문목록머리"><strong>{{지문.제목}}</strong></span>
                 <span class="지문설명">{{지문.주제}} · <em :class="{ 완료: 지문상태(지문) === '완료' }">{{지문상태(지문)}}</em><small v-if="지문최고(지문) !== null" class="최고정타율"> · 최고 {{지문최고(지문)}}%</small></span>
+                <PraiseStamp v-if="지문도장(지문)" :grade="지문도장(지문)!" compact class="지문목록도장" />
               </button>
               <p v-if="글테마 === '즐겨찾기' && 현재지문들.length === 0" class="빈즐겨찾기">마음에 드는 글의 별을 누르면 이곳에 모입니다.</p>
             </div>
@@ -888,6 +889,7 @@ button { font: inherit; }
 .지문서랍 h3 span { margin-left: 8px; color: var(--옅은글); font-weight: 400; }
 .글목록 { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; margin-top: 13px; }
 .글목록 .지문선택버튼 {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -904,10 +906,12 @@ button { font: inherit; }
   cursor: pointer;
 }
 .글목록 .지문선택버튼:hover, .글목록 .지문선택버튼.선택됨 { border-color: var(--강조); background: var(--선택바탕); }
-.지문목록머리 { display: flex; align-items: center; justify-content: space-between; gap: 7px; width: 100%; min-width: 0; }
+.글목록 .지문선택버튼.도장있음 { padding-right: 55px; }
+.글목록 .지문목록도장 { position: absolute; top: 50%; right: 8px; transform: translateY(-50%) rotate(-9deg); }
+.지문목록머리 { display: block; width: 100%; min-width: 0; }
 .글목록 strong { font-size: 12px; }
-.지문목록머리 strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.글목록 .지문설명 { color: var(--보조글); font-size: 10px; }
+.지문목록머리 strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.글목록 .지문설명 { max-width: 100%; overflow: hidden; color: var(--보조글); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
 .글목록 em { font-style: normal; }
 .글목록 em.완료 { color: var(--완료색); font-weight: 700; }
 .글목록 .최고정타율 { color: var(--보조글); font-size: inherit; font-variant-numeric: tabular-nums; }

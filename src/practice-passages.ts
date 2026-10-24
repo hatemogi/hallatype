@@ -4,7 +4,7 @@ import { 명상지문들 } from './practice-meditation-passages';
 import { 자기확언지문들 } from './practice-affirmation-passages';
 import { 스토아지문들 } from './practice-stoic-passages';
 import { 감정지문들 } from './practice-emotion-passages';
-import { 생활체육지문들 } from './practice-sports-passages';
+import { 스포츠지문들 } from './practice-sports-passages';
 import { 조선시대지문들 } from './practice-joseon-passages';
 import { 우주지문들 } from './practice-space-passages';
 import { 지구지문들 } from './practice-earth-passages';
@@ -29,7 +29,7 @@ export interface 연습지문 {
 }
 
 export type 지문테마 = '시작하기' | '산문' | '자기계발' | '명상' | '자기확언'
-  | '스토아 철학' | '감정 읽기' | '생활체육' | '조선시대' | '우주' | '지구' | '동물' | '식물'
+  | '스토아 철학' | '감정 읽기' | '스포츠' | '조선시대' | '우주' | '지구' | '동물' | '식물'
   | '우리말' | '소리와 음악' | '몸과 감각' | '도시와 건축'
   | '생활교양' | '요리레시피'
   | '메밀꽃 필 무렵' | '봄봄';
@@ -88,7 +88,7 @@ export const 테마별지문들: Record<지문테마, readonly 연습지문[]> =
   자기확언: 자기확언지문들,
   '스토아 철학': 스토아지문들,
   '감정 읽기': 감정지문들,
-  생활체육: 생활체육지문들,
+  스포츠: 스포츠지문들,
   조선시대: 조선시대지문들,
   우주: 우주지문들,
   지구: 지구지문들,

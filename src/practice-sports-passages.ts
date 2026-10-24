@@ -17,7 +17,7 @@ import type { 연습지문 } from './practice-passages';
  * https://worldathletics.org/about-iaaf/documents/technical-information
  * https://www.uci.org/article/about-road-cycling/3R0Ls046rySKwc4fjq5yVc
  */
-export const 생활체육지문들: readonly 연습지문[] = [
+export const 스포츠지문들: readonly 연습지문[] = [
   { id: 'UaQmRvLnTpKe', 제목: '축구의 빈 공간', 주제: '축구',
     본문: '축구는 두 팀이 공을 상대 골문에 넣어 득점을 겨루는 경기다. 골키퍼를 제외한 선수는 손과 팔로 공을 다룰 수 없고, 공이 옆줄을 넘으면 마지막으로 건드린 팀의 상대가 손으로 던져 경기를 잇는다. 오프사이드는 공격수가 상대 진영에서 공과 두 번째 수비수보다 앞에 있는지만으로 결정되지 않는다. 동료가 공을 보내는 순간의 위치와 플레이에 관여했는지를 함께 본다. 관전할 때는 공을 가진 선수만 보지 말고 빈 공간으로 달려가는 선수도 살펴보자. 그 움직임이 수비의 간격을 벌리고 패스 길을 연다. 동네 경기에서도 한 번의 멋진 슛은 그 전에 만들어진 여러 움직임에서 시작된다.' },
   { id: 'UbRnQaLtMpVe', 제목: '풋살의 빠른 선택', 주제: '풋살',
