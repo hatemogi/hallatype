@@ -1,4 +1,4 @@
-export type 필사단축동작 = '다음' | '다시쓰기' | '주제고르기' | '환경설정' | '도움말' | null;
+export type 필사단축동작 = '다음' | '다시쓰기' | '즐겨찾기' | '주제고르기' | '환경설정' | '도움말' | null;
 
 /** 주요 진행 동작은 Enter, 보조 동작은 Alt 조합으로 쓴다. */
 export function 필사단축키(event: Pick<KeyboardEvent,
@@ -12,6 +12,7 @@ export function 필사단축키(event: Pick<KeyboardEvent,
   }
   switch (event.code) {
     case 'KeyR': return '다시쓰기';
+    case 'KeyF': return '즐겨찾기';
     case 'KeyG': return '주제고르기';
     case 'KeyS': return '환경설정';
     case 'KeyH': return '도움말';

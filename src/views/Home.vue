@@ -25,6 +25,7 @@
             <div><dt>Alt + G</dt><dd>주제 고르기</dd></div>
             <div><dt>Alt + S</dt><dd>환경설정</dd></div>
             <div><dt>Alt + R</dt><dd>이 글 다시 쓰기</dd></div>
+            <div><dt>Alt + F</dt><dd>이 글 즐겨찾기</dd></div>
             <div><dt>Alt + H</dt><dd>단축키 도움말</dd></div>
           </dl>
           <p>한 편을 마친 뒤</p>
@@ -82,7 +83,7 @@
 
       <section class="작업공간" aria-label="필사할 글">
         <div class="모바일선택줄">
-          <div><span>선택한 글</span><strong>{{글테마}} · {{오늘지문.제목}}</strong></div>
+          <div><span>선택한 글</span><strong>{{원래글테마}} · {{오늘지문.제목}}</strong></div>
           <button type="button" aria-controls="지문선택창" :aria-expanded="목록열림"
             aria-keyshortcuts="Alt+G"
             @click="목록열기">주제 고르기 <span aria-hidden="true">⌄</span></button>
@@ -98,7 +99,7 @@
           <div class="글테마선택" role="group" aria-label="필사 주제 선택" @keydown="선택버튼화살표">
             <button v-for="테마 in 글테마선택지" :key="테마" type="button"
               :class="{ 선택됨: 글테마 === 테마 }" :aria-pressed="글테마 === 테마"
-              :aria-label="`${테마}, 전체 ${주제완료도[테마].전체}편 중 ${주제완료도[테마].완료}편 완료`"
+              :aria-label="`${테마}, ${주제완료도[테마].전체}편 중 ${주제완료도[테마].완료}편 완료`"
               @click="글테마바꾸기(테마, $event)">
               <span class="주제이름">{{테마}}</span>
               <span class="주제진행바탕" aria-hidden="true">
@@ -107,14 +108,15 @@
             </button>
           </div>
           <section class="지문서랍" :aria-label="`${글테마} 지문 목록`">
-            <h3>전체 글 <span>{{현재지문들.length}}편</span></h3>
+            <h3>{{글테마 === '즐겨찾기' ? '모아 둔 글' : '전체 글'}} <span>{{현재지문들.length}}편</span></h3>
             <div class="글목록" role="group" :aria-label="`${글테마} 지문 선택`" @keydown="선택버튼화살표">
-              <button v-for="지문 in 현재지문들" :key="지문.id" type="button"
+              <button v-for="지문 in 현재지문들" :key="지문.id" type="button" class="지문선택버튼"
                 :class="{ 선택됨: 오늘지문.id === 지문.id }" :aria-pressed="오늘지문.id === 지문.id"
                 @click="지문선택(지문, $event)">
                 <strong>{{지문.제목}}</strong>
                 <span>{{지문.주제}} · <em :class="{ 완료: 지문상태(지문) === '완료' }">{{지문상태(지문)}}</em><small v-if="지문최고(지문) !== null" class="최고정타율"> · 최고 {{지문최고(지문)}}%</small></span>
               </button>
+              <p v-if="글테마 === '즐겨찾기' && 현재지문들.length === 0" class="빈즐겨찾기">마음에 드는 글의 별을 누르면 이곳에 모입니다.</p>
             </div>
           </section>
         </aside>
@@ -123,7 +125,12 @@
         <article class="종이" aria-labelledby="지문제목">
           <div class="종이상단">
             <span>필사 노트 <span class="가운데점">·</span> {{오늘날짜}}</span>
-            <span class="종이장식" aria-hidden="true">✳</span>
+            <button type="button" class="본문즐겨찾기" :class="{ 선택됨: 즐겨찾기인가(오늘지문.id) }"
+              :aria-label="`${오늘지문.제목} 즐겨찾기 ${즐겨찾기인가(오늘지문.id) ? '해제' : '추가'}`"
+              :aria-pressed="즐겨찾기인가(오늘지문.id)" aria-keyshortcuts="Alt+F"
+              @click="즐겨찾기토글(오늘지문.id)">
+              <span aria-hidden="true">{{즐겨찾기인가(오늘지문.id) ? '★' : '☆'}}</span>
+            </button>
           </div>
           <div class="지문머리">
             <p class="분류">선택한 글 · {{오늘지문.주제}}</p>
@@ -131,7 +138,8 @@
             <p class="출처" v-if="오늘지문.원문URL">
               <a :href="오늘지문.원문URL" target="_blank" rel="noopener noreferrer">{{오늘지문.저자}} · 위키문헌 원문 ↗</a>
             </p>
-            <p class="출처" v-else>{{글테마}} · 창작 지문</p>
+            <p class="출처" v-else>{{원래글테마}} · 창작 지문</p>
+            <p v-if="즐겨찾기오류" class="즐겨찾기안내" role="alert">즐겨찾기를 저장하지 못했어요. 브라우저 저장 공간을 확인해 주세요.</p>
           </div>
           <div class="가는선" aria-hidden="true"></div>
 
@@ -205,10 +213,13 @@ import { 지문틀 } from '@/본문';
 import { 따라그리기틀 } from '@/따라그리기';
 import 그림판틀 from '@/그림판';
 import { 빈리듬그래프, 완료리듬그래프, type 리듬막대 } from '@/practice-rhythm';
+import { 즐겨찾기바꾸기, 즐겨찾기읽기, 즐겨찾기저장, 즐겨찾기저장키,
+  즐겨찾기지문들 as 모은지문들, 지문원래테마 } from '@/practice-favorites';
 import { 필사단축키, type 필사단축동작 } from '@/practice-shortcuts';
 import { 날짜키, 테마별지문들,
   type 연습지문, type 지문테마 } from '@/practice-passages';
-import { 다음미완료지문, 첫진입지문선택, 주제지문선택, 주제완료현황 } from '@/practice-selection';
+import { 다음미완료지문, 첫진입지문선택, 주제지문선택, 주제완료현황,
+  지문모음선택, 지문모음완료현황 } from '@/practice-selection';
 import { 본문버전, 브라우저저장소, 시도목록, 시도시작, 시도완료, 시도중단, 입력묶음,
   지문입력상태, 지문재개시도, 지문최고정타율, 정타율, 정타율표시, 이번이최고정타율인가,
   진행기록키인가, 진행작업읽기, 진행작업저장, 작업합치기, type 입력키, type 진행작업,
@@ -219,7 +230,9 @@ import { 기본필사설정, 필사설정, 필사설정읽기, 필사설정저�
 const 테마선택지 = 필사테마순서.map(이름 => ({ 이름 }));
 const 글자크기선택지: 지문크기[] = ['작게', '보통', '크게'];
 const 가장자리단계이름 = ['선명하게', '조금 선명하게', '보통', '조금 부드럽게', '부드럽게'];
-const 글테마선택지 = Object.keys(테마별지문들) as 지문테마[];
+type 선택주제 = 지문테마 | '즐겨찾기';
+const 기본글테마 = Object.keys(테마별지문들) as 지문테마[];
+const 글테마선택지: 선택주제[] = [기본글테마[0], '즐겨찾기', ...기본글테마.slice(1)];
 
 export default defineComponent({
   components: { GeulsumMark },
@@ -227,7 +240,7 @@ export default defineComponent({
     return {
       오늘날짜: 날짜키(new Date()),
       오늘지문: 테마별지문들.시작하기[0],
-      글테마: '시작하기' as 지문테마,
+      글테마: '시작하기' as 선택주제,
       글테마선택지,
       테마선택지,
       글자크기선택지,
@@ -248,6 +261,8 @@ export default defineComponent({
       정타수: 0,
       종전최고정타율: null as number | null,
       기록들: [] as 진행작업[],
+      즐겨찾기IDs: [] as string[],
+      즐겨찾기오류: false,
       시도ID: null as string | null,
       이어쓰기원본: null as 이어쓰기원본 | null,
       다음기록순서: 0,
@@ -315,6 +330,7 @@ export default defineComponent({
           this.도움말닫기();
           this.다시쓰기();
           break;
+        case '즐겨찾기': this.즐겨찾기토글(this.오늘지문.id); break;
         case '주제고르기': this.목록열기(); break;
         case '환경설정': this.환경설정열기(); break;
         case '도움말': this.도움말토글(); break;
@@ -323,7 +339,8 @@ export default defineComponent({
     선택버튼화살표(event: KeyboardEvent) {
       if (!(event.target instanceof HTMLButtonElement) || event.altKey || event.ctrlKey || event.metaKey) { return; }
       const 묶음 = event.currentTarget as HTMLElement;
-      const 버튼들 = Array.from(묶음.querySelectorAll('button')).filter((버튼) => 버튼.getClientRects().length > 0);
+      const 버튼들 = Array.from(묶음.querySelectorAll<HTMLButtonElement>('button'))
+        .filter((버튼) => 버튼.getClientRects().length > 0);
       const 현재 = 버튼들.indexOf(event.target);
       if (현재 < 0) { return; }
       const 열수 = getComputedStyle(묶음).display === 'grid'
@@ -341,6 +358,9 @@ export default defineComponent({
     다른탭기록반영(event: StorageEvent) {
       if (진행기록키인가(event.key)) {
         this.기록들 = 작업합치기(this.기록들, 진행작업읽기());
+      }
+      if (event.key === 즐겨찾기저장키 || event.key === null) {
+        this.즐겨찾기IDs = 즐겨찾기읽기();
       }
     },
     저장대기(작업: 진행작업) {
@@ -381,17 +401,33 @@ export default defineComponent({
       const 최고 = 지문최고정타율(this.시도들, 지문.id, 본문버전(지문.본문));
       return 최고 === null ? null : 정타율표시(최고);
     },
-    글테마바꾸기(테마: 지문테마, event?: MouseEvent) {
+    즐겨찾기인가(지문ID: string): boolean {
+      return this.즐겨찾기IDs.includes(지문ID);
+    },
+    즐겨찾기토글(지문ID: string) {
+      const 다음 = 즐겨찾기바꾸기(this.즐겨찾기IDs, 지문ID);
+      const 현재글해제 = this.글테마 === '즐겨찾기' && this.오늘지문.id === 지문ID &&
+        !다음.includes(지문ID);
+      this.즐겨찾기IDs = 다음;
+      if (현재글해제) { this.글테마 = 지문원래테마(지문ID) ?? '시작하기'; }
+      this.즐겨찾기오류 = !즐겨찾기저장(다음);
+    },
+    글테마바꾸기(테마: 선택주제, event?: MouseEvent) {
       if (!this.목록열림) { (event?.currentTarget as HTMLElement | undefined)?.blur(); }
       this.입력기록저장();
-      const 선택 = 주제지문선택(테마, this.시도들);
-      if (테마 === this.글테마 && 선택.지문.id === this.오늘지문.id && !this.결과화면보이기) {
+      const 지문 = 테마 === '즐겨찾기'
+        ? 지문모음선택(this.즐겨찾기모음, this.시도들)
+        : 주제지문선택(테마, this.시도들).지문;
+      if (지문?.id === this.오늘지문.id &&
+          (테마 === '즐겨찾기' || !this.결과화면보이기)) {
+        this.글테마 = 테마;
         if (this.목록열림) { this.$nextTick(() => document.querySelector<HTMLElement>('.글목록 button.선택됨')?.focus()); }
         return;
       }
-      this.글테마 = 선택.테마;
-      this.오늘지문 = 선택.지문;
-      const 새로시작 = this.지문상태(선택.지문) === '완료' || !this.복원할시도();
+      this.글테마 = 테마;
+      if (!지문) { return; }
+      this.오늘지문 = 지문;
+      const 새로시작 = this.지문상태(지문) === '완료' || !this.복원할시도();
       this.reset(새로시작);
       if (this.목록열림) { this.$nextTick(() => document.querySelector<HTMLElement>('.글목록 button.선택됨')?.focus()); }
     },
@@ -628,6 +664,7 @@ export default defineComponent({
     document.title = '글숨 · 한글 타이핑 필사';
     this.설정 = 필사설정읽기();
     this.기록들 = 진행작업읽기();
+    this.즐겨찾기IDs = 즐겨찾기읽기();
     const 선택 = 첫진입지문선택(this.시도들);
     this.오늘날짜 = 날짜키(new Date());
     this.글테마 = 선택.테마;
@@ -656,19 +693,27 @@ export default defineComponent({
     시도들(): 필사시도[] {
       return 시도목록(this.기록들);
     },
+    즐겨찾기모음(): 연습지문[] {
+      return 모은지문들(this.즐겨찾기IDs);
+    },
+    원래글테마(): 지문테마 {
+      return 지문원래테마(this.오늘지문.id) ?? '시작하기';
+    },
     완료리듬막대들(): Array<리듬막대 | null> {
       const 시도 = this.시도들.find((후보) => 후보.시작.attemptId === this.시도ID);
       return 시도 ? 완료리듬그래프(this.오늘지문.본문, 시도.입력들,
         시도.완료?.elapsedMs ?? 시도.걸린밀리초) : 빈리듬그래프();
     },
-    주제완료도(): Record<지문테마, { 완료: number; 전체: number; 비율: number }> {
+    주제완료도(): Record<선택주제, { 완료: number; 전체: number; 비율: number }> {
       return Object.fromEntries(this.글테마선택지.map((테마) => {
-        const 현황 = 주제완료현황(테마, this.시도들);
+        const 현황 = 테마 === '즐겨찾기'
+          ? 지문모음완료현황(this.즐겨찾기모음, this.시도들)
+          : 주제완료현황(테마, this.시도들);
         return [테마, { ...현황, 비율: 현황.전체 ? 현황.완료 / 현황.전체 * 100 : 0 }];
-      })) as Record<지문테마, { 완료: number; 전체: number; 비율: number }>;
+      })) as Record<선택주제, { 완료: number; 전체: number; 비율: number }>;
     },
     현재지문들(): readonly 연습지문[] {
-      return 테마별지문들[this.글테마];
+      return this.글테마 === '즐겨찾기' ? this.즐겨찾기모음 : 테마별지문들[this.글테마];
     },
     걸린시간() {
       return `${Math.floor(this.완료초 / 60)}분 ${this.완료초 % 60}초`;
@@ -1338,11 +1383,13 @@ button { font: inherit; }
 .지문서랍 h3 { margin: 0; color: var(--강조); font-size: 12px; font-weight: 600; }
 .지문서랍 h3 span { margin-left: 8px; color: var(--옅은글); font-weight: 400; }
 .글목록 { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; margin-top: 13px; }
-.글목록 button {
+.글목록 .지문선택버튼 {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  box-sizing: border-box;
   gap: 5px;
+  width: 100%;
   min-height: 57px;
   padding: 11px 13px;
   border: 1px solid var(--테두리);
@@ -1352,12 +1399,13 @@ button { font: inherit; }
   text-align: left;
   cursor: pointer;
 }
-.글목록 button:hover, .글목록 button.선택됨 { border-color: var(--강조); background: var(--선택바탕); }
+.글목록 .지문선택버튼:hover, .글목록 .지문선택버튼.선택됨 { border-color: var(--강조); background: var(--선택바탕); }
 .글목록 strong { font-size: 12px; }
-.글목록 span { color: var(--보조글); font-size: 10px; }
+.글목록 .지문선택버튼 > span { color: var(--보조글); font-size: 10px; }
 .글목록 em { font-style: normal; }
 .글목록 em.완료 { color: var(--완료색); font-weight: 700; }
 .글목록 .최고정타율 { color: var(--보조글); font-size: inherit; font-variant-numeric: tabular-nums; }
+.빈즐겨찾기 { grid-column: 1 / -1; margin: 0; padding: 14px 2px; color: var(--보조글); font-size: 12px; line-height: 1.6; }
 .종이 {
   margin-top: 22px;
   padding: 30px clamp(24px, 5.4vw, 73px) 27px;
@@ -1368,7 +1416,6 @@ button { font: inherit; }
 }
 .종이상단 { display: flex; justify-content: space-between; align-items: center; color: var(--옅은글); font-size: 11px; letter-spacing: .08em; }
 .가운데점 { margin: 0 5px; }
-.종이장식 { color: var(--강조); font-size: 20px; }
 .지문머리 { padding-top: 43px; text-align: center; }
 .분류 { margin: 0 0 13px; }
 .지문머리 h2 {
@@ -1378,7 +1425,11 @@ button { font: inherit; }
   font-weight: 500;
   letter-spacing: -.04em;
 }
+.본문즐겨찾기 { display: grid; place-items: center; flex: none; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 3px; background: transparent; color: var(--보조글); font-size: 22px; line-height: 1; cursor: pointer; }
+.본문즐겨찾기.선택됨 { color: var(--강조); }
+.본문즐겨찾기:hover { background: var(--선택바탕); }
 .출처 { margin: 14px 0 0; color: var(--옅은글); font-size: 12px; }
+.즐겨찾기안내 { margin: 7px 0 0; color: var(--오류색); font-size: 11px; }
 .출처 a,
 .출처 a:visited {
   color: var(--출처링크);
@@ -1485,7 +1536,7 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
 .글테마선택 button { padding: 8px 5px 11px; font-size: 12px; }
 .지문서랍 { display: flex; flex-direction: column; flex: 1; min-height: 0; margin-top: 20px; }
 .글목록 { display: flex; flex-direction: column; flex: 1; min-height: 0; gap: 6px; overflow-y: auto; overscroll-behavior: contain; padding-right: 3px; }
-.글목록 button { min-height: 51px; flex: none; padding: 9px 11px; }
+.글목록 .지문선택버튼 { flex: none; min-height: 51px; padding: 9px 11px; }
 .필사패널 { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 .필사실[data-theme='매트릭스'] .종이 { box-shadow: inset 0 0 38px rgba(43, 202, 82, .06); }
 .필사실[data-theme='PC통신'] .종이 { box-shadow: none; }
@@ -1549,7 +1600,7 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
   .글테마선택 button:first-child { grid-column: auto; }
   .글테마선택 button:last-child:nth-child(odd) { grid-column: auto; }
   .글목록 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; }
-  .글목록 button { min-height: 56px; }
+  .글목록 .지문선택버튼 { min-height: 56px; }
   .필사패널 { flex: 1; }
   .종이 { padding: 13px 16px 22px; }
   .지문머리 { padding-top: 8px; }

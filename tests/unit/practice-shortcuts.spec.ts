@@ -8,10 +8,11 @@ function 키(code: string, 변경: Partial<Record<'repeat' | 'isComposing' | 'de
 
 describe('필사 단축키', () => {
   it.each([false, true])('완료 상태 %s에서 Alt 조합만 공통 동작시킨다', (완료) => {
-    for (const code of ['KeyR', 'KeyG', 'KeyS', 'KeyH']) {
+    for (const code of ['KeyR', 'KeyF', 'KeyG', 'KeyS', 'KeyH']) {
       expect(필사단축키(키(code), 완료)).toBeNull();
     }
     expect(필사단축키(키('KeyR', { altKey: true }), 완료)).toBe('다시쓰기');
+    expect(필사단축키(키('KeyF', { altKey: true }), 완료)).toBe('즐겨찾기');
     expect(필사단축키(키('KeyG', { altKey: true }), 완료)).toBe('주제고르기');
     expect(필사단축키(키('KeyS', { altKey: true }), 완료)).toBe('환경설정');
     expect(필사단축키(키('KeyH', { altKey: true }), 완료)).toBe('도움말');

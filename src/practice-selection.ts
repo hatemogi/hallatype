@@ -22,14 +22,27 @@ function 미완료(선택: 지문선택, 시도들: readonly 필사시도[]): bo
 }
 
 /** 현재 본문 버전에서 한 번이라도 완료한 글 수를 센다. */
-export function 주제완료현황(테마: 지문테마, 시도들: readonly 필사시도[]): { 완료: number; 전체: number } {
-  const 지문들 = 테마별지문들[테마];
+export function 지문모음완료현황(지문들: readonly 연습지문[],
+  시도들: readonly 필사시도[]): { 완료: number; 전체: number } {
   const 완료기록 = new Set(시도들.filter((시도) => 시도.완료)
     .map((시도) => `${시도.시작.passageId}:${시도.시작.contentVersion}`));
   return {
     완료: 지문들.filter((지문) => 완료기록.has(`${지문.id}:${본문버전(지문.본문)}`)).length,
     전체: 지문들.length,
   };
+}
+
+export function 주제완료현황(테마: 지문테마, 시도들: readonly 필사시도[]): { 완료: number; 전체: number } {
+  return 지문모음완료현황(테마별지문들[테마], 시도들);
+}
+
+/** 즐겨찾기처럼 여러 주제의 글을 모은 목록도 진행 중, 미완료, 첫 글 순서로 고른다. */
+export function 지문모음선택(지문들: readonly 연습지문[],
+  시도들: readonly 필사시도[]): 연습지문 | undefined {
+  const 선택지 = 전체선택지.filter((선택) => 지문들.some((지문) => 지문.id === 선택.지문.id));
+  const 진행중 = 진행중선택(선택지, 시도들)?.지문;
+  return 진행중 ?? 지문들.find((지문) =>
+    지문입력상태(시도들, 지문.id, 본문버전(지문.본문)) !== '완료') ?? 지문들[0];
 }
 
 /** 주제를 고르면 해당 주제의 최근 이어 쓸 글, 첫 미완료 글, 첫 글 순서로 선택한다. */
