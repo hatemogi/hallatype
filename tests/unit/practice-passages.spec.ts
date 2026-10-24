@@ -12,6 +12,9 @@ it('시작하기 맛보기와 기존 테마에 입력 가능한 지문을 둔다
   expect(테마별지문들.자기계발).toHaveLength(14);
   expect(테마별지문들.명상).toHaveLength(14);
   expect(테마별지문들.자기확언).toHaveLength(14);
+  expect(테마별지문들['스토아 철학']).toHaveLength(14);
+  expect(테마별지문들['감정 읽기']).toHaveLength(14);
+  expect(테마별지문들.생활체육).toHaveLength(14);
   expect(테마별지문들.생활교양).toHaveLength(14);
   expect(테마별지문들.요리레시피).toHaveLength(14);
   expect(테마별지문들['메밀꽃 필 무렵']).toHaveLength(27);
