@@ -48,6 +48,19 @@ export function 정타율(정타수: number, 전체타수: number): string {
   return 전체타수 > 0 ? (정타수 / 전체타수 * 100).toFixed(2) : '0.00';
 }
 
+/** 같은 본문의 완료 기록 중 가장 높은 정타율을 반환한다. */
+export function 지문최고정타율(시도들: readonly 필사시도[], passageId: string,
+  contentVersion: string, 제외시도ID?: string): number | null {
+  let 최고: number | null = null;
+  for (const 시도 of 시도들) {
+    if (시도.시작.passageId !== passageId || 시도.시작.contentVersion !== contentVersion ||
+        시도.시작.attemptId === 제외시도ID || !시도.완료) { continue; }
+    const 비율 = Number(정타율(시도.완료.correctInputs, 시도.완료.totalInputs));
+    최고 = 최고 === null ? 비율 : Math.max(최고, 비율);
+  }
+  return 최고;
+}
+
 export function 브라우저저장소(): 저장소 | undefined {
   try { return typeof window === 'undefined' ? undefined : window.localStorage; }
   catch (_) { return undefined; }

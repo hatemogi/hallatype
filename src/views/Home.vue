@@ -83,7 +83,7 @@
                 :class="{ 선택됨: 오늘지문.id === 지문.id }" :aria-pressed="오늘지문.id === 지문.id"
                 @click="지문선택(지문, $event)">
                 <strong>{{지문.제목}}</strong>
-                <span>{{지문.주제}} · <em :class="{ 완료: 지문상태(지문) === '완료' }">{{지문상태(지문)}}</em></span>
+                <span>{{지문.주제}} · <em :class="{ 완료: 지문상태(지문) === '완료' }">{{지문상태(지문)}}</em><small v-if="지문상태(지문) === '완료'" class="최고정타율"> · 최고 {{지문최고(지문)}}%</small></span>
               </button>
             </div>
           </section>
@@ -131,9 +131,13 @@
               <p class="마침꼬리">한 편을 마쳤어요</p>
               <dl class="마침통계" aria-label="이번 필사 기록">
                 <div><dt>걸린 시간</dt><dd>{{걸린시간}}</dd></div>
-                <div><dt>정타 / 전체 타수</dt><dd>{{정타수}}/{{총입력타수}} ({{정타율}}%)</dd></div>
+                <div><dt>이번 정타율</dt><dd>{{정타율}}% ({{정타수}}/{{총입력타수}})</dd></div>
                 <div><dt>분당 정타</dt><dd>{{분당타수}}/분</dd></div>
               </dl>
+              <p v-if="종전최고정타율 !== null" class="정타율비교">
+                종전 최고 {{종전최고정타율.toFixed(2)}}% 대비
+                <strong>{{정타율차이 > 0 ? '+' : ''}}{{정타율차이.toFixed(2)}}%p</strong>
+              </p>
             </div>
             <div class="마침동작">
               <button v-if="다음편" type="button" class="주버튼" @click="지문선택(다음편)">다음 편 입력 <span aria-hidden="true">→</span></button>
@@ -164,7 +168,7 @@ import 그림판틀 from '@/그림판';
 import { 날짜키, 지문선택읽기, 지문선택저장, 테마별지문들,
   type 연습지문, type 지문테마 } from '@/practice-passages';
 import { 본문버전, 브라우저저장소, 시도목록, 시도시작, 시도완료, 시도중단, 입력묶음,
-  지문입력상태, 정타율,
+  지문입력상태, 지문최고정타율, 정타율,
   진행작업읽기, 진행작업저장, 작업합치기, type 입력키, type 진행작업,
   type 필사시도, type 이어쓰기원본 } from '@/practice-progress';
 import { 기본필사설정, 필사설정, 필사설정읽기, 필사설정저장,
@@ -205,6 +209,7 @@ export default defineComponent({
       총입력타수: 0,
       정타수: 0,
       분당타수: 0,
+      종전최고정타율: null as number | null,
       기록들: [] as 진행작업[],
       시도ID: null as string | null,
       이어쓰기원본: null as 이어쓰기원본 | null,
@@ -279,6 +284,9 @@ export default defineComponent({
     },
     지문상태(지문: 연습지문): string {
       return 지문입력상태(this.시도들, 지문.id, 본문버전(지문.본문));
+    },
+    지문최고(지문: 연습지문): string {
+      return 지문최고정타율(this.시도들, 지문.id, 본문버전(지문.본문))?.toFixed(2) ?? '0.00';
     },
     글테마바꾸기(테마: 지문테마, event?: MouseEvent) {
       if (!this.목록열림) { (event?.currentTarget as HTMLElement | undefined)?.blur(); }
@@ -369,6 +377,7 @@ export default defineComponent({
       this.총입력타수 = 0;
       this.정타수 = 0;
       this.분당타수 = 0;
+      this.종전최고정타율 = null;
       this.시도ID = null;
       this.이어쓰기원본 = null;
       this.다음기록순서 = 0;
@@ -395,6 +404,8 @@ export default defineComponent({
           this.총입력타수 = 본문.입력타수;
           this.정타수 = 본문.유효타수;
           this.분당타수 = Math.round(this.정타수 * 60000 / 걸린밀리초);
+          this.종전최고정타율 = 지문최고정타율(this.시도들, this.오늘지문.id,
+            본문버전(this.오늘지문.본문), 복원.완료 ? 복원.시작.attemptId : undefined);
           this.결과화면보이기 = true;
           if (!복원.완료) {
             this.저장대기(시도완료(복원.시작.attemptId, 걸린밀리초, this.총입력타수, this.정타수));
@@ -479,6 +490,8 @@ export default defineComponent({
           self.총입력타수 = 본문.입력타수;
           self.정타수 = 본문.유효타수;
           self.분당타수 = Math.round(self.정타수 * 60000 / 걸린밀리초);
+          self.종전최고정타율 = 지문최고정타율(self.시도들, self.오늘지문.id,
+            본문버전(self.오늘지문.본문));
           self.입력기록저장();
           self.저장대기(시도완료(self.시도ID, 걸린밀리초, self.총입력타수, self.정타수));
           self.결과화면보이기 = true;
@@ -541,6 +554,10 @@ export default defineComponent({
     },
     정타율(): string {
       return 정타율(this.정타수, this.총입력타수);
+    },
+    정타율차이(): number {
+      return this.종전최고정타율 === null ? 0
+        : Math.round((Number(this.정타율) - this.종전최고정타율) * 100) / 100;
     },
     상태문구() {
       if (this.결과화면보이기) { return '이 글의 필사를 마쳤어요'; }
@@ -811,6 +828,7 @@ button { font: inherit; }
 .글목록 span { color: var(--보조글); font-size: 10px; }
 .글목록 em { font-style: normal; }
 .글목록 em.완료 { color: var(--완료색); font-weight: 700; }
+.글목록 .최고정타율 { color: var(--보조글); font-size: inherit; font-variant-numeric: tabular-nums; }
 .종이 {
   margin-top: 22px;
   padding: 30px clamp(24px, 5.4vw, 73px) 27px;
@@ -883,6 +901,8 @@ button { font: inherit; }
 .마침통계 div { display: flex; flex-direction: column; gap: 5px; }
 .마침통계 dt { color: var(--옅은글); font-size: 11px; }
 .마침통계 dd { margin: 0; color: var(--보조글); font-size: 12px; font-variant-numeric: tabular-nums; }
+.정타율비교 { margin: 10px 0 0; color: var(--보조글); font-size: 11px; font-variant-numeric: tabular-nums; }
+.정타율비교 strong { color: var(--글); }
 .마침동작 { display: flex; flex-direction: column; align-items: center; gap: 9px; margin-left: auto; }
 .주버튼 { min-width: 132px; padding: 11px 14px; border: 1px solid var(--강조); border-radius: 2px; background: var(--강조); color: var(--역글); font-size: 12px; cursor: pointer; }
 .주버튼:hover { background: var(--강조호버); }
