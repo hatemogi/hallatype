@@ -16,6 +16,14 @@ it('시작하기 맛보기와 기존 테마에 입력 가능한 지문을 둔다
   expect(테마별지문들['감정 읽기']).toHaveLength(14);
   expect(테마별지문들.생활체육).toHaveLength(14);
   expect(테마별지문들.조선시대).toHaveLength(14);
+  expect(테마별지문들.우주).toHaveLength(14);
+  expect(테마별지문들.지구).toHaveLength(14);
+  expect(테마별지문들.동물).toHaveLength(14);
+  expect(테마별지문들.식물).toHaveLength(14);
+  expect(테마별지문들.우리말).toHaveLength(14);
+  expect(테마별지문들['소리와 음악']).toHaveLength(14);
+  expect(테마별지문들['몸과 감각']).toHaveLength(14);
+  expect(테마별지문들['도시와 건축']).toHaveLength(14);
   expect(테마별지문들.생활교양).toHaveLength(14);
   expect(테마별지문들.요리레시피).toHaveLength(14);
   expect(테마별지문들['메밀꽃 필 무렵']).toHaveLength(27);

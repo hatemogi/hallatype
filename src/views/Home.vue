@@ -150,9 +150,9 @@
               <span v-if="!결과화면보이기" class="진행숫자" role="progressbar" :aria-valuenow="진행률" aria-valuemin="0"
                 aria-valuemax="100" :aria-label="`${오늘지문.제목} 필사 진행률`">{{진행률}}%</span>
             </div>
-            <div v-if="결과화면보이기" class="리듬그래프" role="img" aria-label="글 전체 진행 위치에 따른 정타와 상대적인 입력 속도. 오타는 색으로, 이전에 저장된 입력은 옅은 막대로 표시됩니다.">
-              <span v-for="(막대, 순서) in 리듬막대들" :key="순서" class="리듬칸" aria-hidden="true">
-                <span v-if="막대" class="리듬막대" :class="{ 오타: 막대.오타, 이전기록: 막대.이전기록 }"
+            <div v-if="결과화면보이기" class="리듬그래프" role="img" aria-label="글 전체 진행 위치에 따른 정타와 상대적인 입력 속도. 오타는 다른 색으로 표시됩니다.">
+              <span v-for="(막대, 순서) in 완료리듬막대들" :key="순서" class="리듬칸" aria-hidden="true">
+                <span v-if="막대" class="리듬막대" :class="{ 오타: 막대.오타 }"
                   :style="{ height: `${막대.높이}%` }"></span>
               </span>
             </div>
@@ -204,7 +204,7 @@ import { 끝글자 } from '@/글자';
 import { 지문틀 } from '@/본문';
 import { 따라그리기틀 } from '@/따라그리기';
 import 그림판틀 from '@/그림판';
-import { 빈리듬그래프, 입력리듬, 리듬막대갱신, 리듬칸수, type 리듬막대 } from '@/practice-rhythm';
+import { 빈리듬그래프, 완료리듬그래프, type 리듬막대 } from '@/practice-rhythm';
 import { 필사단축키, type 필사단축동작 } from '@/practice-shortcuts';
 import { 날짜키, 테마별지문들,
   type 연습지문, type 지문테마 } from '@/practice-passages';
@@ -240,9 +240,6 @@ export default defineComponent({
       날짜확인타이머: null as ReturnType<typeof setInterval> | null,
       현재한줄칸수: 0,
       진행률: 0,
-      리듬막대들: 빈리듬그래프() as Array<리듬막대 | null>,
-      리듬측정기: markRaw(new 입력리듬()),
-      리듬시작칸: 0,
       입력상태: '대기' as '대기' | '진행' | '오타' | '정정',
       결과화면보이기: false,
       시작시각: null as number | null,
@@ -348,6 +345,7 @@ export default defineComponent({
     },
     저장대기(작업: 진행작업) {
       this.미저장작업.push(작업);
+      this.기록들 = 작업합치기(this.기록들, [작업]);
       this.밀린기록저장();
     },
     밀린기록저장() {
@@ -355,7 +353,6 @@ export default defineComponent({
       while (this.미저장작업.length) {
         const 작업 = this.미저장작업[0];
         if (!진행작업저장(작업, 저장소)) { this.기록오류 = true; return; }
-        this.기록들 = 작업합치기(this.기록들, [작업]);
         this.미저장작업.shift();
       }
       this.기록오류 = false;
@@ -480,9 +477,6 @@ export default defineComponent({
       this.그림판?.종료();
       this.결과화면보이기 = false;
       this.진행률 = 0;
-      this.리듬막대들 = 빈리듬그래프();
-      this.리듬측정기 = markRaw(new 입력리듬());
-      this.리듬시작칸 = 0;
       this.입력상태 = '대기';
       this.시작시각 = null;
       this.완료초 = 0;
@@ -505,9 +499,6 @@ export default defineComponent({
           inputCount: 복원.입력들.length, elapsedMs: 복원.걸린밀리초 };
         this.이어쓰기복원됨 = true;
         for (const 키 of 복원.입력들) { 본문.입력(키.code, 키.shift); }
-        this.리듬시작칸 = Math.min(리듬칸수 - 1,
-          Math.floor(본문.진행획수 / 본문.전체획수 * 리듬칸수));
-        this.리듬막대들 = 빈리듬그래프(this.리듬시작칸);
         this.진행률 = 본문.진행률;
         this.입력상태 = 본문.방금오타 ? '오타' : '진행';
         if (본문.끝) {
@@ -517,6 +508,7 @@ export default defineComponent({
           this.정타수 = 본문.유효타수;
           this.종전최고정타율 = 지문최고정타율(this.시도들, this.오늘지문.id,
             본문버전(this.오늘지문.본문));
+          this.시도ID = 복원.시작.attemptId;
           this.결과화면보이기 = true;
           this.저장대기(시도완료(복원.시작.attemptId, 걸린밀리초, this.총입력타수, this.정타수));
         }
@@ -598,10 +590,8 @@ export default defineComponent({
         }
         const 직전오타 = self.입력상태 === '오타';
         const 바뀐위치 = 본문.입력(e.code, e.shiftKey);
-        self.리듬막대들 = 리듬막대갱신(self.리듬막대들, 본문.진행획수,
-          본문.전체획수, self.리듬측정기.입력(!본문.방금오타, performance.now()),
-          본문.방금오타, self.리듬시작칸);
-        self.입력기록추가({ code: e.code, shift: e.shiftKey });
+        self.입력기록추가({ code: e.code, shift: e.shiftKey,
+          elapsedMs: Math.max(0, Math.round(performance.now() - self.시작시각!)) });
         self.입력상태 = 본문.방금오타 ? '오타' : 직전오타 ? '정정' : '진행';
         if (본문.방금오타) {
           그림판.오타효과시작(본문.위치);
@@ -665,6 +655,11 @@ export default defineComponent({
   computed: {
     시도들(): 필사시도[] {
       return 시도목록(this.기록들);
+    },
+    완료리듬막대들(): Array<리듬막대 | null> {
+      const 시도 = this.시도들.find((후보) => 후보.시작.attemptId === this.시도ID);
+      return 시도 ? 완료리듬그래프(this.오늘지문.본문, 시도.입력들,
+        시도.완료?.elapsedMs ?? 시도.걸린밀리초) : 빈리듬그래프();
     },
     주제완료도(): Record<지문테마, { 완료: number; 전체: number; 비율: number }> {
       return Object.fromEntries(this.글테마선택지.map((테마) => {
@@ -1427,11 +1422,10 @@ button { font: inherit; }
 .리듬칸 { position: relative; height: 100%; min-width: 0; }
 .리듬막대 { position: absolute; right: 0; bottom: 0; left: 0; display: block; background: var(--진행활성); }
 .리듬막대.오타 { background: var(--오류색); }
-.리듬막대.이전기록 { background: var(--진행선); }
-.필사실[data-theme='한지'] .리듬막대:not(.오타):not(.이전기록),
-.필사실[data-theme='새벽'] .리듬막대:not(.오타):not(.이전기록),
-.필사실[data-theme='항구'] .리듬막대:not(.오타):not(.이전기록),
-.필사실[data-theme='모과'] .리듬막대:not(.오타):not(.이전기록) { background: var(--강조); }
+.필사실[data-theme='한지'] .리듬막대:not(.오타),
+.필사실[data-theme='새벽'] .리듬막대:not(.오타),
+.필사실[data-theme='항구'] .리듬막대:not(.오타),
+.필사실[data-theme='모과'] .리듬막대:not(.오타) { background: var(--강조); }
 .기록안내 { margin: 10px 0 0; color: var(--보조글); font-size: 11px; }
 .기록안내[role="alert"] { color: var(--오류색); }
 .진행아래 { display: flex; justify-content: space-between; align-items: center; gap: 20px; max-width: 800px; margin: 19px auto 0; color: var(--보조글); font-size: 11px; }
@@ -1486,7 +1480,7 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
 }
 .선택머리 { align-items: start; }
 .선택머리 h2 { margin-top: 6px; font-size: 17px; }
-.글테마선택 { grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; gap: 6px; margin-top: 18px; }
+.글테마선택 { grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; max-height: min(40dvh, 310px); gap: 6px; margin-top: 18px; overflow-y: auto; overscroll-behavior: contain; }
 .글테마선택 button:first-child { grid-column: 1 / -1; }
 .글테마선택 button { padding: 8px 5px 11px; font-size: 12px; }
 .지문서랍 { display: flex; flex-direction: column; flex: 1; min-height: 0; margin-top: 20px; }

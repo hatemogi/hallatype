@@ -11,7 +11,7 @@ function ID확인(id: string): void {
   if (!ID_PATTERN.test(id)) { throw new Error('ID는 영문자 12자리여야 합니다.'); }
 }
 
-export type 입력키 = { code: string; shift: boolean };
+export type 입력키 = { code: string; shift: boolean; elapsedMs?: number };
 export type 이어쓰기원본 = { attemptId: string; inputCount: number; elapsedMs: number };
 
 type 작업기본 = { id: string; attemptId: string; schema: 2; at: string };
@@ -25,7 +25,7 @@ export type 진행작업 =
 type 저장작업기본 = { v: 4; i: string; a: string; d: number };
 type 저장작업 =
   | (저장작업기본 & { t: 's'; p: string; y: string; c: string; f?: [string, number, number] })
-  | (저장작업기본 & { t: 'i'; n: number; keys: string; e: number })
+  | (저장작업기본 & { t: 'i'; n: number; keys: string; e: number; m?: number[] })
   | (저장작업기본 & { t: 'c'; e: number; n: number; o: number })
   | (저장작업기본 & { t: 'x' });
 
@@ -87,7 +87,9 @@ function 작업압축(작업: 진행작업): 저장작업 | undefined {
       c: 작업.contentVersion, ...(작업.continuedFrom && { f: [작업.continuedFrom.attemptId,
         작업.continuedFrom.inputCount, 작업.continuedFrom.elapsedMs] as [string, number, number] }) };
     case 'inputs': return { ...기본, t: 'i', n: 작업.seq,
-      keys: 작업.keys.map(입력키압축).join(''), e: 작업.elapsedMs };
+      keys: 작업.keys.map(입력키압축).join(''), e: 작업.elapsedMs,
+      ...(작업.keys.every((키) => 키.elapsedMs !== undefined) &&
+        { m: 작업.keys.map((키) => 키.elapsedMs!) }) };
     case 'completed': return { ...기본, t: 'c', e: 작업.elapsedMs,
       n: 작업.totalInputs, o: 작업.correctInputs };
     case 'abandoned': return { ...기본, t: 'x' };
@@ -123,6 +125,14 @@ function 작업복원(값: unknown): 진행작업 | undefined {
         키들 = 입력키열복원(압축.keys);
       }
       if (!키들) { return undefined; }
+      if (압축.m !== undefined) {
+        if (압축.v !== 4 || !Array.isArray(압축.m) || 압축.m.length !== 키들.length ||
+            !압축.m.every((시각) => typeof 시각 === 'number' && Number.isFinite(시각) && 시각 >= 0)) {
+          return undefined;
+        }
+        const 시각들 = 압축.m as number[];
+        키들 = 키들.map((키, 순서) => ({ ...키, elapsedMs: 시각들[순서] }));
+      }
       작업 = { ...기본, type: 'inputs', seq: 압축.n as number,
         keys: 키들, elapsedMs: 압축.e as number };
       break;
@@ -248,7 +258,10 @@ function 올바른작업(값: unknown): 값 is 진행작업 {
         typeof 작업.elapsedMs === 'number' && Number.isFinite(작업.elapsedMs) && 작업.elapsedMs >= 0 &&
         Array.isArray(작업.keys) && 작업.keys.length > 0 &&
         작업.keys.every((키: unknown) => !!키 && typeof 키 === 'object' &&
-          typeof (키 as 입력키).code === 'string' && typeof (키 as 입력키).shift === 'boolean');
+          typeof (키 as 입력키).code === 'string' && typeof (키 as 입력키).shift === 'boolean' &&
+          ((키 as 입력키).elapsedMs === undefined ||
+            (typeof (키 as 입력키).elapsedMs === 'number' &&
+              Number.isFinite((키 as 입력키).elapsedMs) && (키 as 입력키).elapsedMs! >= 0)));
     case 'completed':
       return ['elapsedMs', 'totalInputs', 'correctInputs'].every((필드) =>
         typeof 작업[필드] === 'number' && Number.isFinite(작업[필드]) && (작업[필드] as number) >= 0);

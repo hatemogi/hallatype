@@ -6,6 +6,14 @@ import { 스토아지문들 } from './practice-stoic-passages';
 import { 감정지문들 } from './practice-emotion-passages';
 import { 생활체육지문들 } from './practice-sports-passages';
 import { 조선시대지문들 } from './practice-joseon-passages';
+import { 우주지문들 } from './practice-space-passages';
+import { 지구지문들 } from './practice-earth-passages';
+import { 동물지문들 } from './practice-animal-passages';
+import { 식물지문들 } from './practice-plant-passages';
+import { 우리말지문들 } from './practice-language-passages';
+import { 소리와음악지문들 } from './practice-music-passages';
+import { 몸과감각지문들 } from './practice-body-passages';
+import { 도시와건축지문들 } from './practice-city-passages';
 import { 생활교양지문들 } from './practice-knowledge-passages';
 import { 요리레시피지문들 } from './practice-recipe-passages';
 import { 메밀꽃지문들, 봄봄지문들 } from './practice-classic-passages';
@@ -21,7 +29,9 @@ export interface 연습지문 {
 }
 
 export type 지문테마 = '시작하기' | '산문' | '자기계발' | '명상' | '자기확언'
-  | '스토아 철학' | '감정 읽기' | '생활체육' | '조선시대' | '생활교양' | '요리레시피'
+  | '스토아 철학' | '감정 읽기' | '생활체육' | '조선시대' | '우주' | '지구' | '동물' | '식물'
+  | '우리말' | '소리와 음악' | '몸과 감각' | '도시와 건축'
+  | '생활교양' | '요리레시피'
   | '메밀꽃 필 무렵' | '봄봄';
 
 /** 기존 산문 지문은 별도의 테마로 보존한다. */
@@ -80,6 +90,14 @@ export const 테마별지문들: Record<지문테마, readonly 연습지문[]> =
   '감정 읽기': 감정지문들,
   생활체육: 생활체육지문들,
   조선시대: 조선시대지문들,
+  우주: 우주지문들,
+  지구: 지구지문들,
+  동물: 동물지문들,
+  식물: 식물지문들,
+  우리말: 우리말지문들,
+  '소리와 음악': 소리와음악지문들,
+  '몸과 감각': 몸과감각지문들,
+  '도시와 건축': 도시와건축지문들,
   생활교양: 생활교양지문들,
   요리레시피: 요리레시피지문들,
   '메밀꽃 필 무렵': 메밀꽃지문들,
