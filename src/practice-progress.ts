@@ -1,6 +1,7 @@
 import { customAlphabet } from 'nanoid';
 
-const STORAGE_PREFIX = 'hallatype:progress:v2:op:';
+const STORAGE_PREFIX = 'tf:p:';
+const LEGACY_STORAGE_PREFIX = 'hallatype:progress:v2:op:';
 const 새ID = customAlphabet('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', 12);
 const ID_PATTERN = /^[A-Za-z]{12}$/;
 const 버전캐시 = new Map<string, string>();
@@ -20,7 +21,124 @@ export type 진행작업 =
   | (작업기본 & { type: 'completed'; elapsedMs: number; totalInputs: number; correctInputs: number })
   | (작업기본 & { type: 'abandoned' });
 
-export type 저장소 = Pick<Storage, 'length' | 'key' | 'getItem' | 'setItem'>;
+type 저장작업기본 = { v: 4; i: string; a: string; d: number };
+type 저장작업 =
+  | (저장작업기본 & { t: 's'; p: string; y: string; c: string; f?: [string, number, number] })
+  | (저장작업기본 & { t: 'i'; n: number; keys: string; e: number })
+  | (저장작업기본 & { t: 'c'; e: number; n: number; o: number })
+  | (저장작업기본 & { t: 'x' });
+
+const 짧은키코드 = new Map(Object.entries({
+  Space: '␠', Enter: '↵', Backspace: '⌫', Backquote: '`', Minus: '-', Equal: '=',
+  BracketLeft: '[', BracketRight: ']', Backslash: '\\', Semicolon: ';', Quote: "'",
+  Comma: ',', Period: '.', Slash: '/',
+}));
+const 원래키코드 = new Map([...짧은키코드].map(([코드, 글자]) => [글자, 코드]));
+
+function 입력키압축(키: 입력키): string {
+  const 코드 = /^Key[A-Z]$/.test(키.code) ? 키.code.slice(3)
+    : /^Digit[0-9]$/.test(키.code) ? 키.code.slice(5)
+      : 짧은키코드.get(키.code) ?? `~${키.code.length}:${키.code}`;
+  return `${키.shift ? '+' : ''}${코드}`;
+}
+
+function 입력키복원(표현: string): 입력키 | undefined {
+  const shift = 표현.startsWith('+');
+  const 글자 = shift ? 표현.slice(1) : 표현;
+  const code = /^[A-Z]$/.test(글자) ? `Key${글자}`
+    : /^[0-9]$/.test(글자) ? `Digit${글자}`
+      : 원래키코드.get(글자) ?? (글자.startsWith('~') ? 글자.slice(1) : undefined);
+  return code === undefined ? undefined : { code, shift };
+}
+
+/** v4 문자열에서 +는 바로 다음 키의 Shift를 뜻하고, ~길이:코드는 알 수 없는 키를 보존한다. */
+function 입력키열복원(표현: string): 입력키[] | undefined {
+  const 키들: 입력키[] = [];
+  let 위치 = 0;
+  while (위치 < 표현.length) {
+    const shift = 표현[위치] === '+';
+    if (shift) { 위치++; }
+    if (위치 >= 표현.length) { return undefined; }
+    if (표현[위치] === '~') {
+      const 길이시작 = ++위치;
+      while (위치 < 표현.length && /[0-9]/.test(표현[위치])) { 위치++; }
+      if (위치 === 길이시작 || 표현[위치] !== ':') { return undefined; }
+      const 길이 = Number(표현.slice(길이시작, 위치++));
+      if (!Number.isSafeInteger(길이) || 길이 > 표현.length - 위치) { return undefined; }
+      키들.push({ code: 표현.slice(위치, 위치 + 길이), shift });
+      위치 += 길이;
+    } else {
+      const 키 = 입력키복원(`${shift ? '+' : ''}${표현[위치++]}`);
+      if (!키) { return undefined; }
+      키들.push(키);
+    }
+  }
+  return 키들.length ? 키들 : undefined;
+}
+
+/** 메모리에서는 기존 작업 구조를 쓰고, 저장할 때만 키와 시각을 압축한다. */
+function 작업압축(작업: 진행작업): 저장작업 | undefined {
+  const d = Date.parse(작업.at);
+  if (!Number.isSafeInteger(d)) { return undefined; }
+  const 기본 = { v: 4 as const, i: 작업.id, a: 작업.attemptId, d };
+  switch (작업.type) {
+    case 'started': return { ...기본, t: 's', p: 작업.passageId, y: 작업.day,
+      c: 작업.contentVersion, ...(작업.continuedFrom && { f: [작업.continuedFrom.attemptId,
+        작업.continuedFrom.inputCount, 작업.continuedFrom.elapsedMs] as [string, number, number] }) };
+    case 'inputs': return { ...기본, t: 'i', n: 작업.seq,
+      keys: 작업.keys.map(입력키압축).join(''), e: 작업.elapsedMs };
+    case 'completed': return { ...기본, t: 'c', e: 작업.elapsedMs,
+      n: 작업.totalInputs, o: 작업.correctInputs };
+    case 'abandoned': return { ...기본, t: 'x' };
+  }
+}
+
+function 작업복원(값: unknown): 진행작업 | undefined {
+  if (올바른작업(값)) { return 값; }
+  if (!값 || typeof 값 !== 'object') { return undefined; }
+  const 압축 = 값 as Record<string, unknown>;
+  if ((압축.v !== 3 && 압축.v !== 4) || typeof 압축.i !== 'string' || typeof 압축.a !== 'string' ||
+      typeof 압축.d !== 'number' || !Number.isSafeInteger(압축.d)) { return undefined; }
+  const 날짜 = new Date(압축.d);
+  if (Number.isNaN(날짜.getTime())) { return undefined; }
+  const 기본 = { schema: 2 as const, id: 압축.i, attemptId: 압축.a, at: 날짜.toISOString() };
+  let 작업: 진행작업;
+  switch (압축.t) {
+    case 's': {
+      const f = 압축.f;
+      if (f !== undefined && (!Array.isArray(f) || f.length !== 3)) { return undefined; }
+      작업 = { ...기본, type: 'started', passageId: 압축.p as string,
+        day: 압축.y as string, contentVersion: 압축.c as string,
+        ...(f && { continuedFrom: { attemptId: f[0], inputCount: f[1], elapsedMs: f[2] } }) };
+      break;
+    }
+    case 'i': {
+      let 키들: 입력키[] | undefined;
+      if (압축.v === 3 && Array.isArray(압축.keys) && 압축.keys.length &&
+          압축.keys.every((키) => typeof 키 === 'string')) {
+        const 복원 = 압축.keys.map((키) => 입력키복원(키));
+        if (복원.every((키) => 키 !== undefined)) { 키들 = 복원 as 입력키[]; }
+      } else if (압축.v === 4 && typeof 압축.keys === 'string') {
+        키들 = 입력키열복원(압축.keys);
+      }
+      if (!키들) { return undefined; }
+      작업 = { ...기본, type: 'inputs', seq: 압축.n as number,
+        keys: 키들, elapsedMs: 압축.e as number };
+      break;
+    }
+    case 'c': 작업 = { ...기본, type: 'completed', elapsedMs: 압축.e as number,
+      totalInputs: 압축.n as number, correctInputs: 압축.o as number }; break;
+    case 'x': 작업 = { ...기본, type: 'abandoned' }; break;
+    default: return undefined;
+  }
+  return 올바른작업(작업) ? 작업 : undefined;
+}
+
+export type 저장소 = Pick<Storage, 'length' | 'key' | 'getItem' | 'setItem' | 'removeItem'>;
+
+export function 진행기록키인가(키: string | null): boolean {
+  return 키 !== null && (키.startsWith(STORAGE_PREFIX) || 키.startsWith(LEGACY_STORAGE_PREFIX));
+}
 
 export interface 필사시도 {
   시작: Extract<진행작업, { type: 'started' }>;
@@ -33,15 +151,30 @@ export interface 필사시도 {
   복원가능: boolean;
 }
 
+/** 같은 본문의 가장 최근 시도를 고른다. */
+export function 지문최근시도(시도들: readonly 필사시도[], passageId: string,
+  contentVersion: string): 필사시도 | undefined {
+  return 시도들
+    .filter((시도) => 시도.시작.passageId === passageId &&
+      시도.시작.contentVersion === contentVersion)
+    .sort((a, b) => b.마지막시각.localeCompare(a.마지막시각) ||
+      b.시작.at.localeCompare(a.시작.at) ||
+      b.시작.attemptId.localeCompare(a.시작.attemptId))[0];
+}
+
 export function 지문입력상태(시도들: readonly 필사시도[], passageId: string,
   contentVersion: string): '완료' | '입력 중' | '미완료' {
-  const 해당시도들 = 시도들.filter((시도) => 시도.시작.passageId === passageId &&
-    시도.시작.contentVersion === contentVersion);
-  if (해당시도들.some((시도) => !!시도.완료)) { return '완료'; }
-  if (해당시도들.some((시도) => 시도.복원가능 && !시도.중단됨 && 시도.입력들.length > 0)) {
-    return '입력 중';
-  }
+  const 최근 = 지문최근시도(시도들, passageId, contentVersion);
+  if (최근?.완료) { return '완료'; }
+  if (최근?.복원가능 && !최근.중단됨 && 최근.입력들.length > 0) { return '입력 중'; }
   return '미완료';
+}
+
+export function 지문재개시도(시도들: readonly 필사시도[], passageId: string,
+  contentVersion: string): 필사시도 | undefined {
+  const 최근 = 지문최근시도(시도들, passageId, contentVersion);
+  return 최근?.복원가능 && !최근.완료 && !최근.중단됨 && 최근.입력들.length > 0
+    ? 최근 : undefined;
 }
 
 export function 정타율(정타수: number, 전체타수: number): string {
@@ -126,31 +259,79 @@ export function 작업합치기(기존: readonly 진행작업[], 받은: readonl
   return [...결과.values()];
 }
 
+function 같은저장작업(원문: string, 짧은원문: string): boolean {
+  try {
+    const 작업 = 작업복원(JSON.parse(원문));
+    return !!작업 && JSON.stringify(작업압축(작업)) === 짧은원문;
+  } catch (_) { return false; }
+}
+
 export function 진행작업읽기(저장소: 저장소 | undefined = 브라우저저장소()): 진행작업[] {
   if (!저장소) { return []; }
-  const 결과: 진행작업[] = [];
+  const 발견: { 키: string; 작업: 진행작업; 짧은원문?: string; 이전키: boolean }[] = [];
   try {
-    for (let 번호 = 0; 번호 < 저장소.length; 번호++) {
-      const 키 = 저장소.key(번호);
-      if (!키?.startsWith(STORAGE_PREFIX)) { continue; }
+    const 키들 = Array.from({ length: 저장소.length }, (_, 번호) => 저장소.key(번호));
+    for (const 키 of 키들) {
+      if (!키 || !진행기록키인가(키)) { continue; }
       try {
         const 원문 = 저장소.getItem(키);
         if (!원문) { continue; }
         const 값: unknown = JSON.parse(원문);
-        if (올바른작업(값) && 키 === STORAGE_PREFIX + 값.id) { 결과.push(값); }
+        const 작업 = 작업복원(값);
+        const 이전키 = 키.startsWith(LEGACY_STORAGE_PREFIX);
+        if (!작업 || 키 !== (이전키 ? LEGACY_STORAGE_PREFIX : STORAGE_PREFIX) + 작업.id) { continue; }
+        const 짧은작업 = 작업압축(작업);
+        const 짧은원문 = 짧은작업 && JSON.stringify(짧은작업);
+        발견.push({ 키, 작업, 짧은원문, 이전키 });
+        if (짧은원문 && 짧은원문 !== 원문) {
+          try { 저장소.setItem(키, 짧은원문); }
+          catch (_) { /* 압축 갱신에 실패해도 기존 기록은 읽는다. */ }
+        }
       } catch (_) { /* 한 항목이 손상되어도 나머지 기록은 읽는다. */ }
     }
   } catch (_) { /* 저장소 접근이 막힌 경우 이미 읽은 작업만 사용한다. */ }
-  return 결과;
+  const 결과 = new Map<string, 진행작업>();
+  for (const 항목 of 발견) {
+    if (!항목.이전키 || !결과.has(항목.작업.id)) { 결과.set(항목.작업.id, 항목.작업); }
+  }
+  for (const 항목 of 발견) {
+    if (!항목.이전키 || !항목.짧은원문) { continue; }
+    try {
+      const 새키 = STORAGE_PREFIX + 항목.작업.id;
+      const 기존 = 저장소.getItem(새키);
+      if (기존) {
+        if (같은저장작업(기존, 항목.짧은원문)) { 저장소.removeItem(항목.키); }
+      } else {
+        저장소.setItem(새키, 항목.짧은원문);
+        저장소.removeItem(항목.키);
+      }
+    } catch (_) { /* 새 키에 쓰지 못하면 기존 기록을 그대로 둔다. */ }
+  }
+  return [...결과.values()];
 }
 
 export function 진행작업저장(작업: 진행작업, 저장소: 저장소 | undefined = 브라우저저장소()): boolean {
   if (!저장소 || !올바른작업(작업)) { return false; }
+  const 압축 = 작업압축(작업);
+  if (!압축) { return false; }
+  const 원문 = JSON.stringify(압축);
   try {
     const 키 = STORAGE_PREFIX + 작업.id;
     const 기존 = 저장소.getItem(키);
-    if (기존) { return 기존 === JSON.stringify(작업); }
-    저장소.setItem(키, JSON.stringify(작업));
+    if (기존) {
+      if (기존 === 원문) { return true; }
+      if (!같은저장작업(기존, 원문)) { return false; }
+    } else {
+      const 이전키 = LEGACY_STORAGE_PREFIX + 작업.id;
+      const 이전 = 저장소.getItem(이전키);
+      if (이전 && !같은저장작업(이전, 원문)) { return false; }
+      if (이전) {
+        try { 저장소.setItem(키, 원문); 저장소.removeItem(이전키); }
+        catch (_) { return true; /* 이전 키에 같은 기록이 남아 있다. */ }
+        return true;
+      }
+    }
+    저장소.setItem(키, 원문);
     return true;
   } catch (_) { return false; }
 }
@@ -209,6 +390,7 @@ export function 시도목록(작업들: readonly 진행작업[]): 필사시도[]
     }
     const 완료 = 작업묶음.filter((작업): 작업 is Extract<진행작업, { type: 'completed' }> => 작업.type === 'completed')
       .sort((a, b) => a.id.localeCompare(b.id))[0];
+    마지막시각 = 작업묶음.reduce((시각, 작업) => 작업.at > 시각 ? 작업.at : 시각, 마지막시각);
     원본들.set(시작.attemptId, { 시작, 입력들, 다음순서, 걸린밀리초, 마지막시각, 완료,
       중단됨: 작업묶음.some((작업) => 작업.type === 'abandoned'),
       복원가능: 입력작업.every((작업) => 작업.seq < 다음순서) });

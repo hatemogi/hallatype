@@ -3,16 +3,24 @@ import { 지문틀 } from '@/본문';
 import { 따라그리기틀 } from '@/따라그리기';
 import { 연습지문들 } from '@/practice-passages';
 import { 본문버전, 시도목록, 시도시작, 시도완료, 시도중단, 입력묶음,
-  진행작업읽기, 진행작업저장, 작업합치기, 지문입력상태, 지문최고정타율, 정타율, 정타율표시,
+  진행기록키인가, 진행작업읽기, 진행작업저장, 작업합치기,
+  지문입력상태, 지문최근시도, 지문재개시도, 지문최고정타율, 정타율, 정타율표시,
   type 저장소 } from '@/practice-progress';
 
-function 메모리저장소(): 저장소 {
+function 메모리저장소(최대길이 = Infinity): 저장소 {
   const 값들 = new Map<string, string>();
   return {
     get length() { return 값들.size; },
     key: (번호) => [...값들.keys()][번호] ?? null,
     getItem: (키) => 값들.get(키) ?? null,
-    setItem: (키, 값) => { 값들.set(키, 값); },
+    setItem: (키, 값) => {
+      const 현재크기 = [...값들].reduce((합, [이름, 내용]) => 합 + 이름.length + 내용.length, 0);
+      const 이전 = 값들.get(키);
+      const 새크기 = 현재크기 - (이전 === undefined ? 0 : 키.length + 이전.length) + 키.length + 값.length;
+      if (새크기 > 최대길이) { throw new Error('QuotaExceededError'); }
+      값들.set(키, 값);
+    },
+    removeItem: (키) => { 값들.delete(키); },
   };
 }
 
@@ -50,6 +58,126 @@ it('불변 입력 작업을 저장하고 다시 읽어 진행 상태를 재생�
   expect(본문.입력타수).toBe(5);
   expect(본문.유효타수).toBe(3);
   expect(본문.진행률).toBe(100);
+});
+
+it('키 입력과 시각을 짧게 저장하고 모든 키 조합을 그대로 복원한다', () => {
+  const 저장소 = 메모리저장소();
+  const 시작 = 시도시작(연습지문들[0].id, '2026-10-24', 'v1');
+  const 키들 = [
+    { code: 'KeyA', shift: false }, { code: 'KeyB', shift: false },
+    { code: 'KeyC', shift: true }, { code: 'Digit7', shift: false },
+    ...['Space', 'Enter', 'Backspace', 'Backquote', 'Minus', 'Equal', 'BracketLeft',
+      'BracketRight', 'Backslash', 'Semicolon', 'Quote', 'Comma', 'Period', 'Slash']
+      .map((code) => ({ code, shift: false })),
+    { code: 'Slash', shift: true }, { code: 'Unmapped', shift: true },
+  ];
+  const 입력 = 입력묶음(시작.attemptId, 0, 키들, 1234);
+  const 완료 = 시도완료(시작.attemptId, 1234, 키들.length, 키들.length);
+  const 중단 = 시도중단(시작.attemptId);
+  const 이어시작 = 시도시작(연습지문들[0].id, '2026-10-24', 'v1',
+    { attemptId: 시작.attemptId, inputCount: 1, elapsedMs: 1234 });
+  for (const 작업 of [시작, 입력, 완료, 중단, 이어시작]) {
+    expect(진행작업저장(작업, 저장소)).toBe(true);
+    expect(진행작업저장(작업, 저장소)).toBe(true);
+    const 저장값 = JSON.parse(저장소.getItem(`tf:p:${작업.id}`)!);
+    expect(저장값.v).toBe(4);
+    expect(저장값.d).toBe(Date.parse(작업.at));
+  }
+  const 입력저장값 = JSON.parse(저장소.getItem(`tf:p:${입력.id}`)!);
+  expect(입력저장값.keys).toBe("AB+C7␠↵⌫`-=[]\\;',./+/+~8:Unmapped");
+  expect(진행작업읽기(저장소)).toEqual([시작, 입력, 완료, 중단, 이어시작]);
+  expect(JSON.stringify(입력저장값).length).toBeLessThan(JSON.stringify(입력).length / 2);
+});
+
+it('이전 상세 기록을 읽으면서 같은 키의 압축 형식으로 갱신한다', () => {
+  const 저장소 = 메모리저장소();
+  const 시작 = 시도시작(연습지문들[0].id, '2026-10-24', 'v1');
+  const 입력 = 입력묶음(시작.attemptId, 0,
+    Array.from({ length: 20 }, () => ({ code: 'KeyA', shift: true })), 2100);
+  const 이전 = [시작, 입력];
+  for (const 작업 of 이전) {
+    저장소.setItem(`hallatype:progress:v2:op:${작업.id}`, JSON.stringify(작업));
+  }
+  expect(진행작업읽기(저장소)).toEqual(이전);
+  for (const 작업 of 이전) {
+    const 저장값 = JSON.parse(저장소.getItem(`tf:p:${작업.id}`)!);
+    expect(저장값.v).toBe(4);
+    expect(저장소.getItem(`hallatype:progress:v2:op:${작업.id}`)).toBeNull();
+    expect(진행작업저장(작업, 저장소)).toBe(true);
+  }
+  expect(시도목록(진행작업읽기(저장소))[0].입력들).toEqual(입력.keys);
+});
+
+it('이전 키 배열 형식도 문자열로 바꾸며 입력을 잃지 않는다', () => {
+  const 저장소 = 메모리저장소();
+  const 시작 = 시도시작(연습지문들[0].id, '2026-10-24', 'v1');
+  const 입력 = 입력묶음(시작.attemptId, 0,
+    [{ code: 'KeyA', shift: false }, { code: 'KeyB', shift: false },
+      { code: 'KeyC', shift: true }, { code: 'Unmapped', shift: true }], 1000);
+  const 이전키 = `hallatype:progress:v2:op:${입력.id}`;
+  저장소.setItem(이전키, JSON.stringify({ v: 3, i: 입력.id, a: 입력.attemptId,
+    d: Date.parse(입력.at), t: 'i', n: 0, keys: ['A', 'B', '+C', '+~Unmapped'], e: 1000 }));
+  expect(진행작업읽기(저장소)).toEqual([입력]);
+  const 저장값 = JSON.parse(저장소.getItem(`tf:p:${입력.id}`)!);
+  expect(저장값.v).toBe(4);
+  expect(저장값.keys).toBe('AB+C+~8:Unmapped');
+  expect(저장소.getItem(이전키)).toBeNull();
+});
+
+it('새 키에 쓸 공간이 없으면 이전 키를 보존하고 기록을 계속 읽는다', () => {
+  const 작업 = 시도시작(연습지문들[0].id, '2026-10-24', 'v1');
+  const 이전키 = `hallatype:progress:v2:op:${작업.id}`;
+  const 원본저장소 = 메모리저장소();
+  원본저장소.setItem(이전키, JSON.stringify(작업));
+  const 저장소: 저장소 = {
+    get length() { return 원본저장소.length; },
+    key: (번호) => 원본저장소.key(번호),
+    getItem: (키) => 원본저장소.getItem(키),
+    setItem: (키, 값) => {
+      if (키.startsWith('tf:p:')) { throw new Error('QuotaExceededError'); }
+      원본저장소.setItem(키, 값);
+    },
+    removeItem: (키) => 원본저장소.removeItem(키),
+  };
+  expect(진행작업읽기(저장소)).toEqual([작업]);
+  expect(저장소.getItem(이전키)).not.toBeNull();
+  expect(저장소.getItem(`tf:p:${작업.id}`)).toBeNull();
+  expect(진행작업저장(작업, 저장소)).toBe(true);
+});
+
+it('새 키와 이전 키에 같은 작업이 함께 있으면 한 번만 읽고 이전 키를 지운다', () => {
+  const 저장소 = 메모리저장소();
+  const 작업 = 시도시작(연습지문들[0].id, '2026-10-24', 'v1');
+  const 이전키 = `hallatype:progress:v2:op:${작업.id}`;
+  const 새키 = `tf:p:${작업.id}`;
+  expect(새키.length).toBeLessThan(이전키.length);
+  저장소.setItem(이전키, JSON.stringify(작업));
+  expect(진행작업저장(작업, 저장소)).toBe(true);
+  저장소.setItem(이전키, JSON.stringify(작업));
+  expect(진행작업읽기(저장소)).toEqual([작업]);
+  expect(저장소.getItem(이전키)).toBeNull();
+  expect(저장소.getItem(새키)).not.toBeNull();
+  expect(진행기록키인가(새키)).toBe(true);
+  expect(진행기록키인가(이전키)).toBe(true);
+  expect(진행기록키인가(null)).toBe(false);
+});
+
+it('기존 기록 때문에 저장 공간이 부족해도 읽으면서 공간을 회수한다', () => {
+  const 시작 = 시도시작(연습지문들[0].id, '2026-10-24', 'v1');
+  const 키들 = Array.from({ length: 20 }, () => ({ code: 'KeyA', shift: true }));
+  const 이전 = 입력묶음(시작.attemptId, 0, 키들, 2100);
+  const 새입력 = 입력묶음(시작.attemptId, 1, 키들, 4200);
+  const 이전키 = `hallatype:progress:v2:op:${이전.id}`;
+  const 새키 = `tf:p:${새입력.id}`;
+  const 임시저장소 = 메모리저장소();
+  expect(진행작업저장(새입력, 임시저장소)).toBe(true);
+  const 새길이 = 임시저장소.getItem(새키)!.length;
+  const 저장소 = 메모리저장소(이전키.length + JSON.stringify(이전).length + 새키.length + 새길이 - 1);
+  저장소.setItem(이전키, JSON.stringify(이전));
+  expect(진행작업저장(새입력, 저장소)).toBe(false);
+  expect(진행작업읽기(저장소)).toEqual([이전]);
+  expect(진행작업저장(새입력, 저장소)).toBe(true);
+  expect(진행작업읽기(저장소)).toEqual([이전, 새입력]);
 });
 
 it('합집합 병합은 순서와 재전송에 무관하고 시도별 완료 및 중단을 보존한다', () => {
@@ -96,18 +224,53 @@ it('같은 지문의 입력은 날짜가 바뀌어도 이어 쓸 수 있다', ()
 
 it('지문별 완료 표시는 날짜를 넘어 유지하고 본문이 바뀌면 초기화한다', () => {
   const 지문ID = 연습지문들[0].id;
-  const 시작 = 시도시작(지문ID, '2026-10-23', 'v1');
-  const 입력 = 입력묶음(시작.attemptId, 0, [{ code: 'KeyR', shift: false }], 100);
+  const 시작 = { ...시도시작(지문ID, '2026-10-23', 'v1'), at: '2026-10-23T01:00:00.000Z' };
+  const 입력 = { ...입력묶음(시작.attemptId, 0, [{ code: 'KeyR', shift: false }], 100),
+    at: '2026-10-23T01:01:00.000Z' };
   expect(지문입력상태(시도목록([시작, 입력]), 지문ID, 'v1')).toBe('입력 중');
-  const 완료 = 시도완료(시작.attemptId, 200, 2, 1);
-  const 다음날 = 시도시작(지문ID, '2026-10-24', 'v1');
-  expect(지문입력상태(시도목록([시작, 입력, 완료, 다음날]), 지문ID, 'v1')).toBe('완료');
+  const 완료 = { ...시도완료(시작.attemptId, 200, 2, 1), at: '2026-10-23T01:02:00.000Z' };
+  expect(지문입력상태(시도목록([시작, 입력, 완료]), 지문ID, 'v1')).toBe('완료');
+  const 다음날 = { ...시도시작(지문ID, '2026-10-24', 'v1'), at: '2026-10-24T01:00:00.000Z' };
+  const 다음입력 = { ...입력묶음(다음날.attemptId, 0, [{ code: 'KeyA', shift: false }], 100),
+    at: '2026-10-24T01:01:00.000Z' };
+  expect(지문입력상태(시도목록([시작, 입력, 완료, 다음날, 다음입력]), 지문ID, 'v1'))
+    .toBe('입력 중');
   expect(지문입력상태(시도목록([시작, 입력, 완료]), 지문ID, 'v2')).toBe('미완료');
   expect(정타율(2, 3)).toBe('66.67');
   expect(정타율(2, 2)).toBe('100');
   expect(정타율(0, 0)).toBe('0.00');
   expect(정타율표시(100)).toBe('100');
   expect(정타율표시(97.5)).toBe('97.50');
+});
+
+it('완료 전에 남은 미완료 입력은 재개하지 않고 완료 후 입력은 재개한다', () => {
+  const 지문ID = 연습지문들[0].id;
+  const 이전시작 = { ...시도시작(지문ID, '2026-10-24', 'v1'), at: '2026-10-24T01:00:00.000Z' };
+  const 이전입력 = { ...입력묶음(이전시작.attemptId, 0, [{ code: 'KeyA', shift: false }], 100),
+    at: '2026-10-24T01:01:00.000Z' };
+  const 완료시작 = { ...시도시작(지문ID, '2026-10-24', 'v1'), at: '2026-10-24T02:00:00.000Z' };
+  const 완료 = { ...시도완료(완료시작.attemptId, 200, 2, 2), at: '2026-10-24T02:01:00.000Z' };
+  const 완료전 = 시도목록([이전시작, 이전입력, 완료시작, 완료]);
+  expect(지문입력상태(완료전, 지문ID, 'v1')).toBe('완료');
+  expect(지문최근시도(완료전, 지문ID, 'v1')?.시작.attemptId).toBe(완료시작.attemptId);
+  expect(지문재개시도(완료전, 지문ID, 'v1')).toBeUndefined();
+
+  const 새시작 = { ...시도시작(지문ID, '2026-10-24', 'v1'), at: '2026-10-24T03:00:00.000Z' };
+  const 새입력 = { ...입력묶음(새시작.attemptId, 0, [{ code: 'KeyB', shift: false }], 100),
+    at: '2026-10-24T03:01:00.000Z' };
+  const 완료후 = 시도목록([새입력, 완료, 이전입력, 새시작, 완료시작, 이전시작]);
+  expect(지문입력상태(완료후, 지문ID, 'v1')).toBe('입력 중');
+  expect(지문재개시도(완료후, 지문ID, 'v1')?.시작.attemptId).toBe(새시작.attemptId);
+  const 새완료 = { ...시도완료(새시작.attemptId, 200, 2, 2), at: '2026-10-24T03:02:00.000Z' };
+  expect(지문입력상태(시도목록([새입력, 새완료, 완료, 이전입력, 새시작,
+    완료시작, 이전시작]), 지문ID, 'v1')).toBe('완료');
+
+  const 중단시작 = { ...시도시작(지문ID, '2026-10-24', 'v1'), at: '2026-10-24T04:00:00.000Z' };
+  const 중단 = { ...시도중단(중단시작.attemptId), at: '2026-10-24T04:01:00.000Z' };
+  const 중단후 = 시도목록([중단, 새완료, 새입력, 중단시작, 새시작, 완료, 완료시작,
+    이전입력, 이전시작]);
+  expect(지문입력상태(중단후, 지문ID, 'v1')).toBe('미완료');
+  expect(지문재개시도(중단후, 지문ID, 'v1')).toBeUndefined();
 });
 
 it('지문별 최고 정타율은 완료한 시도에서만 구하고 이번 시도를 제외해 종전 기록을 비교한다', () => {

@@ -167,8 +167,8 @@ import 그림판틀 from '@/그림판';
 import { 날짜키, 다음지문찾기, 지문선택읽기, 지문선택저장, 테마별지문들,
   type 연습지문, type 지문테마 } from '@/practice-passages';
 import { 본문버전, 브라우저저장소, 시도목록, 시도시작, 시도완료, 시도중단, 입력묶음,
-  지문입력상태, 지문최고정타율, 정타율, 정타율표시,
-  진행작업읽기, 진행작업저장, 작업합치기, type 입력키, type 진행작업,
+  지문입력상태, 지문최근시도, 지문재개시도, 지문최고정타율, 정타율, 정타율표시,
+  진행기록키인가, 진행작업읽기, 진행작업저장, 작업합치기, type 입력키, type 진행작업,
   type 필사시도, type 이어쓰기원본 } from '@/practice-progress';
 import { 기본필사설정, 필사설정, 필사설정읽기, 필사설정저장,
   필사테마, 지문크기, 안티앨리어싱단계, 단계별안티앨리어싱강도, 필사팔레트들 } from '@/practice-settings';
@@ -233,7 +233,7 @@ export default defineComponent({
       if (열려있음) { (document.activeElement as HTMLElement | null)?.blur(); }
     },
     다른탭기록반영(event: StorageEvent) {
-      if (event.key?.startsWith('hallatype:progress:v2:op:')) {
+      if (진행기록키인가(event.key)) {
         this.기록들 = 작업합치기(this.기록들, 진행작업읽기());
       }
     },
@@ -266,20 +266,12 @@ export default defineComponent({
       }
     },
     복원할시도(): 필사시도 | undefined {
-      const 버전 = 본문버전(this.오늘지문.본문);
-      return this.시도들
-        .filter((시도) => 시도.시작.passageId === this.오늘지문.id &&
-          시도.시작.contentVersion === 버전 && 시도.복원가능 && !시도.완료 &&
-          !시도.중단됨 && 시도.입력들.length)
-        .sort((a, b) => b.마지막시각.localeCompare(a.마지막시각) ||
-          b.시작.attemptId.localeCompare(a.시작.attemptId))[0];
+      return 지문재개시도(this.시도들, this.오늘지문.id, 본문버전(this.오늘지문.본문));
     },
     완료한시도(): 필사시도 | undefined {
-      const 버전 = 본문버전(this.오늘지문.본문);
-      return this.시도들
-        .filter((시도) => 시도.시작.passageId === this.오늘지문.id &&
-          시도.시작.contentVersion === 버전 && 시도.복원가능 && !!시도.완료)
-        .sort((a, b) => b.완료!.at.localeCompare(a.완료!.at))[0];
+      const 최근 = 지문최근시도(this.시도들, this.오늘지문.id,
+        본문버전(this.오늘지문.본문));
+      return 최근?.복원가능 && 최근.완료 ? 최근 : undefined;
     },
     지문상태(지문: 연습지문): string {
       return 지문입력상태(this.시도들, 지문.id, 본문버전(지문.본문));
@@ -295,16 +287,20 @@ export default defineComponent({
       this.글테마 = 테마;
       this.오늘지문 = 테마별지문들[테마][0];
       지문선택저장(테마, this.오늘지문.id);
-      this.reset();
+      const 새로시작 = this.지문상태(this.오늘지문) === '완료' || !this.복원할시도();
+      this.reset(새로시작);
     },
     지문선택(지문: 연습지문, event?: MouseEvent) {
       (event?.currentTarget as HTMLElement | undefined)?.blur();
       this.목록닫기();
-      if (지문.id === this.오늘지문.id) { return; }
+      const 같은지문 = 지문.id === this.오늘지문.id;
+      const 완료된지문 = this.지문상태(지문) === '완료';
+      if (같은지문 && !this.결과화면보이기 && !완료된지문) { return; }
       this.입력기록저장();
       this.오늘지문 = 지문;
       지문선택저장(this.글테마, 지문.id);
-      this.reset();
+      const 새로시작 = 완료된지문 || (같은지문 && this.결과화면보이기) || !this.복원할시도();
+      this.reset(새로시작);
     },
     날짜변경확인() {
       const 오늘날짜 = 날짜키(new Date());
