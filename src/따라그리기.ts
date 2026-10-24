@@ -97,6 +97,8 @@ export class 따라그리기틀 {
         return this.글자들[this.획들[this.획번호]?.글자번호]?.위치 || this.지문.위치;
     }
     public get 끝(): boolean { return this.획번호 === this.획들.length; }
+    public get 전체획수(): number { return this.획들.length; }
+    public get 진행획수(): number { return this.획번호; }
     public get 기대타수(): number { return this.획들.length - this.건너뛴타수; }
     public get 입력타수(): number { return this.누른타수; }
     public get 유효타수(): number { return this.맞은타수; }

@@ -122,10 +122,17 @@
             <div class="진행문구">
               <span class="상태표시" :class="{ 오류: 입력상태 === '오타', 완료: 결과화면보이기 }" aria-hidden="true"></span>
               <span role="status" aria-live="polite">{{상태문구}}</span>
-              <span class="진행숫자">{{진행률}}%</span>
+              <span v-if="결과화면보이기" class="그래프설명">정타율 × 속도</span>
+              <span v-if="!결과화면보이기" class="진행숫자" role="progressbar" :aria-valuenow="진행률" aria-valuemin="0"
+                aria-valuemax="100" :aria-label="`${오늘지문.제목} 필사 진행률`">{{진행률}}%</span>
             </div>
-            <div class="진행막대" role="progressbar" :aria-valuenow="진행률" aria-valuemin="0"
-              aria-valuemax="100" :aria-label="`${오늘지문.제목} 필사 진행률`">
+            <div v-if="결과화면보이기" class="리듬그래프" role="img" aria-label="글 전체 진행 위치에 따른 정타와 상대적인 입력 속도. 오타는 색으로, 이전에 저장된 입력은 옅은 막대로 표시됩니다.">
+              <span v-for="(막대, 순서) in 리듬막대들" :key="순서" class="리듬칸" aria-hidden="true">
+                <span v-if="막대" class="리듬막대" :class="{ 오타: 막대.오타, 이전기록: 막대.이전기록 }"
+                  :style="{ height: `${막대.높이}%` }"></span>
+              </span>
+            </div>
+            <div v-else class="진행막대" aria-hidden="true">
               <span :style="{ width: `${진행률}%` }"></span>
             </div>
             <p v-if="기록오류" class="기록안내" role="alert">진행 기록을 저장하지 못했어요. 브라우저 저장 공간을 확인해 주세요.</p>
@@ -173,6 +180,7 @@ import { 끝글자 } from '@/글자';
 import { 지문틀 } from '@/본문';
 import { 따라그리기틀 } from '@/따라그리기';
 import 그림판틀 from '@/그림판';
+import { 빈리듬그래프, 입력리듬, 리듬막대갱신, 리듬칸수, type 리듬막대 } from '@/practice-rhythm';
 import { 날짜키, 테마별지문들,
   type 연습지문, type 지문테마 } from '@/practice-passages';
 import { 다음미완료지문, 첫진입지문선택, 주제지문선택, 주제완료현황 } from '@/practice-selection';
@@ -206,6 +214,9 @@ export default defineComponent({
       날짜확인타이머: null as ReturnType<typeof setInterval> | null,
       현재한줄칸수: 0,
       진행률: 0,
+      리듬막대들: 빈리듬그래프() as Array<리듬막대 | null>,
+      리듬측정기: markRaw(new 입력리듬()),
+      리듬시작칸: 0,
       입력상태: '대기' as '대기' | '진행' | '오타' | '정정',
       결과화면보이기: false,
       시작시각: null as number | null,
@@ -370,6 +381,9 @@ export default defineComponent({
       this.그림판?.종료();
       this.결과화면보이기 = false;
       this.진행률 = 0;
+      this.리듬막대들 = 빈리듬그래프();
+      this.리듬측정기 = markRaw(new 입력리듬());
+      this.리듬시작칸 = 0;
       this.입력상태 = '대기';
       this.시작시각 = null;
       this.완료초 = 0;
@@ -392,6 +406,9 @@ export default defineComponent({
           inputCount: 복원.입력들.length, elapsedMs: 복원.걸린밀리초 };
         this.이어쓰기복원됨 = true;
         for (const 키 of 복원.입력들) { 본문.입력(키.code, 키.shift); }
+        this.리듬시작칸 = Math.min(리듬칸수 - 1,
+          Math.floor(본문.진행획수 / 본문.전체획수 * 리듬칸수));
+        this.리듬막대들 = 빈리듬그래프(this.리듬시작칸);
         this.진행률 = 본문.진행률;
         this.입력상태 = 본문.방금오타 ? '오타' : '진행';
         if (본문.끝) {
@@ -477,6 +494,9 @@ export default defineComponent({
         }
         const 직전오타 = self.입력상태 === '오타';
         const 바뀐위치 = 본문.입력(e.code, e.shiftKey);
+        self.리듬막대들 = 리듬막대갱신(self.리듬막대들, 본문.진행획수,
+          본문.전체획수, self.리듬측정기.입력(!본문.방금오타, performance.now()),
+          본문.방금오타, self.리듬시작칸);
         self.입력기록추가({ code: e.code, shift: e.shiftKey });
         self.입력상태 = 본문.방금오타 ? '오타' : 직전오타 ? '정정' : '진행';
         if (본문.방금오타) {
@@ -1277,9 +1297,27 @@ button { font: inherit; }
 .상태표시 { width: 6px; height: 6px; flex: none; border-radius: 50%; background: var(--옅은글); }
 .상태표시.오류 { background: var(--오류색); }
 .상태표시.완료 { background: var(--완료색); }
-.진행숫자 { margin-left: auto; font-size: 11px; font-variant-numeric: tabular-nums; }
+.그래프설명 { margin-left: auto; color: var(--보조글); font-size: 11px; white-space: nowrap; }
+.진행숫자 { min-width: 36px; margin-left: auto; text-align: right; font-size: 11px; font-variant-numeric: tabular-nums; }
 .진행막대 { height: 2px; margin-top: 13px; overflow: hidden; background: var(--진행선); }
 .진행막대 span { display: block; height: 100%; background: var(--진행활성); transition: width .2s ease; }
+.리듬그래프 {
+  display: grid;
+  grid-template-columns: repeat(100, minmax(0, 1fr));
+  align-items: end;
+  gap: 1px;
+  height: 38px;
+  margin-top: 12px;
+  border-bottom: 1px solid var(--진행선);
+}
+.리듬칸 { position: relative; height: 100%; min-width: 0; }
+.리듬막대 { position: absolute; right: 0; bottom: 0; left: 0; display: block; background: var(--진행활성); }
+.리듬막대.오타 { background: var(--오류색); }
+.리듬막대.이전기록 { background: var(--진행선); }
+.필사실[data-theme='한지'] .리듬막대:not(.오타):not(.이전기록),
+.필사실[data-theme='새벽'] .리듬막대:not(.오타):not(.이전기록),
+.필사실[data-theme='항구'] .리듬막대:not(.오타):not(.이전기록),
+.필사실[data-theme='모과'] .리듬막대:not(.오타):not(.이전기록) { background: var(--강조); }
 .기록안내 { margin: 10px 0 0; color: var(--보조글); font-size: 11px; }
 .기록안내[role="alert"] { color: var(--오류색); }
 .진행아래 { display: flex; justify-content: space-between; align-items: center; gap: 20px; max-width: 800px; margin: 19px auto 0; color: var(--보조글); font-size: 11px; }
@@ -1420,6 +1458,7 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
 }
 
 @media (max-width: 380px) {
+  .그래프설명 { display: none; }
   .진행아래 > span { display: none; }
   .마침통계 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
@@ -1427,4 +1466,5 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
 @media (prefers-reduced-motion: reduce) {
   .진행막대 span { transition: none; }
 }
+
 </style>

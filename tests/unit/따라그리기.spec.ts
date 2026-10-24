@@ -18,6 +18,8 @@ describe('장문 따라그리기', () => {
     it('틀린 키에서 멈추고 같은 키를 정정하면 지문 자소를 그대로 그린다', () => {
         const 본문 = 연습('가나');
         expect(본문.기대타수).toBe(4);
+        expect(본문.전체획수).toBe(4);
+        expect(본문.진행획수).toBe(0);
         expect(본문.진행률).toBe(0);
         expect(본문.입력('KeyT', false)).toEqual([new 위치틀()]);
         expect(본문.방금오타).toBe(true);
@@ -27,6 +29,7 @@ describe('장문 따라그리기', () => {
         본문.입력('KeyR', false);
         expect(본문.방금오타).toBe(false);
         expect(본문.진행률).toBe(25);
+        expect(본문.진행획수).toBe(1);
         expect(보이는글자(본문).색[0]).toBe(색상.필사먹색);
         본문.입력('KeyK', false);
         expect(보이는글자(본문).색[1]).toBe(색상.필사먹색);
@@ -35,6 +38,7 @@ describe('장문 따라그리기', () => {
         본문.입력('KeyK', false);
         expect(본문.끝).toBe(true);
         expect(본문.진행률).toBe(100);
+        expect(본문.진행획수).toBe(4);
         expect(본문.입력타수).toBe(5);
         expect(본문.유효타수).toBe(3);
         본문.입력('KeyT', false);
