@@ -13,7 +13,7 @@
         <p class="슬로건">한 글자씩, 마음을 고르다.</p>
         <div class="구분선" aria-hidden="true"></div>
         <p class="설명">키보드를 두드릴 핑계.<br>좋은 문장을 따라 쓰는 시간.</p>
-        <a ref="시작버튼" href="#practice" class="시작버튼">필사 시작하기 <span aria-hidden="true">→</span></a>
+        <a ref="시작버튼" href="#practice" class="시작버튼" aria-keyshortcuts="Enter">필사 시작하기 <span aria-hidden="true">→</span></a>
       </section>
 
       <footer class="첫화면하단"><span>천천히, 나의 속도로</span><span>글숨 · DAILYTYPING</span></footer>

@@ -8,7 +8,7 @@ function 키(code: string, 변경: Partial<Record<'repeat' | 'isComposing' | 'de
 
 describe('필사 단축키', () => {
   it.each([false, true])('완료 상태 %s에서 Alt 조합만 공통 동작시킨다', (완료) => {
-    for (const code of ['KeyR', 'KeyG', 'KeyS', 'KeyH', 'Enter']) {
+    for (const code of ['KeyR', 'KeyG', 'KeyS', 'KeyH']) {
       expect(필사단축키(키(code), 완료)).toBeNull();
     }
     expect(필사단축키(키('KeyR', { altKey: true }), 완료)).toBe('다시쓰기');
@@ -17,10 +17,13 @@ describe('필사 단축키', () => {
     expect(필사단축키(키('KeyH', { altKey: true }), 완료)).toBe('도움말');
   });
 
-  it('Alt + Enter는 완료 후에만 다음 지문으로 이동한다', () => {
+  it('Enter는 완료 후에만 다음 지문으로 이동한다', () => {
     for (const code of ['Enter', 'NumpadEnter']) {
-      expect(필사단축키(키(code, { altKey: true }), false)).toBeNull();
-      expect(필사단축키(키(code, { altKey: true }), true)).toBe('다음');
+      expect(필사단축키(키(code), false)).toBeNull();
+      expect(필사단축키(키(code), true)).toBe('다음');
+      expect(필사단축키(키(code, { altKey: true }), true)).toBeNull();
+      expect(필사단축키(키(code, { repeat: true }), true)).toBeNull();
+      expect(필사단축키(키(code, { isComposing: true }), true)).toBeNull();
     }
   });
 

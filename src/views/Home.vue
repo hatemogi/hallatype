@@ -29,7 +29,7 @@
           </dl>
           <p>한 편을 마친 뒤</p>
           <dl>
-            <div><dt>Alt + Enter</dt><dd>다음 지문</dd></div>
+            <div><dt>Enter</dt><dd>다음 지문</dd></div>
           </dl>
           <p class="단축키기본">Tab으로 이동 · Enter 또는 Space로 선택 · Esc로 닫기<br>Mac에서는 Option(⌥) 키가 Alt입니다.</p>
         </section>
@@ -180,7 +180,7 @@
               </div>
             </div>
             <div class="마침동작">
-              <button type="button" class="주버튼" aria-keyshortcuts="Alt+Enter" @click="다음글시작">다음 지문 시작 <span aria-hidden="true">→</span></button>
+              <button type="button" class="주버튼" aria-keyshortcuts="Enter" @click="다음글시작">다음 지문 시작 <span aria-hidden="true">→</span></button>
               <button type="button" class="글자버튼" aria-keyshortcuts="Alt+R" @click="다시쓰기">이 글 다시 쓰기 <span aria-hidden="true">↺</span></button>
             </div>
           </div>
@@ -564,7 +564,7 @@ export default defineComponent({
         }
         const 대상 = e.target as HTMLElement | null;
         const 동작 = 필사단축키(e, self.결과화면보이기);
-        if (동작) {
+        if (동작 && e.altKey) {
           e.preventDefault();
           self.단축키실행(동작);
           return;
@@ -572,6 +572,11 @@ export default defineComponent({
         if (대상?.closest('input, select, textarea, [contenteditable="true"]')) { return; }
         if (self.목록열림 || self.설정열림 || self.도움말열림) { return; }
         const 조작요소 = 대상?.closest('button, summary, a');
+        if (동작 && !조작요소) {
+          e.preventDefault();
+          self.단축키실행(동작);
+          return;
+        }
         if (조작요소 || self.결과화면보이기) { return; }
         if (e.code.startsWith('Shift') || e.code.startsWith('Control') ||
             e.code.startsWith('Alt') || e.code.startsWith('Meta') ||
