@@ -2,7 +2,8 @@ import { 끝글자 } from '@/글자';
 import { 지문틀 } from '@/본문';
 import { 따라그리기틀 } from '@/따라그리기';
 import 그림판틀 from '@/그림판';
-import { 기본필사설정, 단계별안티앨리어싱강도, 필사설정읽기, 필사설정저장, 필사팔레트들 } from '@/practice-settings';
+import { 기본필사설정, 단계별안티앨리어싱강도, 필사설정읽기, 필사설정저장,
+  필사테마순서, 필사팔레트들 } from '@/practice-settings';
 
 it('필사 설정을 저장하고 잘못된 저장값은 기본값으로 복구한다', () => {
   const 값들 = new Map<string, string>();
@@ -18,7 +19,7 @@ it('필사 설정을 저장하고 잘못된 저장값은 기본값으로 복구�
   expect(필사설정읽기(storage)).toEqual(설정);
   필사설정저장({ ...설정, 글자크기: '작게' }, storage);
   expect(필사설정읽기(storage).글자크기).toBe('작게');
-  for (const 테마 of ['벚꽃', '숲', '라벤더', '매트릭스', 'PC통신', '호박색 모니터'] as const) {
+  for (const 테마 of 필사테마순서) {
     필사설정저장({ ...설정, 테마 }, storage);
     expect(필사설정읽기(storage).테마).toBe(테마);
   }
@@ -26,6 +27,8 @@ it('필사 설정을 저장하고 잘못된 저장값은 기본값으로 복구�
   expect(필사설정읽기(storage).안티앨리어싱단계).toBe(2);
 
   const 키 = [...값들.keys()][0];
+  값들.set(키, JSON.stringify({ ...설정, 테마: '호박색 모니터', 설정버전: 2 }));
+  expect(필사설정읽기(storage).테마).toBe('커피');
   값들.set(키, '{');
   expect(필사설정읽기(storage)).toEqual(기본필사설정);
   값들.set(키, JSON.stringify({ 안티앨리어싱단계: 6 }));
@@ -36,6 +39,12 @@ it('필사 설정을 저장하고 잘못된 저장값은 기본값으로 복구�
   expect(필사설정읽기(storage).안티앨리어싱단계).toBe(4);
   값들.set(키, JSON.stringify({ 테마: '알 수 없음', 글자크기: '매우 크게', 커서깜빡임: 1 }));
   expect(필사설정읽기(storage)).toEqual(기본필사설정);
+});
+
+it('열다섯 테마가 선택 순서와 팔레트에 빠짐없이 반영된다', () => {
+  expect(필사테마순서).toHaveLength(15);
+  expect(필사테마순서.slice(1, 4)).toEqual(['새벽', '오후', '밤']);
+  expect(Object.keys(필사팔레트들)).toEqual([...필사테마순서]);
 });
 
 it('슬라이더 다섯 눈금의 가운데가 기존 보통 강도다', () => {

@@ -171,13 +171,9 @@ import { 본문버전, 브라우저저장소, 시도목록, 시도시작, 시도
   진행기록키인가, 진행작업읽기, 진행작업저장, 작업합치기, type 입력키, type 진행작업,
   type 필사시도, type 이어쓰기원본 } from '@/practice-progress';
 import { 기본필사설정, 필사설정, 필사설정읽기, 필사설정저장,
-  필사테마, 지문크기, 안티앨리어싱단계, 단계별안티앨리어싱강도, 필사팔레트들 } from '@/practice-settings';
+  필사테마순서, 지문크기, 안티앨리어싱단계, 단계별안티앨리어싱강도, 필사팔레트들 } from '@/practice-settings';
 
-const 테마선택지: Array<{ 이름: 필사테마 }> = [
-  { 이름: '한지' }, { 이름: '새벽' }, { 이름: '밤' },
-  { 이름: '벚꽃' }, { 이름: '숲' }, { 이름: '라벤더' },
-  { 이름: '매트릭스' }, { 이름: 'PC통신' }, { 이름: '호박색 모니터' },
-];
+const 테마선택지 = 필사테마순서.map(이름 => ({ 이름 }));
 const 글자크기선택지: 지문크기[] = ['작게', '보통', '크게'];
 const 가장자리단계이름 = ['선명하게', '조금 선명하게', '보통', '조금 부드럽게', '부드럽게'];
 const 글테마선택지 = Object.keys(테마별지문들) as 지문테마[];
@@ -580,7 +576,7 @@ export default defineComponent({
   --옅은글: #69665c;
   --출처링크: #6e675c;
   --출처링크호버: #38372f;
-  --강조: #746650;
+  --강조: #6c5e49;
   --강조호버: #665b49;
   --역글: #fff;
   --테두리: #ddd7ca;
@@ -593,7 +589,7 @@ export default defineComponent({
   --진행선: #d9d2c5;
   --진행활성: #9b8a6d;
   --오류색: #8b5749;
-  --완료색: #586f4f;
+  --완료색: #526849;
   min-height: 100vh;
   box-sizing: border-box;
   color: var(--글);
@@ -626,7 +622,31 @@ export default defineComponent({
   --진행선: #c1d3d8;
   --진행활성: #688c9a;
   --오류색: #8e5342;
-  --완료색: #4c725f;
+  --완료색: #466b59;
+}
+
+.필사실[data-theme='오후'] {
+  --화면: #f2dec0;
+  --장식빛: rgba(201, 131, 77, .22);
+  --글: #49372e;
+  --보조글: #664c3b;
+  --옅은글: #705546;
+  --출처링크: #664c3b;
+  --출처링크호버: #49372e;
+  --강조: #874631;
+  --강조호버: #713824;
+  --역글: #fff;
+  --테두리: #d8b992;
+  --연테두리: #ead0af;
+  --종이: #fff7e9;
+  --선택바탕: #efd5b6;
+  --선택안함: rgba(255, 247, 233, .52);
+  --진행바탕: #f3dcb9;
+  --진행테두리: #d8b992;
+  --진행선: #d1ae83;
+  --진행활성: #874631;
+  --오류색: #973d36;
+  --완료색: #3d5c3c;
 }
 
 .필사실[data-theme='밤'] {
@@ -634,7 +654,7 @@ export default defineComponent({
   --장식빛: rgba(91, 123, 131, .12);
   --글: #e0e5df;
   --보조글: #b2bdb9;
-  --옅은글: #9dacaa;
+  --옅은글: #a3b3b1;
   --출처링크: #b2bdb9;
   --출처링크호버: #e0e5df;
   --강조: #b6c8be;
@@ -649,7 +669,7 @@ export default defineComponent({
   --진행테두리: #405056;
   --진행선: #4b5d5f;
   --진행활성: #b8b089;
-  --오류색: #d7977f;
+  --오류색: #dda38a;
   --완료색: #9dbb9d;
 }
 
@@ -675,6 +695,30 @@ export default defineComponent({
   --진행활성: #8b3d5a;
   --오류색: #9a3540;
   --완료색: #486542;
+}
+
+.필사실[data-theme='산호'] {
+  --화면: #fae1d5;
+  --장식빛: rgba(238, 128, 104, .18);
+  --글: #542f2b;
+  --보조글: #70483f;
+  --옅은글: #765044;
+  --출처링크: #70483f;
+  --출처링크호버: #542f2b;
+  --강조: #8f3d31;
+  --강조호버: #742e25;
+  --역글: #fff;
+  --테두리: #dfb6a7;
+  --연테두리: #efd0c3;
+  --종이: #fff8f4;
+  --선택바탕: #f4d5c6;
+  --선택안함: rgba(255, 248, 244, .52);
+  --진행바탕: #f3d7c9;
+  --진행테두리: #dfb6a7;
+  --진행선: #d9ad9e;
+  --진행활성: #8f3d31;
+  --오류색: #a0354d;
+  --완료색: #365d46;
 }
 
 .필사실[data-theme='숲'] {
@@ -725,6 +769,126 @@ export default defineComponent({
   --완료색: #4b644f;
 }
 
+.필사실[data-theme='커피'] {
+  --화면: #2a211c;
+  --장식빛: rgba(177, 129, 89, .16);
+  --글: #f3e7d6;
+  --보조글: #d9c8b3;
+  --옅은글: #c4ae98;
+  --출처링크: #d9c8b3;
+  --출처링크호버: #f3e7d6;
+  --강조: #d8b58e;
+  --강조호버: #ead0ad;
+  --역글: #34251c;
+  --테두리: #7e6856;
+  --연테두리: #635142;
+  --종이: #352922;
+  --선택바탕: #48382e;
+  --선택안함: #30251f;
+  --진행바탕: #3c2e26;
+  --진행테두리: #7e6856;
+  --진행선: #8d715b;
+  --진행활성: #d8b58e;
+  --오류색: #f1a895;
+  --완료색: #c6d8ac;
+}
+
+.필사실[data-theme='바다'] {
+  --화면: #063b4b;
+  --장식빛: rgba(90, 201, 205, .14);
+  --글: #e0f6f4;
+  --보조글: #b3dfe0;
+  --옅은글: #a2d0d1;
+  --출처링크: #b3dfe0;
+  --출처링크호버: #e0f6f4;
+  --강조: #80dfd8;
+  --강조호버: #a3f0e7;
+  --역글: #073e49;
+  --테두리: #4b8790;
+  --연테두리: #376e78;
+  --종이: #0b4856;
+  --선택바탕: #195b69;
+  --선택안함: #0c4654;
+  --진행바탕: #124d5d;
+  --진행테두리: #4b8790;
+  --진행선: #5b96a0;
+  --진행활성: #80dfd8;
+  --오류색: #ffc8a7;
+  --완료색: #a6edca;
+}
+
+.필사실[data-theme='호수'] {
+  --화면: #e6f4ef;
+  --장식빛: rgba(103, 173, 162, .22);
+  --글: #244940;
+  --보조글: #3d655b;
+  --옅은글: #496b62;
+  --출처링크: #3d655b;
+  --출처링크호버: #244940;
+  --강조: #28675d;
+  --강조호버: #20564d;
+  --역글: #fff;
+  --테두리: #bad9d0;
+  --연테두리: #d1e7de;
+  --종이: #f7fcfa;
+  --선택바탕: #d8ebe3;
+  --선택안함: rgba(247, 252, 250, .56);
+  --진행바탕: #deeee8;
+  --진행테두리: #b7d8cd;
+  --진행선: #b6d6c9;
+  --진행활성: #28675d;
+  --오류색: #9b5348;
+  --완료색: #386e55;
+}
+
+.필사실[data-theme='빙하'] {
+  --화면: #e2f4fb;
+  --장식빛: rgba(122, 199, 226, .24);
+  --글: #213f52;
+  --보조글: #375d73;
+  --옅은글: #47687c;
+  --출처링크: #375d73;
+  --출처링크호버: #213f52;
+  --강조: #28647d;
+  --강조호버: #1e5167;
+  --역글: #fff;
+  --테두리: #b9d8e6;
+  --연테두리: #d4eaf2;
+  --종이: #f8fdff;
+  --선택바탕: #d3e8f2;
+  --선택안함: rgba(248, 253, 255, .55);
+  --진행바탕: #d5eaf4;
+  --진행테두리: #b9d8e6;
+  --진행선: #a8cbdc;
+  --진행활성: #28647d;
+  --오류색: #a34745;
+  --완료색: #386b59;
+}
+
+.필사실[data-theme='우주'] {
+  --화면: #171429;
+  --장식빛: rgba(130, 105, 209, .18);
+  --글: #ece7ff;
+  --보조글: #c5bdda;
+  --옅은글: #aea5cb;
+  --출처링크: #c5bdda;
+  --출처링크호버: #ece7ff;
+  --강조: #d8b6ff;
+  --강조호버: #e8d2ff;
+  --역글: #251b3f;
+  --테두리: #625879;
+  --연테두리: #4e4667;
+  --종이: #211d37;
+  --선택바탕: #372e58;
+  --선택안함: #26213e;
+  --진행바탕: #2b2543;
+  --진행테두리: #625879;
+  --진행선: #786b9c;
+  --진행활성: #d8b6ff;
+  --오류색: #ffbaa6;
+  --완료색: #bee5cf;
+}
+
 .필사실[data-theme='매트릭스'] {
   --화면: #061009;
   --장식빛: rgba(43, 202, 82, .08);
@@ -773,38 +937,14 @@ export default defineComponent({
   --완료색: #e2fff0;
 }
 
-.필사실[data-theme='호박색 모니터'] {
-  --화면: #120e08;
-  --장식빛: rgba(255, 166, 55, .08);
-  --글: #f8d79a;
-  --보조글: #cfaa70;
-  --옅은글: #ab8656;
-  --출처링크: #cfaa70;
-  --출처링크호버: #f8d79a;
-  --강조: #ffbc55;
-  --강조호버: #ffd98b;
-  --역글: #231306;
-  --테두리: #77512a;
-  --연테두리: #704a27;
-  --종이: #1b1209;
-  --선택바탕: #3b2712;
-  --선택안함: #24180c;
-  --진행바탕: #271a0d;
-  --진행테두리: #79552f;
-  --진행선: #654522;
-  --진행활성: #ffc15e;
-  --오류색: #ff9476;
-  --완료색: #f9d383;
-}
-
-.필사실:is([data-theme='매트릭스'], [data-theme='PC통신'], [data-theme='호박색 모니터']) .지문머리 h2 {
+.필사실:is([data-theme='매트릭스'], [data-theme='PC통신']) .지문머리 h2 {
   font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
   font-weight: 700;
   letter-spacing: -.02em;
 }
-.필사실:is([data-theme='매트릭스'], [data-theme='PC통신'], [data-theme='호박색 모니터']) .브랜드문양,
-.필사실:is([data-theme='매트릭스'], [data-theme='PC통신'], [data-theme='호박색 모니터']) .종이,
-.필사실:is([data-theme='매트릭스'], [data-theme='PC통신'], [data-theme='호박색 모니터']) .진행판 {
+.필사실:is([data-theme='매트릭스'], [data-theme='PC통신']) .브랜드문양,
+.필사실:is([data-theme='매트릭스'], [data-theme='PC통신']) .종이,
+.필사실:is([data-theme='매트릭스'], [data-theme='PC통신']) .진행판 {
   border-radius: 0;
 }
 
@@ -836,16 +976,23 @@ button { font: inherit; }
 .설정패널 legend { margin-bottom: 9px; color: var(--보조글); font-size: 12px; font-weight: 700; }
 .테마선택 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
 .테마버튼 { display: flex; align-items: center; flex-direction: column; gap: 7px; padding: 7px; border: 1px solid var(--테두리); border-radius: 3px; background: var(--선택안함); color: var(--글); font-size: 12px; cursor: pointer; }
+.테마버튼:last-child:nth-child(3n + 1) { grid-column: 2; }
 .테마버튼.선택됨, .설정선택 button.선택됨 { border-color: var(--강조); background: var(--선택바탕); }
 .테마견본 { display: grid; place-items: center; width: 100%; height: 38px; background: #fff; color: #454037; font-family: 'AppleMyungjo', 'Batang', serif; font-size: 19px; }
 .테마견본[data-theme='새벽'] { background: #fafcfc; color: #30444f; }
+.테마견본[data-theme='오후'] { background: #fff7e9; color: #874631; }
 .테마견본[data-theme='밤'] { background: #222c31; color: #e2e7df; }
 .테마견본[data-theme='벚꽃'] { background: #fff9fa; color: #8b3d5a; }
+.테마견본[data-theme='산호'] { background: #fff8f4; color: #8f3d31; }
 .테마견본[data-theme='숲'] { background: #19392f; color: #b6d99e; }
 .테마견본[data-theme='라벤더'] { background: #fcfaff; color: #675184; }
+.테마견본[data-theme='커피'] { background: #352922; color: #d8b58e; }
+.테마견본[data-theme='바다'] { background: #0b4856; color: #80dfd8; }
+.테마견본[data-theme='호수'] { background: #f7fcfa; color: #28675d; }
+.테마견본[data-theme='빙하'] { background: #f8fdff; color: #28647d; }
+.테마견본[data-theme='우주'] { background: #211d37; color: #d8b6ff; }
 .테마견본[data-theme='매트릭스'] { background: #08190e; color: #9affaa; text-shadow: 0 0 7px rgba(99, 245, 131, .65); }
 .테마견본[data-theme='PC통신'] { background: #102287; color: #fff; }
-.테마견본[data-theme='호박색 모니터'] { background: #1b1209; color: #ffdc94; text-shadow: 0 0 7px rgba(255, 191, 87, .65); }
 .설정선택 { display: flex; gap: 7px; }
 .설정선택 button { min-width: 72px; padding: 8px 13px; border: 1px solid var(--테두리); border-radius: 3px; background: var(--선택안함); color: var(--글); font-size: 12px; cursor: pointer; }
 .가장자리선택 input { display: block; width: 100%; margin: 0; accent-color: var(--강조); cursor: pointer; }
@@ -1012,7 +1159,6 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
 .필사패널 { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 .필사실[data-theme='매트릭스'] .종이 { box-shadow: inset 0 0 38px rgba(43, 202, 82, .06); }
 .필사실[data-theme='PC통신'] .종이 { box-shadow: none; }
-.필사실[data-theme='호박색 모니터'] .종이 { box-shadow: inset 0 0 38px rgba(255, 166, 55, .06); }
 .종이 {
   flex: 1;
   min-height: 0;
