@@ -13,7 +13,7 @@
         <p class="슬로건">한 글자씩, 마음을 고르다.</p>
         <div class="구분선" aria-hidden="true"></div>
         <p class="설명">좋은 문장을 천천히 따라 쓰며<br>잠시 나에게 집중하는 시간.</p>
-        <a href="#practice" class="시작버튼">오늘의 타이핑 시작하기 <span aria-hidden="true">→</span></a>
+        <a ref="시작버튼" href="#practice" class="시작버튼">오늘의 타이핑 시작하기 <span aria-hidden="true">→</span></a>
       </section>
 
       <footer class="첫화면하단"><span>천천히, 나의 속도로</span><span>글숨 · TYPINGFLOW</span></footer>
@@ -29,6 +29,15 @@ import Home from './Home.vue';
 
 const 필사시작됨 = ref(window.location.hash === '#practice');
 const 테마 = ref<필사테마>(필사설정읽기().테마);
+const 시작버튼 = ref<HTMLAnchorElement | null>(null);
+
+function 첫화면엔터(event: KeyboardEvent) {
+  if (event.key !== 'Enter' || event.defaultPrevented || event.repeat || event.isComposing ||
+      event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || 필사시작됨.value) { return; }
+  if (event.target instanceof Element &&
+      event.target.closest('a, button, input, textarea, select, [contenteditable]')) { return; }
+  시작버튼.value?.click();
+}
 
 function 저장된테마반영() {
   테마.value = 필사설정읽기().테마;
@@ -47,11 +56,13 @@ onMounted(() => {
   document.title = 필사시작됨.value ? '글숨 · 한글 필사' : '글숨 · 한 글자씩, 마음을 고르다.';
   window.addEventListener('hashchange', 주소반영);
   window.addEventListener('storage', 저장된테마반영);
+  window.addEventListener('keydown', 첫화면엔터);
 });
 
 onUnmounted(() => {
   window.removeEventListener('hashchange', 주소반영);
   window.removeEventListener('storage', 저장된테마반영);
+  window.removeEventListener('keydown', 첫화면엔터);
   document.title = window.location.pathname.endsWith('/masks')
     ? '글숨 · 마스크 편집기' : '글숨 · 글꼴 편집기';
 });
