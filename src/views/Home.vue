@@ -8,17 +8,39 @@
         </a>
         <div class="상단동작">
           <span class="상단문구">한 글자씩, 마음을 고르다.</span>
+          <button type="button" class="단축키버튼" aria-controls="키보드안내"
+            :aria-expanded="도움말열림" aria-keyshortcuts="Alt+H"
+            aria-label="키보드 단축키 보기" @click="도움말토글">?</button>
           <button type="button" class="설정버튼" aria-controls="필사설정"
-            :aria-expanded="설정열림" @click="설정열림 = !설정열림">환경설정 <span aria-hidden="true">⚙</span></button>
+            :aria-expanded="설정열림" aria-keyshortcuts="Alt+S"
+            @click="설정토글">환경설정 <span aria-hidden="true">⚙</span></button>
         </div>
+        <section v-show="도움말열림" id="키보드안내" class="단축키패널" aria-label="키보드 단축키 안내">
+          <div class="설정머리">
+            <strong>키보드 단축키</strong>
+            <button type="button" class="단축키닫기" aria-label="단축키 안내 닫기" @click="도움말닫기">×</button>
+          </div>
+          <p>언제나</p>
+          <dl>
+            <div><dt>Alt + G</dt><dd>주제 고르기</dd></div>
+            <div><dt>Alt + S</dt><dd>환경설정</dd></div>
+            <div><dt>Alt + R</dt><dd>이 글 다시 쓰기</dd></div>
+            <div><dt>Alt + H</dt><dd>단축키 도움말</dd></div>
+          </dl>
+          <p>한 편을 마친 뒤</p>
+          <dl>
+            <div><dt>Alt + Enter</dt><dd>다음 지문</dd></div>
+          </dl>
+          <p class="단축키기본">Tab으로 이동 · Enter 또는 Space로 선택 · Esc로 닫기<br>Mac에서는 Option(⌥) 키가 Alt입니다.</p>
+        </section>
         <section v-show="설정열림" id="필사설정" class="설정패널" aria-label="필사 환경설정">
           <div class="설정머리">
             <strong>환경설정</strong>
-            <button type="button" class="설정닫기" aria-label="환경설정 닫기" @click="설정열림 = false">×</button>
+            <button type="button" class="설정닫기" aria-label="환경설정 닫기" @click="환경설정닫기">×</button>
           </div>
           <fieldset>
             <legend>색상 테마</legend>
-            <div class="테마선택">
+            <div class="테마선택" @keydown="선택버튼화살표">
               <button v-for="테마 in 테마선택지" :key="테마.이름" type="button" class="테마버튼"
                 :class="{ 선택됨: 설정.테마 === 테마.이름 }" :aria-pressed="설정.테마 === 테마.이름"
                 @click="설정변경({ 테마: 테마.이름 })">
@@ -61,7 +83,9 @@
       <section class="작업공간" aria-label="필사할 글">
         <div class="모바일선택줄">
           <div><span>선택한 글</span><strong>{{글테마}} · {{오늘지문.제목}}</strong></div>
-          <button type="button" aria-controls="지문선택창" :aria-expanded="목록열림" @click="목록열기">주제 고르기 <span aria-hidden="true">⌄</span></button>
+          <button type="button" aria-controls="지문선택창" :aria-expanded="목록열림"
+            aria-keyshortcuts="Alt+G"
+            @click="목록열기">주제 고르기 <span aria-hidden="true">⌄</span></button>
         </div>
         <div v-if="모바일보기 && 목록열림" class="목록가림막" @click="목록닫기"></div>
         <aside v-show="!모바일보기 || 목록열림" id="지문선택창" class="선택패널"
@@ -71,7 +95,7 @@
             <div><span class="구역번호">필사할 주제</span><h2>주제 고르기</h2></div>
             <button type="button" class="목록닫기" aria-label="주제 선택창 닫기" @click="목록닫기">×</button>
           </div>
-          <div class="글테마선택" role="group" aria-label="필사 주제 선택">
+          <div class="글테마선택" role="group" aria-label="필사 주제 선택" @keydown="선택버튼화살표">
             <button v-for="테마 in 글테마선택지" :key="테마" type="button"
               :class="{ 선택됨: 글테마 === 테마 }" :aria-pressed="글테마 === 테마"
               :aria-label="`${테마}, 전체 ${주제완료도[테마].전체}편 중 ${주제완료도[테마].완료}편 완료`"
@@ -84,7 +108,7 @@
           </div>
           <section class="지문서랍" :aria-label="`${글테마} 지문 목록`">
             <h3>전체 글 <span>{{현재지문들.length}}편</span></h3>
-            <div class="글목록" role="group" :aria-label="`${글테마} 지문 선택`">
+            <div class="글목록" role="group" :aria-label="`${글테마} 지문 선택`" @keydown="선택버튼화살표">
               <button v-for="지문 in 현재지문들" :key="지문.id" type="button"
                 :class="{ 선택됨: 오늘지문.id === 지문.id }" :aria-pressed="오늘지문.id === 지문.id"
                 @click="지문선택(지문, $event)">
@@ -156,14 +180,14 @@
               </div>
             </div>
             <div class="마침동작">
-              <button type="button" class="주버튼" @click="다음글시작">다음 지문 시작 <span aria-hidden="true">→</span></button>
-              <button type="button" class="글자버튼" @click="다시쓰기">이 글 다시 쓰기 <span aria-hidden="true">↺</span></button>
+              <button type="button" class="주버튼" aria-keyshortcuts="Alt+Enter" @click="다음글시작">다음 지문 시작 <span aria-hidden="true">→</span></button>
+              <button type="button" class="글자버튼" aria-keyshortcuts="Alt+R" @click="다시쓰기">이 글 다시 쓰기 <span aria-hidden="true">↺</span></button>
             </div>
           </div>
 
           <div v-else class="진행아래">
             <span>띄어쓰기와 줄바꿈은 건너뛰어도 괜찮아요.</span>
-            <button type="button" class="글자버튼" @click="다시쓰기">처음부터 다시 쓰기 <span aria-hidden="true">↺</span></button>
+            <button type="button" class="글자버튼" aria-keyshortcuts="Alt+R" @click="다시쓰기">처음부터 다시 쓰기 <span aria-hidden="true">↺</span></button>
           </div>
         </section>
 
@@ -181,6 +205,7 @@ import { 지문틀 } from '@/본문';
 import { 따라그리기틀 } from '@/따라그리기';
 import 그림판틀 from '@/그림판';
 import { 빈리듬그래프, 입력리듬, 리듬막대갱신, 리듬칸수, type 리듬막대 } from '@/practice-rhythm';
+import { 필사단축키, type 필사단축동작 } from '@/practice-shortcuts';
 import { 날짜키, 테마별지문들,
   type 연습지문, type 지문테마 } from '@/practice-passages';
 import { 다음미완료지문, 첫진입지문선택, 주제지문선택, 주제완료현황 } from '@/practice-selection';
@@ -209,6 +234,7 @@ export default defineComponent({
       가장자리단계이름,
       설정: { ...기본필사설정 } as 필사설정,
       설정열림: false,
+      도움말열림: false,
       모바일보기: typeof window !== 'undefined' && window.innerWidth <= 850,
       목록열림: false,
       날짜확인타이머: null as ReturnType<typeof setInterval> | null,
@@ -239,13 +265,81 @@ export default defineComponent({
   },
   methods: {
     목록열기() {
+      this.설정열림 = false;
+      this.도움말열림 = false;
       this.목록열림 = true;
-      this.$nextTick(() => document.querySelector<HTMLElement>('.목록닫기')?.focus());
+      this.$nextTick(() => document.querySelector<HTMLElement>('.글테마선택 button.선택됨')?.focus());
     },
     목록닫기() {
       const 열려있음 = this.목록열림;
       this.목록열림 = false;
       if (열려있음) { (document.activeElement as HTMLElement | null)?.blur(); }
+    },
+    환경설정열기() {
+      this.목록닫기();
+      this.도움말열림 = false;
+      this.설정열림 = true;
+      this.$nextTick(() => document.querySelector<HTMLElement>('.테마선택 button.선택됨')?.focus());
+    },
+    환경설정닫기() {
+      this.설정열림 = false;
+      if ((document.activeElement as HTMLElement | null)?.closest('.설정패널')) {
+        (document.activeElement as HTMLElement).blur();
+      }
+    },
+    설정토글() {
+      if (this.설정열림) { this.환경설정닫기(); }
+      else { this.환경설정열기(); }
+    },
+    도움말토글() {
+      if (this.도움말열림) { this.도움말닫기(); return; }
+      this.목록닫기();
+      this.설정열림 = false;
+      this.도움말열림 = true;
+      this.$nextTick(() => document.querySelector<HTMLElement>('.단축키닫기')?.focus());
+    },
+    도움말닫기() {
+      this.도움말열림 = false;
+      if ((document.activeElement as HTMLElement | null)?.closest('.단축키패널')) {
+        (document.activeElement as HTMLElement).blur();
+      }
+    },
+    단축키실행(동작: Exclude<필사단축동작, null>) {
+      switch (동작) {
+        case '다음':
+          this.목록닫기();
+          this.환경설정닫기();
+          this.도움말닫기();
+          this.다음글시작();
+          break;
+        case '다시쓰기':
+          this.목록닫기();
+          this.환경설정닫기();
+          this.도움말닫기();
+          this.다시쓰기();
+          break;
+        case '주제고르기': this.목록열기(); break;
+        case '환경설정': this.환경설정열기(); break;
+        case '도움말': this.도움말토글(); break;
+      }
+    },
+    선택버튼화살표(event: KeyboardEvent) {
+      if (!(event.target instanceof HTMLButtonElement) || event.altKey || event.ctrlKey || event.metaKey) { return; }
+      const 묶음 = event.currentTarget as HTMLElement;
+      const 버튼들 = Array.from(묶음.querySelectorAll('button')).filter((버튼) => 버튼.getClientRects().length > 0);
+      const 현재 = 버튼들.indexOf(event.target);
+      if (현재 < 0) { return; }
+      const 열수 = getComputedStyle(묶음).display === 'grid'
+        ? getComputedStyle(묶음).gridTemplateColumns.split(' ').length : 1;
+      const 다음 = event.code === 'ArrowLeft' ? 현재 - 1
+        : event.code === 'ArrowRight' ? 현재 + 1
+          : event.code === 'ArrowUp' ? 현재 - 열수
+            : event.code === 'ArrowDown' ? 현재 + 열수
+              : event.code === 'Home' ? 0
+                : event.code === 'End' ? 버튼들.length - 1 : -1;
+      if (다음 < 0 && !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.code)) { return; }
+      event.preventDefault();
+      버튼들[다음]?.focus();
     },
     다른탭기록반영(event: StorageEvent) {
       if (진행기록키인가(event.key)) {
@@ -294,11 +388,15 @@ export default defineComponent({
       if (!this.목록열림) { (event?.currentTarget as HTMLElement | undefined)?.blur(); }
       this.입력기록저장();
       const 선택 = 주제지문선택(테마, this.시도들);
-      if (테마 === this.글테마 && 선택.지문.id === this.오늘지문.id && !this.결과화면보이기) { return; }
+      if (테마 === this.글테마 && 선택.지문.id === this.오늘지문.id && !this.결과화면보이기) {
+        if (this.목록열림) { this.$nextTick(() => document.querySelector<HTMLElement>('.글목록 button.선택됨')?.focus()); }
+        return;
+      }
       this.글테마 = 선택.테마;
       this.오늘지문 = 선택.지문;
       const 새로시작 = this.지문상태(선택.지문) === '완료' || !this.복원할시도();
       this.reset(새로시작);
+      if (this.목록열림) { this.$nextTick(() => document.querySelector<HTMLElement>('.글목록 button.선택됨')?.focus()); }
     },
     지문선택(지문: 연습지문, event?: MouseEvent) {
       (event?.currentTarget as HTMLElement | undefined)?.blur();
@@ -342,8 +440,9 @@ export default defineComponent({
       this.설정변경({ 안티앨리어싱단계: Number((event.target as HTMLInputElement).value) as 안티앨리어싱단계 });
     },
     설정밖클릭(event: PointerEvent) {
-      if (this.설정열림 && event.target instanceof Element && !event.target.closest('.상단')) {
+      if (event.target instanceof Element && !event.target.closest('.상단')) {
         this.설정열림 = false;
+        this.도움말열림 = false;
       }
     },
 
@@ -440,12 +539,18 @@ export default defineComponent({
       });
       const self = this;
       window.onkeydown = (e: KeyboardEvent) => {
-        if (e.code === 'Escape' && self.목록열림) {
-          self.목록닫기();
+        if (e.code === 'Escape') {
+          if (self.목록열림) { e.preventDefault(); self.목록닫기(); return; }
+          if (self.설정열림) { e.preventDefault(); self.환경설정닫기(); return; }
+          if (self.도움말열림) { e.preventDefault(); self.도움말닫기(); return; }
+          if ((document.activeElement as HTMLElement | null)?.closest('button, a')) {
+            (document.activeElement as HTMLElement).blur();
+          }
           return;
         }
         if (e.code === 'Tab' && self.목록열림) {
-          const 버튼들 = Array.from(document.querySelectorAll<HTMLElement>('.선택패널 button'));
+          const 버튼들 = Array.from(document.querySelectorAll<HTMLElement>('.선택패널 button'))
+            .filter((버튼) => 버튼.getClientRects().length > 0);
           const 첫버튼 = 버튼들[0];
           const 끝버튼 = 버튼들[버튼들.length - 1];
           if (e.shiftKey && document.activeElement === 첫버튼) {
@@ -457,27 +562,21 @@ export default defineComponent({
           }
           return;
         }
-        if (e.code === 'Escape' && self.설정열림) {
-          self.설정열림 = false;
+        const 대상 = e.target as HTMLElement | null;
+        const 동작 = 필사단축키(e, self.결과화면보이기);
+        if (동작) {
+          e.preventDefault();
+          self.단축키실행(동작);
           return;
         }
-        if ((e.target as HTMLElement | null)?.closest('button, input, select, textarea, summary, a, [contenteditable="true"]')) {
-          return;
-        }
-        if (self.결과화면보이기) {
-          if (e.key === 'Enter' && !e.repeat && !e.isComposing && !e.defaultPrevented &&
-              !e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey &&
-              !self.목록열림 && !self.설정열림) {
-            e.preventDefault();
-            self.다음글시작();
-          }
-          return;
-        }
+        if (대상?.closest('input, select, textarea, [contenteditable="true"]')) { return; }
+        if (self.목록열림 || self.설정열림 || self.도움말열림) { return; }
+        const 조작요소 = 대상?.closest('button, summary, a');
+        if (조작요소 || self.결과화면보이기) { return; }
         if (e.code.startsWith('Shift') || e.code.startsWith('Control') ||
             e.code.startsWith('Alt') || e.code.startsWith('Meta') ||
             e.getModifierState('Control') || e.getModifierState('Alt') || e.getModifierState('Meta') ||
-            !/^(Key[A-Z]|Digit[0-9]|Space|Enter|Backspace|Backquote|Minus|Equal|BracketLeft|BracketRight|Backslash|Semicolon|Quote|Comma|Period|Slash)$/.test(e.code) ||
-            self.목록열림) {
+            !/^(Key[A-Z]|Digit[0-9]|Space|Enter|Backspace|Backquote|Minus|Equal|BracketLeft|BracketRight|Backslash|Semicolon|Quote|Comma|Period|Slash)$/.test(e.code)) {
           return;
         }
         e.preventDefault();
@@ -1148,9 +1247,19 @@ button { font: inherit; }
 .브랜드글자 { color: var(--글); font-size: 13px; font-weight: 800; letter-spacing: .12em; }
 .브랜드글자 small { margin-left: 12px; color: var(--보조글); font-size: 12px; font-weight: 500; letter-spacing: 0; }
 .상단문구 { color: var(--보조글); font-size: 12px; letter-spacing: .03em; }
+.단축키버튼 { width: 31px; height: 31px; padding: 0; border: 1px solid var(--테두리); border-radius: 3px; background: var(--선택안함); color: var(--보조글); font-size: 15px; cursor: pointer; }
+.단축키버튼:hover { border-color: var(--강조); color: var(--글); }
 .설정버튼 { padding: 8px 11px; border: 1px solid var(--테두리); border-radius: 3px; background: var(--선택안함); color: var(--보조글); font-size: 12px; cursor: pointer; }
 .설정버튼:hover { border-color: var(--강조); color: var(--글); }
 .설정버튼 span { margin-left: 5px; font-size: 15px; }
+.단축키패널 { position: absolute; z-index: 11; top: 72px; right: 0; box-sizing: border-box; width: min(310px, calc(100vw - 36px)); max-height: calc(100dvh - 90px); padding: 22px; overflow-y: auto; border: 1px solid var(--테두리); border-radius: 4px; background: var(--종이); color: var(--글); box-shadow: 0 15px 36px rgba(0, 0, 0, .18); }
+.단축키패널 > p { margin: 16px 0 7px; color: var(--보조글); font-size: 12px; font-weight: 700; }
+.단축키패널 dl { margin: 0; }
+.단축키패널 dl div { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; font-size: 12px; }
+.단축키패널 dt { color: var(--강조); font-weight: 700; white-space: nowrap; }
+.단축키패널 dd { margin: 0; color: var(--글); text-align: right; }
+.단축키패널 .단축키기본 { margin-top: 18px; font-size: 11px; font-weight: 400; line-height: 1.7; }
+.단축키닫기 { border: 0; background: none; color: var(--보조글); font-size: 24px; line-height: 1; cursor: pointer; }
 .설정패널 { position: absolute; z-index: 10; top: 72px; right: 0; box-sizing: border-box; width: min(360px, calc(100vw - 36px)); max-height: calc(100dvh - 90px); padding: 22px; overflow-y: auto; overscroll-behavior: contain; border: 1px solid var(--테두리); border-radius: 4px; background: var(--종이); box-shadow: 0 15px 36px rgba(0, 0, 0, .18); }
 .설정머리 { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
 .설정머리 strong { font-size: 17px; }
@@ -1407,6 +1516,7 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
   .페이지 { padding: 0 14px; }
   .상단 { height: 56px; }
   .상단문구 { display: none; }
+  .상단동작 { gap: 8px; }
   .작업공간 { display: flex; flex-direction: column; gap: 9px; padding: 9px 0 11px; }
   .모바일선택줄 {
     display: flex;
