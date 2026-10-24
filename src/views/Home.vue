@@ -74,7 +74,13 @@
           <div class="글테마선택" role="group" aria-label="필사 주제 선택">
             <button v-for="테마 in 글테마선택지" :key="테마" type="button"
               :class="{ 선택됨: 글테마 === 테마 }" :aria-pressed="글테마 === 테마"
-              @click="글테마바꾸기(테마, $event)">{{테마}}</button>
+              :aria-label="`${테마}, 전체 ${주제완료도[테마].전체}편 중 ${주제완료도[테마].완료}편 완료`"
+              @click="글테마바꾸기(테마, $event)">
+              <span class="주제이름">{{테마}}</span>
+              <span class="주제진행바탕" aria-hidden="true">
+                <span :style="{ width: `${주제완료도[테마].비율}%` }"></span>
+              </span>
+            </button>
           </div>
           <section class="지문서랍" :aria-label="`${글테마} 지문 목록`">
             <h3>전체 글 <span>{{현재지문들.length}}편</span></h3>
@@ -165,7 +171,7 @@ import { 따라그리기틀 } from '@/따라그리기';
 import 그림판틀 from '@/그림판';
 import { 날짜키, 테마별지문들,
   type 연습지문, type 지문테마 } from '@/practice-passages';
-import { 다음미완료지문, 첫진입지문선택, 주제지문선택 } from '@/practice-selection';
+import { 다음미완료지문, 첫진입지문선택, 주제지문선택, 주제완료현황 } from '@/practice-selection';
 import { 본문버전, 브라우저저장소, 시도목록, 시도시작, 시도완료, 시도중단, 입력묶음,
   지문입력상태, 지문재개시도, 지문최고정타율, 정타율, 정타율표시,
   진행기록키인가, 진행작업읽기, 진행작업저장, 작업합치기, type 입력키, type 진행작업,
@@ -531,6 +537,12 @@ export default defineComponent({
   computed: {
     시도들(): 필사시도[] {
       return 시도목록(this.기록들);
+    },
+    주제완료도(): Record<지문테마, { 완료: number; 전체: number; 비율: number }> {
+      return Object.fromEntries(this.글테마선택지.map((테마) => {
+        const 현황 = 주제완료현황(테마, this.시도들);
+        return [테마, { ...현황, 비율: 현황.전체 ? 현황.완료 / 현황.전체 * 100 : 0 }];
+      })) as Record<지문테마, { 완료: number; 전체: number; 비율: number }>;
     },
     현재지문들(): readonly 연습지문[] {
       return 테마별지문들[this.글테마];
@@ -1014,8 +1026,10 @@ button { font: inherit; }
 .선택머리 h2 { margin: 9px 0 0; font-size: 18px; font-weight: 650; letter-spacing: -.045em; }
 .글테마선택 { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; width: min(100%, 542px); margin-top: 18px; }
 .글테마선택 button {
+  position: relative;
+  overflow: hidden;
   min-width: 0;
-  padding: 10px 17px;
+  padding: 10px 17px 13px;
   border: 1px solid var(--테두리);
   border-radius: 3px;
   background: var(--선택안함);
@@ -1023,6 +1037,16 @@ button { font: inherit; }
   font-size: 13px;
   cursor: pointer;
 }
+.글테마선택 .주제이름 { position: relative; z-index: 1; }
+.주제진행바탕 {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: var(--진행바탕);
+}
+.주제진행바탕 span { display: block; height: 100%; background: var(--강조); }
 .글테마선택 button.선택됨 { border-color: var(--강조); background: var(--선택바탕); color: var(--글); font-weight: 700; }
 .지문서랍 { margin-top: 21px; }
 .지문서랍 h3 { margin: 0; color: var(--강조); font-size: 12px; font-weight: 600; }
@@ -1152,7 +1176,7 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
 .선택머리 h2 { margin-top: 6px; font-size: 17px; }
 .글테마선택 { grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; gap: 6px; margin-top: 18px; }
 .글테마선택 button:first-child { grid-column: 1 / -1; }
-.글테마선택 button { padding: 8px 5px; font-size: 12px; }
+.글테마선택 button { padding: 8px 5px 11px; font-size: 12px; }
 .지문서랍 { display: flex; flex-direction: column; flex: 1; min-height: 0; margin-top: 20px; }
 .글목록 { display: flex; flex-direction: column; flex: 1; min-height: 0; gap: 6px; overflow-y: auto; overscroll-behavior: contain; padding-right: 3px; }
 .글목록 button { min-height: 51px; flex: none; padding: 9px 11px; }

@@ -1,5 +1,5 @@
 import { 테마별지문들, type 연습지문 } from '@/practice-passages';
-import { 다음미완료지문, 첫진입지문선택, 주제지문선택 } from '@/practice-selection';
+import { 다음미완료지문, 첫진입지문선택, 주제지문선택, 주제완료현황 } from '@/practice-selection';
 import { 본문버전, 시도목록, 시도시작, 시도완료, 입력묶음, type 진행작업 } from '@/practice-progress';
 
 const 시각 = (시: number, 분: number) =>
@@ -51,6 +51,22 @@ it('주제를 누르면 최근 진행 중인 글, 첫 미완료 글, 첫 글 순
 
   const 전체완료 = 시도목록(지문들.flatMap((지문, 순서) => 시도(지문, 순서 + 8, true)));
   expect(주제지문선택('시작하기', 전체완료).지문).toBe(지문들[0]);
+});
+
+it('주제 완료도는 현재 본문 버전에서 한 번이라도 완료한 글만 센다', () => {
+  const 지문들 = 테마별지문들.시작하기;
+  expect(주제완료현황('시작하기', [])).toEqual({ 완료: 0, 전체: 지문들.length });
+  const 기록작업 = [
+    ...시도(지문들[0], 8, true),
+    ...시도(지문들[1], 9, true, 'old-version'),
+    ...시도(지문들[2], 10),
+  ];
+  const 기록 = 시도목록(기록작업);
+  expect(주제완료현황('시작하기', 기록)).toEqual({ 완료: 1, 전체: 지문들.length });
+  const 다시쓰기 = 시도목록([...기록작업, ...시도(지문들[0], 11)]);
+  expect(주제완료현황('시작하기', 다시쓰기)).toEqual({ 완료: 1, 전체: 지문들.length });
+  const 전체완료 = 시도목록(지문들.flatMap((지문, 순서) => 시도(지문, 순서 + 8, true)));
+  expect(주제완료현황('시작하기', 전체완료)).toEqual({ 완료: 지문들.length, 전체: 지문들.length });
 });
 
 it('다음 글은 완료한 글을 건너뛰고 다음 주제로 이어진 뒤 처음으로 순환한다', () => {

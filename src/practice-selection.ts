@@ -21,6 +21,17 @@ function 미완료(선택: 지문선택, 시도들: readonly 필사시도[]): bo
   return 지문입력상태(시도들, 선택.지문.id, 본문버전(선택.지문.본문)) !== '완료';
 }
 
+/** 현재 본문 버전에서 한 번이라도 완료한 글 수를 센다. */
+export function 주제완료현황(테마: 지문테마, 시도들: readonly 필사시도[]): { 완료: number; 전체: number } {
+  const 지문들 = 테마별지문들[테마];
+  const 완료기록 = new Set(시도들.filter((시도) => 시도.완료)
+    .map((시도) => `${시도.시작.passageId}:${시도.시작.contentVersion}`));
+  return {
+    완료: 지문들.filter((지문) => 완료기록.has(`${지문.id}:${본문버전(지문.본문)}`)).length,
+    전체: 지문들.length,
+  };
+}
+
 /** 주제를 고르면 해당 주제의 최근 이어 쓸 글, 첫 미완료 글, 첫 글 순서로 선택한다. */
 export function 주제지문선택(테마: 지문테마, 시도들: readonly 필사시도[]): 지문선택 {
   const 선택지 = 전체선택지.filter((선택) => 선택.테마 === 테마);
