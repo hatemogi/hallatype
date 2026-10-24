@@ -3,11 +3,7 @@
     <div class="페이지">
       <header class="상단">
         <a class="브랜드" href="#" aria-label="글숨 첫 화면으로 이동">
-          <svg class="브랜드문양" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
-            <circle cx="32" cy="32" r="30" />
-            <path d="M12 28c7-7 14-7 21 0s14 7 21 0" />
-            <path d="M17 39c5-5 10-5 15 0s10 5 15 0" />
-          </svg>
+          <GeulsumMark class="브랜드문양" />
           <span class="브랜드글자">글숨 <small>한글 필사</small></span>
         </a>
         <div class="상단동작">
@@ -160,6 +156,7 @@
 
 <script lang="ts">
 import { defineComponent, markRaw } from 'vue';
+import GeulsumMark from '@/components/GeulsumMark.vue';
 import { 끝글자 } from '@/글자';
 import { 지문틀 } from '@/본문';
 import { 따라그리기틀 } from '@/따라그리기';
@@ -183,6 +180,7 @@ const 글테마선택지: 지문테마[] = ['산문', '자기계발', '명상', 
   '메밀꽃 필 무렵', '봄봄'];
 
 export default defineComponent({
+  components: { GeulsumMark },
   data() {
     const 선택 = 지문선택읽기();
     return {
@@ -738,16 +736,6 @@ button { font: inherit; }
 .상단동작 { display: flex; align-items: center; gap: 20px; }
 .브랜드 { display: flex; align-items: center; gap: 11px; text-decoration: none; }
 .브랜드:focus-visible { outline: 2px solid var(--강조); outline-offset: 4px; }
-.브랜드문양 {
-  display: block;
-  width: 31px;
-  height: 31px;
-  flex: none;
-}
-.브랜드문양 circle { fill: var(--강조); }
-.브랜드문양 path { fill: none; stroke: var(--역글); stroke-linecap: round; }
-.브랜드문양 path:nth-of-type(1) { stroke-width: 5; }
-.브랜드문양 path:nth-of-type(2) { stroke-width: 4; opacity: .7; }
 .브랜드글자 { color: var(--글); font-size: 13px; font-weight: 800; letter-spacing: .12em; }
 .브랜드글자 small { margin-left: 12px; color: var(--보조글); font-size: 12px; font-weight: 500; letter-spacing: 0; }
 .상단문구 { color: var(--보조글); font-size: 12px; letter-spacing: .03em; }

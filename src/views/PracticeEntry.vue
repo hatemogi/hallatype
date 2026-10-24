@@ -3,7 +3,7 @@
   <main v-else class="첫화면" :data-theme="테마">
     <div class="첫화면안쪽">
       <header class="첫화면상단">
-        <span class="도메인">TYPINGFLOW.COM</span>
+        <div class="첫화면브랜드"><GeulsumMark /><span class="도메인">TYPINGFLOW.COM</span></div>
         <span class="상단장식" aria-hidden="true">✳</span>
       </header>
 
@@ -24,6 +24,7 @@
 <script setup lang="ts">
 import { nextTick, onMounted, onUnmounted, ref } from 'vue';
 import { 필사설정읽기, type 필사테마 } from '@/practice-settings';
+import GeulsumMark from '@/components/GeulsumMark.vue';
 import Home from './Home.vue';
 
 const 필사시작됨 = ref(window.location.hash === '#practice');
@@ -147,6 +148,7 @@ onUnmounted(() => {
   padding: 34px clamp(24px, 5vw, 66px) 28px;
 }
 .첫화면상단, .첫화면하단 { display: flex; justify-content: space-between; align-items: center; }
+.첫화면브랜드 { display: flex; align-items: center; gap: 11px; }
 .도메인 { color: var(--보조글); font-size: 11px; font-weight: 700; letter-spacing: .23em; }
 .상단장식 { color: var(--강조); font-size: 20px; }
 .소개 {
