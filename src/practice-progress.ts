@@ -187,6 +187,12 @@ export function 정타율표시(비율: number): string {
   return 표시 === '100.00' ? '100' : 표시;
 }
 
+/** 화면에 표시하는 정타율을 기준으로 첫 기록, 갱신, 동률을 최고 기록으로 본다. */
+export function 이번이최고정타율인가(정타수: number, 전체타수: number,
+  종전최고: number | null): boolean {
+  return 전체타수 > 0 && (종전최고 === null || Number(정타율(정타수, 전체타수)) >= 종전최고);
+}
+
 /** 같은 본문의 완료 기록 중 가장 높은 정타율을 반환한다. */
 export function 지문최고정타율(시도들: readonly 필사시도[], passageId: string,
   contentVersion: string, 제외시도ID?: string): number | null {

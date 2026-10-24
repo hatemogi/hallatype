@@ -139,6 +139,9 @@
                 <div><dt>이번 정타율</dt><dd>{{정타율}}% ({{정타수}}/{{총입력타수}})</dd></div>
                 <div><dt>걸린 시간</dt><dd>{{걸린시간}}</dd></div>
               </dl>
+              <p v-if="이번최고기록" class="개인최고안내">
+                <strong class="개인최고표시">PB</strong> 이번 정타율이 최고 기록이에요.
+              </p>
               <p v-if="종전최고정타율 !== null" class="정타율비교">
                 종전 최고 {{종전최고표시}}% 대비
                 <strong>{{정타율차이표시}}%p</strong>
@@ -173,7 +176,7 @@ import { 날짜키, 테마별지문들,
   type 연습지문, type 지문테마 } from '@/practice-passages';
 import { 다음미완료지문, 첫진입지문선택, 주제지문선택, 주제완료현황 } from '@/practice-selection';
 import { 본문버전, 브라우저저장소, 시도목록, 시도시작, 시도완료, 시도중단, 입력묶음,
-  지문입력상태, 지문재개시도, 지문최고정타율, 정타율, 정타율표시,
+  지문입력상태, 지문재개시도, 지문최고정타율, 정타율, 정타율표시, 이번이최고정타율인가,
   진행기록키인가, 진행작업읽기, 진행작업저장, 작업합치기, type 입력키, type 진행작업,
   type 필사시도, type 이어쓰기원본 } from '@/practice-progress';
 import { 기본필사설정, 필사설정, 필사설정읽기, 필사설정저장,
@@ -552,6 +555,9 @@ export default defineComponent({
     },
     정타율(): string {
       return 정타율(this.정타수, this.총입력타수);
+    },
+    이번최고기록(): boolean {
+      return 이번이최고정타율인가(this.정타수, this.총입력타수, this.종전최고정타율);
     },
     종전최고표시(): string {
       return this.종전최고정타율 === null ? '' : 정타율표시(this.종전최고정타율);
@@ -1144,6 +1150,8 @@ button { font: inherit; }
 .마침통계 div { display: flex; flex-direction: column; gap: 5px; }
 .마침통계 dt { color: var(--옅은글); font-size: 11px; }
 .마침통계 dd { margin: 0; color: var(--보조글); font-size: 12px; font-variant-numeric: tabular-nums; }
+.개인최고안내 { display: flex; align-items: center; gap: 7px; margin: 10px 0 0; color: var(--글); font-size: 11px; }
+.개인최고표시 { padding: 2px 5px; border: 1px solid var(--강조); border-radius: 2px; background: var(--선택바탕); color: var(--글); font-size: 10px; letter-spacing: .04em; }
 .정타율비교 { margin: 10px 0 0; color: var(--보조글); font-size: 11px; font-variant-numeric: tabular-nums; }
 .정타율비교 strong { color: var(--글); }
 .마침동작 { display: flex; flex-direction: column; align-items: center; gap: 9px; margin-left: auto; }
