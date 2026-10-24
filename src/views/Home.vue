@@ -140,7 +140,7 @@
               </p>
             </div>
             <div class="마침동작">
-              <button type="button" class="주버튼" @click="지문선택(다음지문)">다음 지문 시작 <span aria-hidden="true">→</span></button>
+              <button type="button" class="주버튼" @click="다음지문시작">다음 지문 시작 <span aria-hidden="true">→</span></button>
               <button type="button" class="글자버튼" @click="다시쓰기">이 글 다시 쓰기 <span aria-hidden="true">↺</span></button>
             </div>
           </div>
@@ -164,7 +164,7 @@ import { 끝글자 } from '@/글자';
 import { 지문틀 } from '@/본문';
 import { 따라그리기틀 } from '@/따라그리기';
 import 그림판틀 from '@/그림판';
-import { 날짜키, 다음지문찾기, 지문선택읽기, 지문선택저장, 테마별지문들,
+import { 날짜키, 다음지문선택, 지문선택읽기, 지문선택저장, 테마별지문들,
   type 연습지문, type 지문테마 } from '@/practice-passages';
 import { 본문버전, 브라우저저장소, 시도목록, 시도시작, 시도완료, 시도중단, 입력묶음,
   지문입력상태, 지문재개시도, 지문최고정타율, 정타율, 정타율표시,
@@ -295,6 +295,14 @@ export default defineComponent({
       지문선택저장(this.글테마, 지문.id);
       const 새로시작 = 완료된지문 || (같은지문 && this.결과화면보이기) || !this.복원할시도();
       this.reset(새로시작);
+    },
+    다음지문시작() {
+      const 다음 = 다음지문선택(this.글테마, this.오늘지문.id);
+      if (다음.테마 !== this.글테마) {
+        this.글테마바꾸기(다음.테마);
+      } else {
+        this.지문선택(다음.지문);
+      }
     },
     날짜변경확인() {
       const 오늘날짜 = 날짜키(new Date());
@@ -445,7 +453,7 @@ export default defineComponent({
               !e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey &&
               !self.목록열림 && !self.설정열림) {
             e.preventDefault();
-            self.지문선택(self.다음지문);
+            self.다음지문시작();
           }
           return;
         }
@@ -538,9 +546,6 @@ export default defineComponent({
     },
     현재지문들(): readonly 연습지문[] {
       return 테마별지문들[this.글테마];
-    },
-    다음지문(): 연습지문 {
-      return 다음지문찾기(this.글테마, this.오늘지문.id);
     },
     걸린시간() {
       return `${Math.floor(this.완료초 / 60)}분 ${this.완료초 % 60}초`;
