@@ -496,10 +496,14 @@ export default defineComponent({
     },
     입력기록추가(키: 입력키) {
       this.미기록입력.push(키);
-      if (this.미기록입력.length >= 20) { this.입력기록저장(); }
+      // 첫 입력은 곧바로 저장해 새로고침 직후에도 선택한 글을 다시 열 수 있게 한다.
+      if (this.다음기록순서 === 0 || this.미기록입력.length >= 20) { this.입력기록저장(); }
       else if (this.기록타이머 === null) {
         this.기록타이머 = setTimeout(() => this.입력기록저장(), 2000);
       }
+    },
+    숨김입력저장() {
+      if (document.hidden) { this.입력기록저장(); }
     },
     복원할시도(): 필사시도 | undefined {
       return 지문재개시도(this.시도들, this.오늘지문.id, 본문버전(this.오늘지문.본문));
@@ -807,6 +811,7 @@ export default defineComponent({
     this.오늘지문 = 선택.지문;
     document.addEventListener('pointerdown', this.설정밖클릭);
     document.addEventListener('visibilitychange', this.날짜변경확인);
+    document.addEventListener('visibilitychange', this.숨김입력저장);
     window.addEventListener('pagehide', this.입력기록저장);
     window.addEventListener('storage', this.다른탭기록반영);
     window.addEventListener('resize', this.화면크기변경);
@@ -817,6 +822,7 @@ export default defineComponent({
     document.title = '글숨 · 글꼴 편집기';
     document.removeEventListener('pointerdown', this.설정밖클릭);
     document.removeEventListener('visibilitychange', this.날짜변경확인);
+    document.removeEventListener('visibilitychange', this.숨김입력저장);
     window.removeEventListener('pagehide', this.입력기록저장);
     window.removeEventListener('storage', this.다른탭기록반영);
     window.removeEventListener('resize', this.화면크기변경);
