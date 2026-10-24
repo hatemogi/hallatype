@@ -111,11 +111,23 @@
           :role="모바일보기 ? 'dialog' : undefined" :aria-modal="모바일보기 ? 'true' : undefined"
           aria-label="필사 주제와 지문 고르기">
           <div class="선택머리">
-            <div><span class="구역번호">필사할 주제</span><h2>주제 고르기</h2></div>
+            <div>
+              <span class="구역번호">필사할 주제</span>
+              <div class="선택제목줄">
+                <h2>주제 고르기</h2>
+                <button type="button" class="주제설정버튼" aria-label="왼쪽에 표시할 주제 선택"
+                  aria-haspopup="dialog" aria-controls="주제관리창" :aria-expanded="주제관리열림" @click="주제관리열기">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+                    stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M4 6h9M4 12h9M4 18h9M18 13v7M14.5 16.5h7" />
+                  </svg>
+                </button>
+              </div>
+            </div>
             <button type="button" class="목록닫기" aria-label="주제 선택창 닫기" @click="목록닫기">×</button>
           </div>
           <div class="글테마선택" role="group" aria-label="필사 주제 선택" @keydown="선택버튼화살표">
-            <button v-for="테마 in 글테마선택지" :key="테마" type="button"
+            <button v-for="테마 in 표시주제들" :key="테마" type="button"
               :class="{ 선택됨: 글테마 === 테마 }" :aria-pressed="글테마 === 테마"
               :aria-label="`${테마}, ${주제완료도[테마].전체}편 중 ${주제완료도[테마].완료}편 완료`"
               @click="글테마바꾸기(테마, $event)">
@@ -126,7 +138,7 @@
             </button>
           </div>
           <section class="지문서랍" :aria-label="`${글테마} 지문 목록`">
-            <h3>{{글테마 === '즐겨찾기' ? '모아 둔 글' : '전체 글'}} <span>{{현재지문들.length}}편</span></h3>
+            <h3>{{글테마 === '즐겨찾기' ? '모아 둔 글' : `${글테마} · 전체 글`}} <span>{{현재지문들.length}}편</span></h3>
             <div class="글목록" role="group" :aria-label="`${글테마} 지문 선택`" @keydown="선택버튼화살표">
               <button v-for="지문 in 현재지문들" :key="지문.id" type="button" class="지문선택버튼"
                 :class="{ 선택됨: 오늘지문.id === 지문.id, 도장있음: !!지문도장(지문) }" :aria-pressed="오늘지문.id === 지문.id"
@@ -221,6 +233,42 @@
         </div>
       </section>
     </div>
+    <div v-if="주제관리열림" class="주제관리배경" @click="주제관리닫기">
+      <section id="주제관리창" class="주제관리창" role="dialog" aria-modal="true"
+        aria-labelledby="주제관리제목" @click.stop>
+        <div class="주제관리머리">
+          <div>
+            <span class="구역번호">주제 선택</span>
+            <h2 id="주제관리제목">왼쪽에 표시할 주제</h2>
+            <p>시작하기와 즐겨찾기는 항상 보입니다. 다른 주제는 최대 {{고정주제한도}}개까지 골라 두세요.</p>
+          </div>
+          <button type="button" class="주제관리닫기" aria-label="주제 선택창 닫기" @click="주제관리닫기">×</button>
+        </div>
+        <p class="주제관리개수" role="status">{{고정주제들.length}} / {{고정주제한도}}개 선택 · 왼쪽에 총 {{표시주제들.length}}개 표시</p>
+        <div class="주제관리목록">
+          <section v-for="묶음 in 주제묶음들" :key="묶음.이름" class="주제관리묶음"
+            :aria-label="묶음.이름">
+            <h3>{{묶음.이름}}</h3>
+            <div class="주제관리선택" @keydown="선택버튼화살표">
+              <button v-for="주제 in 묶음.주제들" :key="주제" type="button"
+                :class="{ 선택됨: 고정주제들.includes(주제), 한도도달: 고정주제들.length >= 고정주제한도 && !고정주제들.includes(주제) }"
+                :aria-pressed="고정주제들.includes(주제)"
+                :aria-disabled="고정주제들.length >= 고정주제한도 && !고정주제들.includes(주제)"
+                @click="고정주제토글(주제)">
+                <span class="주제관리표시" aria-hidden="true">{{고정주제들.includes(주제) ? '✓' : ''}}</span>
+                {{주제}}
+              </button>
+            </div>
+          </section>
+        </div>
+        <p v-if="주제선택안내" class="주제관리안내" role="status">{{주제선택안내}}</p>
+        <p v-if="주제저장오류" class="주제관리안내" role="alert">선택한 주제를 저장하지 못했어요. 브라우저 저장 공간을 확인해 주세요.</p>
+        <div class="주제관리발">
+          <span>선택한 주제는 이 브라우저에 저장됩니다.</span>
+          <button type="button" @click="주제관리닫기">완료</button>
+        </div>
+      </section>
+    </div>
   </main>
 </template>
 
@@ -239,6 +287,8 @@ import { 즐겨찾기바꾸기, 즐겨찾기읽기, 즐겨찾기저장, 즐겨�
 import { 필사단축키, type 필사단축동작 } from '@/practice-shortcuts';
 import { 날짜키, 테마별지문들,
   type 연습지문, type 지문테마 } from '@/practice-passages';
+import { 고정주제바꾸기, 고정주제읽기, 고정주제저장, 고정주제저장키, 고정주제한도,
+  기본고정주제들, 전체주제들, 항상표시주제들, 주제묶음들, type 선택주제 } from '@/practice-pinned-topics';
 import { 다음미완료지문, 첫진입지문선택, 주제지문선택, 주제완료현황,
   지문모음선택, 지문모음완료현황 } from '@/practice-selection';
 import { 본문버전, 브라우저저장소, 시도목록, 시도시작, 시도완료, 시도중단, 입력묶음,
@@ -252,10 +302,6 @@ import { 기본필사설정, 필사설정, 필사설정읽기, 필사설정저�
 const 테마선택지 = 필사테마순서.map(이름 => ({ 이름 }));
 const 글자크기선택지: 지문크기[] = ['작게', '보통', '크게'];
 const 가장자리단계이름 = ['선명하게', '조금 선명하게', '보통', '조금 부드럽게', '부드럽게'];
-type 선택주제 = 지문테마 | '즐겨찾기';
-const 기본글테마 = Object.keys(테마별지문들) as 지문테마[];
-const 글테마선택지: 선택주제[] = [기본글테마[0], '즐겨찾기', ...기본글테마.slice(1)];
-
 export default defineComponent({
   components: { GeulsumMark, PraiseStamp },
   props: {
@@ -266,7 +312,14 @@ export default defineComponent({
       오늘날짜: 날짜키(new Date()),
       오늘지문: 테마별지문들.시작하기[0],
       글테마: '시작하기' as 선택주제,
-      글테마선택지,
+      글테마선택지: 전체주제들,
+      고정주제한도,
+      고정주제들: [...기본고정주제들] as 선택주제[],
+      주제묶음들,
+      주제관리열림: false,
+      주제관리이전목록: false,
+      주제선택안내: '',
+      주제저장오류: false,
       테마선택지,
       글자크기선택지,
       가장자리단계이름,
@@ -305,12 +358,41 @@ export default defineComponent({
       this.설정열림 = false;
       this.도움말열림 = false;
       this.목록열림 = true;
-      this.$nextTick(() => document.querySelector<HTMLElement>('.글테마선택 button.선택됨')?.focus());
+      this.$nextTick(() => (document.querySelector<HTMLElement>('.글테마선택 button.선택됨')
+        ?? document.querySelector<HTMLElement>('.글테마선택 button')
+        ?? document.querySelector<HTMLElement>('.주제설정버튼'))?.focus());
     },
     목록닫기() {
       const 열려있음 = this.목록열림;
       this.목록열림 = false;
       if (열려있음) { (document.activeElement as HTMLElement | null)?.blur(); }
+    },
+    주제관리열기() {
+      this.주제관리이전목록 = this.모바일보기 && this.목록열림;
+      if (this.주제관리이전목록) { this.목록닫기(); }
+      this.설정열림 = false;
+      this.도움말열림 = false;
+      this.주제선택안내 = '';
+      this.주제관리열림 = true;
+      this.$nextTick(() => (document.querySelector<HTMLElement>('.주제관리선택 button[aria-pressed="true"]')
+        ?? document.querySelector<HTMLElement>('.주제관리선택 button'))?.focus());
+    },
+    주제관리닫기() {
+      this.주제관리열림 = false;
+      if (this.주제관리이전목록) {
+        this.주제관리이전목록 = false;
+        this.목록열기();
+      }
+      this.$nextTick(() => document.querySelector<HTMLElement>('.주제설정버튼')?.focus());
+    },
+    고정주제토글(주제: 선택주제) {
+      if (this.고정주제들.length >= this.고정주제한도 && !this.고정주제들.includes(주제)) {
+        this.주제선택안내 = `${this.고정주제한도}개까지 선택할 수 있어요. 다른 주제를 먼저 해제해 주세요.`;
+        return;
+      }
+      this.고정주제들 = 고정주제바꾸기(this.고정주제들, 주제);
+      this.주제선택안내 = '';
+      this.주제저장오류 = !고정주제저장(this.고정주제들);
     },
     환경설정열기() {
       this.목록닫기();
@@ -386,6 +468,9 @@ export default defineComponent({
       }
       if (event.key === 즐겨찾기저장키 || event.key === null) {
         this.즐겨찾기IDs = 즐겨찾기읽기();
+      }
+      if (event.key === 고정주제저장키 || event.key === null) {
+        this.고정주제들 = 고정주제읽기();
       }
     },
     저장대기(작업: 진행작업) {
@@ -598,11 +683,27 @@ export default defineComponent({
       const self = this;
       window.onkeydown = (e: KeyboardEvent) => {
         if (e.code === 'Escape') {
+          if (self.주제관리열림) { e.preventDefault(); self.주제관리닫기(); return; }
           if (self.목록열림) { e.preventDefault(); self.목록닫기(); return; }
           if (self.설정열림) { e.preventDefault(); self.환경설정닫기(); return; }
           if (self.도움말열림) { e.preventDefault(); self.도움말닫기(); return; }
           if ((document.activeElement as HTMLElement | null)?.closest('button, a')) {
             (document.activeElement as HTMLElement).blur();
+          }
+          return;
+        }
+        if (self.주제관리열림) {
+          if (e.code === 'Tab') {
+            const 버튼들 = Array.from(document.querySelectorAll<HTMLElement>('.주제관리창 button'));
+            const 첫버튼 = 버튼들[0];
+            const 끝버튼 = 버튼들[버튼들.length - 1];
+            if (e.shiftKey && document.activeElement === 첫버튼) {
+              e.preventDefault();
+              끝버튼?.focus();
+            } else if (!e.shiftKey && document.activeElement === 끝버튼) {
+              e.preventDefault();
+              첫버튼?.focus();
+            }
           }
           return;
         }
@@ -696,6 +797,7 @@ export default defineComponent({
   mounted() {
     document.title = '글숨 · 한글 타이핑 필사';
     this.설정 = 필사설정읽기();
+    this.고정주제들 = 고정주제읽기();
     this.기록들 = 진행작업읽기();
     this.즐겨찾기IDs = 즐겨찾기읽기();
     const 요청지문 = this.requestedPassageId ? 지문찾기(this.requestedPassageId) : undefined;
@@ -724,6 +826,9 @@ export default defineComponent({
     this.그림판?.종료();
   },
   computed: {
+    표시주제들(): 선택주제[] {
+      return [...항상표시주제들, ...this.고정주제들];
+    },
     이번도장(): 칭찬도장종류 | null {
       return this.결과화면보이기 ? 정타도장(this.정타수, this.총입력타수) : null;
     },
@@ -883,6 +988,10 @@ button { font: inherit; }
 .구역번호 { color: var(--강조); font-size: 12px; font-weight: 700; letter-spacing: .08em; }
 .구역번호 span { padding: 0 5px; color: var(--옅은글); }
 .선택머리 h2 { margin: 9px 0 0; font-size: 18px; font-weight: 650; letter-spacing: -.045em; }
+.선택제목줄 { display: flex; align-items: center; gap: 8px; }
+.주제설정버튼 { display: grid; place-items: center; width: 27px; height: 27px; margin-top: 9px; padding: 4px; border: 1px solid var(--테두리); border-radius: 3px; background: var(--선택안함); color: var(--글); cursor: pointer; }
+.주제설정버튼:hover { border-color: var(--강조); background: var(--선택바탕); }
+.주제설정버튼 svg { width: 17px; height: 17px; }
 .글테마선택 { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; width: min(100%, 542px); margin-top: 18px; }
 .글테마선택 button {
   position: relative;
@@ -907,6 +1016,25 @@ button { font: inherit; }
 }
 .주제진행바탕 span { display: block; height: 100%; background: var(--강조); }
 .글테마선택 button.선택됨 { border-color: var(--강조); background: var(--선택바탕); color: var(--글); font-weight: 700; }
+.주제관리배경 { position: fixed; z-index: 30; inset: 0; display: grid; place-items: center; padding: 16px; background: rgba(0, 0, 0, .5); }
+.주제관리창 { display: flex; flex-direction: column; box-sizing: border-box; width: min(650px, 100%); max-height: min(88dvh, 760px); padding: 25px; border: 1px solid var(--테두리); border-radius: 8px; background: var(--종이); color: var(--글); box-shadow: 0 20px 60px rgba(0, 0, 0, .25); }
+.주제관리머리 { display: flex; justify-content: space-between; align-items: start; gap: 12px; }
+.주제관리머리 h2 { margin: 7px 0 0; font-size: 21px; letter-spacing: -.04em; }
+.주제관리머리 p { margin: 8px 0 0; color: var(--보조글); font-size: 12px; }
+.주제관리닫기 { flex: none; border: 0; background: none; color: var(--글); font-size: 26px; line-height: 1; cursor: pointer; }
+.주제관리개수 { margin: 17px 0 0; color: var(--강조); font-size: 12px; font-weight: 700; }
+.주제관리목록 { min-height: 0; margin-top: 9px; overflow-y: auto; overscroll-behavior: contain; }
+.주제관리묶음 { padding: 13px 0 15px; border-top: 1px solid var(--연테두리); }
+.주제관리묶음 h3 { margin: 0 0 9px; color: var(--보조글); font-size: 12px; font-weight: 700; }
+.주제관리선택 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+.주제관리선택 button { display: flex; align-items: center; min-width: 0; min-height: 38px; gap: 7px; padding: 7px 9px; border: 1px solid var(--테두리); border-radius: 3px; background: var(--선택안함); color: var(--글); font-size: 12px; text-align: left; cursor: pointer; }
+.주제관리선택 button:hover, .주제관리선택 button.선택됨 { border-color: var(--강조); background: var(--선택바탕); }
+.주제관리선택 button.한도도달 { cursor: not-allowed; }
+.주제관리표시 { display: grid; place-items: center; flex: none; width: 15px; height: 15px; border: 1px solid var(--강조); border-radius: 2px; color: var(--글); font-size: 12px; font-weight: 700; }
+.주제관리안내 { margin: 10px 0 0; color: var(--보조글); font-size: 12px; }
+.주제관리발 { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 13px; padding-top: 14px; border-top: 1px solid var(--연테두리); }
+.주제관리발 span { color: var(--보조글); font-size: 11px; }
+.주제관리발 button { min-width: 68px; padding: 8px 13px; border: 1px solid var(--강조); border-radius: 3px; background: var(--선택바탕); color: var(--글); font-size: 12px; font-weight: 700; cursor: pointer; }
 .지문서랍 { margin-top: 21px; }
 .지문서랍 h3 { margin: 0; color: var(--강조); font-size: 12px; font-weight: 600; }
 .지문서랍 h3 span { margin-left: 8px; color: var(--옅은글); font-weight: 400; }
@@ -1066,8 +1194,8 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
 }
 .선택머리 { align-items: start; }
 .선택머리 h2 { margin-top: 6px; font-size: 17px; }
+.주제설정버튼 { margin-top: 6px; }
 .글테마선택 { grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; max-height: min(40dvh, 310px); gap: 6px; margin-top: 18px; overflow-y: auto; overscroll-behavior: contain; }
-.글테마선택 button:first-child { grid-column: 1 / -1; }
 .글테마선택 button { padding: 8px 5px 11px; font-size: 12px; }
 .지문서랍 { display: flex; flex-direction: column; flex: 1; min-height: 0; margin-top: 20px; }
 .글목록 { display: flex; flex-direction: column; flex: 1; min-height: 0; gap: 6px; overflow-y: auto; overscroll-behavior: contain; padding-right: 3px; }
@@ -1132,8 +1260,8 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
   }
   .목록닫기 { display: block; border: 0; background: none; color: var(--보조글); font-size: 26px; line-height: 1; cursor: pointer; }
   .글테마선택 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .글테마선택 button:first-child { grid-column: auto; }
-  .글테마선택 button:last-child:nth-child(odd) { grid-column: auto; }
+  .주제관리창 { max-height: 90dvh; padding: 20px; }
+  .주제관리선택 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .글목록 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; }
   .글목록 .지문선택버튼 { min-height: 56px; }
   .필사패널 { flex: 1; }
