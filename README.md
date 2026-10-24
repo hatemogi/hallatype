@@ -1,6 +1,6 @@
 # 글숨 (DailyTyping)
 
-한 글자씩, 마음을 고르다. 좋은 문장을 천천히 따라 쓰며 잠시 나에게 집중하는 한글 타이핑 필사 앱입니다. 첫 화면(`/`)에서 `오늘의 타이핑 시작하기`를 누르면 필사 화면이 열립니다. 개발용 전체 앱에는 필사 앱(`/practice`)과 한글 비트맵 글꼴 편집기(`/font-editor`), 키별 자소 마스크 편집기(`/masks`)도 있습니다. 서비스 도메인은 `dailytyping.com`입니다.
+한 글자씩, 마음을 고르다. 좋은 문장을 천천히 따라 쓰며 잠시 나에게 집중하는 한글 타이핑 필사 앱입니다. 첫 화면(`/`)에서 `필사 시작하기`를 누르면 필사 화면이 열립니다. 개발용 전체 앱에는 필사 앱(`/practice`)과 한글 비트맵 글꼴 편집기(`/font-editor`), 키별 자소 마스크 편집기(`/masks`)도 있습니다. 서비스 도메인은 `dailytyping.com`입니다.
 
 아이콘 원본은 [`src/assets/geulsum-logo.svg`](src/assets/geulsum-logo.svg)입니다. macOS에서는 `swift scripts/render-logo-icons.swift`로 설치 아이콘과 PNG·ICO 파비콘을 다시 만들 수 있습니다.
 

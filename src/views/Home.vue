@@ -130,9 +130,8 @@
             <div class="마침내용">
               <p class="마침꼬리">한 편을 마쳤어요</p>
               <dl class="마침통계" aria-label="이번 필사 기록">
-                <div><dt>걸린 시간</dt><dd>{{걸린시간}}</dd></div>
                 <div><dt>이번 정타율</dt><dd>{{정타율}}% ({{정타수}}/{{총입력타수}})</dd></div>
-                <div><dt>분당 정타</dt><dd>{{분당타수}}/분</dd></div>
+                <div><dt>걸린 시간</dt><dd>{{걸린시간}}</dd></div>
               </dl>
               <p v-if="종전최고정타율 !== null" class="정타율비교">
                 종전 최고 {{종전최고표시}}% 대비
@@ -206,7 +205,6 @@ export default defineComponent({
       완료초: 0,
       총입력타수: 0,
       정타수: 0,
-      분당타수: 0,
       종전최고정타율: null as number | null,
       기록들: [] as 진행작업[],
       시도ID: null as string | null,
@@ -366,7 +364,6 @@ export default defineComponent({
       this.완료초 = 0;
       this.총입력타수 = 0;
       this.정타수 = 0;
-      this.분당타수 = 0;
       this.종전최고정타율 = null;
       this.시도ID = null;
       this.이어쓰기원본 = null;
@@ -391,7 +388,6 @@ export default defineComponent({
           this.완료초 = Math.max(1, Math.round(걸린밀리초 / 1000));
           this.총입력타수 = 본문.입력타수;
           this.정타수 = 본문.유효타수;
-          this.분당타수 = Math.round(this.정타수 * 60000 / 걸린밀리초);
           this.종전최고정타율 = 지문최고정타율(this.시도들, this.오늘지문.id,
             본문버전(this.오늘지문.본문));
           this.결과화면보이기 = true;
@@ -484,7 +480,6 @@ export default defineComponent({
           self.완료초 = Math.max(1, Math.round(걸린밀리초 / 1000));
           self.총입력타수 = 본문.입력타수;
           self.정타수 = 본문.유효타수;
-          self.분당타수 = Math.round(self.정타수 * 60000 / 걸린밀리초);
           self.종전최고정타율 = 지문최고정타율(self.시도들, self.오늘지문.id,
             본문버전(self.오늘지문.본문));
           self.입력기록저장();
@@ -579,11 +574,11 @@ export default defineComponent({
   --화면: #f4f1e9;
   --장식빛: rgba(219, 206, 182, .25);
   --글: #38372f;
-  --보조글: #777468;
-  --옅은글: #958e81;
+  --보조글: #5f5b50;
+  --옅은글: #69665c;
   --출처링크: #6e675c;
   --출처링크호버: #38372f;
-  --강조: #82755f;
+  --강조: #7e715d;
   --강조호버: #665b49;
   --역글: #fff;
   --테두리: #ddd7ca;
@@ -612,11 +607,11 @@ export default defineComponent({
   --화면: #e9f0f2;
   --장식빛: rgba(171, 199, 208, .26);
   --글: #30444f;
-  --보조글: #5e7580;
-  --옅은글: #718892;
+  --보조글: #45606c;
+  --옅은글: #536974;
   --출처링크: #526e7b;
   --출처링크호버: #30444f;
-  --강조: #607f8d;
+  --강조: #587684;
   --강조호버: #456674;
   --역글: #fff;
   --테두리: #cddde1;
@@ -1011,7 +1006,7 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
   .진행아래 { flex-direction: row; align-items: center; gap: 8px; margin-top: 8px; }
   .마침 { align-items: start; flex-wrap: wrap; gap: 8px; }
   .마침내용 { flex-basis: 100%; }
-  .마침통계 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+  .마침통계 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
   .마침통계 dd { font-size: 11px; }
   .마침동작 { width: auto; margin: 0; }
   .주버튼 { padding: 8px 11px; }
