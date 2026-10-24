@@ -10,12 +10,13 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'img/icons/*.png', 'img/icons/*.svg'],
       manifest: {
-        name: 'hallatype',
-        short_name: 'hallatype',
+        name: '글숨 · 한 글자씩, 마음을 고르다.',
+        short_name: '글숨',
+        lang: 'ko',
         start_url: '/',
         display: 'standalone',
-        background_color: '#000000',
-        theme_color: '#4DBA87',
+        background_color: '#f4f1e9',
+        theme_color: '#f4f1e9',
         icons: [
           { src: '/img/icons/android-chrome-192x192.png', sizes: '192x192', type: 'image/png' },
           { src: '/img/icons/android-chrome-512x512.png', sizes: '512x512', type: 'image/png' },

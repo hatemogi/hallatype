@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import Home from './views/Home.vue';
+import PracticeEntry from './views/PracticeEntry.vue';
 import FontEditor from './views/FontEditor.vue';
 import MaskEditor from './views/MaskEditor.vue';
 
@@ -9,12 +9,17 @@ export default createRouter({
     {
       path: '/',
       name: 'home',
+      component: PracticeEntry,
+    },
+    {
+      path: '/font-editor',
+      name: 'font-editor',
       component: FontEditor,
     },
     {
       path: '/practice',
       name: 'practice',
-      component: Home,
+      component: PracticeEntry,
     },
     {
       path: '/masks',

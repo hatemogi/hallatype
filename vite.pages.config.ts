@@ -20,8 +20,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'img/icons/*.png'],
       manifest: {
-        name: 'HALLATYPE · 한글 필사',
-        short_name: 'hallatype',
+        name: '글숨 · 한 글자씩, 마음을 고르다.',
+        short_name: '글숨',
+        lang: 'ko',
         start_url: '/',
         scope: '/',
         display: 'standalone',

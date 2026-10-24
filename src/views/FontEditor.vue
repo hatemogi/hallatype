@@ -1,7 +1,7 @@
 <template>
   <div class="studio">
     <header class="topbar">
-      <div class="brand"><span class="brand-mark">▦</span><div><strong>한글 비트맵 스튜디오</strong><small>16 × 16 → 32 × 32 → 8비트 안티앨리어싱</small></div></div>
+      <div class="brand"><span class="brand-mark" aria-hidden="true"></span><div><strong>글숨</strong><small>한글 비트맵 글꼴 편집기</small></div></div>
       <div class="top-actions">
         <router-link class="quiet-link" to="/masks">키 마스크 편집 →</router-link>
         <router-link class="quiet-link" to="/practice">타자 연습 →</router-link>
@@ -88,4 +88,11 @@ export default FontEditorView;
 .preview-scale-note{font-size:11px;color:#81979a;margin:10px 0 0}
 .composition-preview-rows{display:grid;gap:12px;min-width:0}.preview-mode-label{display:block;margin-bottom:5px;color:#728b91;font-size:10px;font-weight:800}.mono-composition>div,.mono-canvas-wrap{background:#fff}.preview-pair{display:grid;gap:10px}.preview-pair>div{min-width:0}
 .physical-preview{margin-top:22px;padding-top:18px;border-top:1px solid #e3e9e3}.physical-preview>strong{display:block;color:#385e6a;font-size:12px}.physical-preview>p{margin:7px 0 14px;color:#7a8f92;font-size:10px;line-height:1.5}.physical-preview-pair{display:grid;gap:11px}.physical-preview-pair>div{min-width:0}.physical-preview-pair .text-canvas-wrap canvas{height:auto}
+.brand-mark::before {
+  content: '';
+  width: 38px;
+  height: 38px;
+  background: url('../assets/geulsum-logo.svg') center / contain no-repeat;
+}
+.brand-mark { background: transparent; }
 </style>

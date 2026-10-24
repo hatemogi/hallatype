@@ -2,12 +2,16 @@
   <main class="필사실" :data-theme="설정.테마">
     <div class="페이지">
       <header class="상단">
-        <div class="브랜드" aria-label="HALLATYPE 한글 필사">
-          <span class="브랜드문양" aria-hidden="true">ㅎ</span>
-          <span class="브랜드글자">HALLATYPE <small>한글 필사</small></span>
-        </div>
+        <a class="브랜드" href="#" aria-label="글숨 첫 화면으로 이동">
+          <svg class="브랜드문양" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+            <circle cx="32" cy="32" r="30" />
+            <path d="M12 28c7-7 14-7 21 0s14 7 21 0" />
+            <path d="M17 39c5-5 10-5 15 0s10 5 15 0" />
+          </svg>
+          <span class="브랜드글자">글숨 <small>한글 필사</small></span>
+        </a>
         <div class="상단동작">
-          <span class="상단문구">손끝으로 읽는 시간</span>
+          <span class="상단문구">한 글자씩, 마음을 고르다.</span>
           <button type="button" class="설정버튼" aria-controls="필사설정"
             :aria-expanded="설정열림" @click="설정열림 = !설정열림">환경설정 <span aria-hidden="true">⚙</span></button>
         </div>
@@ -495,7 +499,7 @@ export default defineComponent({
     },
   },
   mounted() {
-    document.title = 'HALLATYPE · 한글 필사';
+    document.title = '글숨 · 한글 필사';
     this.설정 = 필사설정읽기();
     this.기록들 = 진행작업읽기();
     const 선택 = 지문선택읽기();
@@ -511,7 +515,7 @@ export default defineComponent({
     this.reset();
   },
   beforeUnmount() {
-    document.title = '한글 비트맵 스튜디오';
+    document.title = '글숨 · 글꼴 편집기';
     document.removeEventListener('pointerdown', this.설정밖클릭);
     document.removeEventListener('visibilitychange', this.날짜변경확인);
     window.removeEventListener('pagehide', this.입력기록저장);
@@ -732,19 +736,18 @@ button { font: inherit; }
   border-bottom: 1px solid var(--테두리);
 }
 .상단동작 { display: flex; align-items: center; gap: 20px; }
-.브랜드 { display: flex; align-items: center; gap: 11px; }
+.브랜드 { display: flex; align-items: center; gap: 11px; text-decoration: none; }
+.브랜드:focus-visible { outline: 2px solid var(--강조); outline-offset: 4px; }
 .브랜드문양 {
-  display: grid;
-  place-items: center;
+  display: block;
   width: 31px;
   height: 31px;
-  border-radius: 50%;
-  background: var(--강조);
-  color: var(--역글);
-  font-family: 'AppleMyungjo', 'Batang', serif;
-  font-size: 18px;
-  line-height: 1;
+  flex: none;
 }
+.브랜드문양 circle { fill: var(--강조); }
+.브랜드문양 path { fill: none; stroke: var(--역글); stroke-linecap: round; }
+.브랜드문양 path:nth-of-type(1) { stroke-width: 5; }
+.브랜드문양 path:nth-of-type(2) { stroke-width: 4; opacity: .7; }
 .브랜드글자 { color: var(--글); font-size: 13px; font-weight: 800; letter-spacing: .12em; }
 .브랜드글자 small { margin-left: 12px; color: var(--보조글); font-size: 12px; font-weight: 500; letter-spacing: 0; }
 .상단문구 { color: var(--보조글); font-size: 12px; letter-spacing: .03em; }
