@@ -1,5 +1,4 @@
 import { 시작하기지문들 } from './practice-intro-passages';
-import { 타이핑리듬지문들 } from './practice-rhythm-passages';
 import { 자기계발지문들 } from './practice-growth-passages';
 import { 명상지문들 } from './practice-meditation-passages';
 import { 자기확언지문들 } from './practice-affirmation-passages';
@@ -17,7 +16,7 @@ export interface 연습지문 {
   원문URL?: string;
 }
 
-export type 지문테마 = '시작하기' | '타이핑 리듬' | '산문' | '자기계발' | '명상' | '자기확언' | '생활교양' | '요리레시피'
+export type 지문테마 = '시작하기' | '산문' | '자기계발' | '명상' | '자기확언' | '생활교양' | '요리레시피'
   | '메밀꽃 필 무렵' | '봄봄';
 
 /** 기존 산문 지문은 별도의 테마로 보존한다. */
@@ -68,7 +67,6 @@ export const 연습지문들: readonly 연습지문[] = [
 
 export const 테마별지문들: Record<지문테마, readonly 연습지문[]> = {
   시작하기: 시작하기지문들,
-  '타이핑 리듬': 타이핑리듬지문들,
   산문: 연습지문들,
   자기계발: 자기계발지문들,
   명상: 명상지문들,
@@ -84,14 +82,6 @@ export function 다음지문찾기(테마: 지문테마, 현재ID: string): 연�
   const 지문들 = 테마별지문들[테마];
   const 순서 = 지문들.findIndex((지문) => 지문.id === 현재ID);
   return 지문들[(순서 + 1) % 지문들.length];
-}
-
-/** 시작하기를 마치면 타이핑 리듬으로 이어 가고, 나머지 주제는 안에서 순환한다. */
-export function 다음지문선택(테마: 지문테마, 현재ID: string): { 테마: 지문테마; 지문: 연습지문 } {
-  if (테마 === '시작하기' && 현재ID === 시작하기지문들.at(-1)?.id) {
-    return { 테마: '타이핑 리듬', 지문: 타이핑리듬지문들[0] };
-  }
-  return { 테마, 지문: 다음지문찾기(테마, 현재ID) };
 }
 
 export function 날짜키(날짜: Date): string {
