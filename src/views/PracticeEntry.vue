@@ -1,5 +1,6 @@
 <template>
-  <Home v-if="필사시작됨" />
+  <Home v-if="화면 === 'practice'" :key="요청지문ID ?? '일반'" :requested-passage-id="요청지문ID ?? undefined" />
+  <Recent v-else-if="화면 === 'recent'" />
   <main v-else class="첫화면" :data-theme="테마">
     <div class="첫화면안쪽">
       <header class="첫화면상단">
@@ -26,14 +27,25 @@ import { nextTick, onMounted, onUnmounted, ref } from 'vue';
 import { 필사설정읽기, type 필사테마 } from '@/practice-settings';
 import GeulsumMark from '@/components/GeulsumMark.vue';
 import Home from './Home.vue';
+import Recent from './Recent.vue';
+import '@/practice-theme.css';
 
-const 필사시작됨 = ref(window.location.hash === '#practice');
+function 주소해석(): { 화면: 'intro' | 'practice' | 'recent'; 지문ID: string | null } {
+  const [이름, 쿼리] = window.location.hash.slice(1).split('?');
+  if (이름 === 'practice') {
+    return { 화면: 'practice', 지문ID: new URLSearchParams(쿼리).get('passage') };
+  }
+  return { 화면: 이름 === 'recent' ? 'recent' : 'intro', 지문ID: null };
+}
+
+const 화면 = ref<'intro' | 'practice' | 'recent'>(주소해석().화면);
+const 요청지문ID = ref<string | null>(주소해석().지문ID);
 const 테마 = ref<필사테마>(필사설정읽기().테마);
 const 시작버튼 = ref<HTMLAnchorElement | null>(null);
 
 function 첫화면엔터(event: KeyboardEvent) {
   if (event.key !== 'Enter' || event.defaultPrevented || event.repeat || event.isComposing ||
-      event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || 필사시작됨.value) { return; }
+      event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || 화면.value !== 'intro') { return; }
   if (event.target instanceof Element &&
       event.target.closest('a, button, input, textarea, select, [contenteditable]')) { return; }
   시작버튼.value?.click();
@@ -44,8 +56,10 @@ function 저장된테마반영() {
 }
 
 function 주소반영() {
-  필사시작됨.value = window.location.hash === '#practice';
-  if (!필사시작됨.value) {
+  const 주소 = 주소해석();
+  화면.value = 주소.화면;
+  요청지문ID.value = 주소.지문ID;
+  if (주소.화면 === 'intro') {
     저장된테마반영();
     nextTick(() => { document.title = '글숨 · 한 글자씩, 마음을 고르다.'; });
   }
@@ -53,7 +67,8 @@ function 주소반영() {
 
 onMounted(() => {
   저장된테마반영();
-  document.title = 필사시작됨.value ? '글숨 · 한글 타이핑 필사' : '글숨 · 한 글자씩, 마음을 고르다.';
+  document.title = 화면.value === 'practice' ? '글숨 · 한글 타이핑 필사'
+    : 화면.value === 'recent' ? '글숨 · 최근 완성한 글' : '글숨 · 한 글자씩, 마음을 고르다.';
   window.addEventListener('hashchange', 주소반영);
   window.addEventListener('storage', 저장된테마반영);
   window.addEventListener('keydown', 첫화면엔터);
