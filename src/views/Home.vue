@@ -139,13 +139,14 @@
                 <div><dt>이번 정타율</dt><dd>{{정타율}}% ({{정타수}}/{{총입력타수}})</dd></div>
                 <div><dt>걸린 시간</dt><dd>{{걸린시간}}</dd></div>
               </dl>
-              <p v-if="이번최고기록" class="개인최고안내">
-                <strong class="개인최고표시">PB</strong> 이번 정타율이 최고 기록이에요.
-              </p>
-              <p v-if="종전최고정타율 !== null" class="정타율비교">
-                종전 최고 {{종전최고표시}}% 대비
-                <strong>{{정타율차이표시}}%p</strong>
-              </p>
+              <div v-if="이번최고기록 || 종전최고정타율 !== null" class="기록비교묶음">
+                <p v-if="이번최고기록" class="개인최고안내">
+                  <strong class="개인최고표시">PB</strong> 이번 정타율이 최고 기록이에요.
+                </p>
+                <p v-if="종전최고정타율 !== null" class="정타율비교">
+                  최고 {{종전최고표시}}% 대비 <strong>{{정타율차이표시}}%p</strong>
+                </p>
+              </div>
             </div>
             <div class="마침동작">
               <button type="button" class="주버튼" @click="다음글시작">다음 지문 시작 <span aria-hidden="true">→</span></button>
@@ -955,6 +956,150 @@ export default defineComponent({
   --완료색: #e2fff0;
 }
 
+.필사실[data-theme='항구'] {
+  --화면: #f1e3cf;
+  --장식빛: rgba(254, 174, 111, .24);
+  --글: #01204e;
+  --보조글: #405273;
+  --옅은글: #52617b;
+  --출처링크: #405273;
+  --출처링크호버: #01204e;
+  --강조: #98512c;
+  --강조호버: #7e3e1e;
+  --역글: #fff;
+  --테두리: #cbbba8;
+  --연테두리: #dfd1bf;
+  --종이: #fff9f0;
+  --선택바탕: #f5d9ba;
+  --선택안함: rgba(255, 249, 240, .58);
+  --진행바탕: #f4e2cb;
+  --진행테두리: #cbbba8;
+  --진행선: #d6b895;
+  --진행활성: #c7763d;
+  --오류색: #a43d42;
+  --완료색: #365e48;
+}
+
+.필사실[data-theme='낙관'] {
+  --화면: #e4ece6;
+  --장식빛: rgba(201, 48, 56, .12);
+  --글: #222323;
+  --보조글: #4b5550;
+  --옅은글: #59645e;
+  --출처링크: #4b5550;
+  --출처링크호버: #222323;
+  --강조: #a72830;
+  --강조호버: #892029;
+  --역글: #fff;
+  --테두리: #bfcbc0;
+  --연테두리: #d3ddd3;
+  --종이: #f0f6f0;
+  --선택바탕: #efd8d7;
+  --선택안함: rgba(240, 246, 240, .59);
+  --진행바탕: #e5e9e1;
+  --진행테두리: #bfcbc0;
+  --진행선: #bac7bb;
+  --진행활성: #c93038;
+  --오류색: #9e3038;
+  --완료색: #3f6b52;
+}
+
+.필사실[data-theme='정원'] {
+  --화면: #ede1d0;
+  --장식빛: rgba(238, 114, 20, .15);
+  --글: #2e4834;
+  --보조글: #425b45;
+  --옅은글: #51634d;
+  --출처링크: #425b45;
+  --출처링크호버: #2e4834;
+  --강조: #a84310;
+  --강조호버: #8b350c;
+  --역글: #fff;
+  --테두리: #c9bba8;
+  --연테두리: #decfbd;
+  --종이: #f9e8d9;
+  --선택바탕: #f3cba9;
+  --선택안함: rgba(249, 232, 217, .58);
+  --진행바탕: #efdbc7;
+  --진행테두리: #c9bba8;
+  --진행선: #d4ad8f;
+  --진행활성: #be4e11;
+  --오류색: #a13e2a;
+  --완료색: #446745;
+}
+
+.필사실[data-theme='자두'] {
+  --화면: #261b2c;
+  --장식빛: rgba(160, 193, 184, .14);
+  --글: #f4e8c1;
+  --보조글: #d4c9c2;
+  --옅은글: #bcb3b9;
+  --출처링크: #d4c9c2;
+  --출처링크호버: #f4e8c1;
+  --강조: #a0c1b8;
+  --강조호버: #c4ddd4;
+  --역글: #261b2c;
+  --테두리: #746579;
+  --연테두리: #5f5065;
+  --종이: #351f39;
+  --선택바탕: #4c3b50;
+  --선택안함: #302238;
+  --진행바탕: #3d2a42;
+  --진행테두리: #746579;
+  --진행선: #847687;
+  --진행활성: #a0c1b8;
+  --오류색: #f0a9a2;
+  --완료색: #b8d5ae;
+}
+
+.필사실[data-theme='서가'] {
+  --화면: #103541;
+  --장식빛: rgba(221, 168, 83, .16);
+  --글: #fbf5dd;
+  --보조글: #ccdbd0;
+  --옅은글: #adc7c2;
+  --출처링크: #ccdbd0;
+  --출처링크호버: #fbf5dd;
+  --강조: #dda853;
+  --강조호버: #f0c67e;
+  --역글: #16404d;
+  --테두리: #648084;
+  --연테두리: #527179;
+  --종이: #16404d;
+  --선택바탕: #315866;
+  --선택안함: #194652;
+  --진행바탕: #1f4b57;
+  --진행테두리: #648084;
+  --진행선: #738d89;
+  --진행활성: #dda853;
+  --오류색: #ffba9b;
+  --완료색: #b9dda9;
+}
+
+.필사실[data-theme='모과'] {
+  --화면: #e7e1cf;
+  --장식빛: rgba(184, 137, 45, .19);
+  --글: #2f391c;
+  --보조글: #535f3b;
+  --옅은글: #566040;
+  --출처링크: #535f3b;
+  --출처링크호버: #2f391c;
+  --강조: #765817;
+  --강조호버: #5f4510;
+  --역글: #fff;
+  --테두리: #c4bea6;
+  --연테두리: #d8d1bd;
+  --종이: #f5efe3;
+  --선택바탕: #e9d9a8;
+  --선택안함: rgba(245, 239, 227, .6);
+  --진행바탕: #e9dfc7;
+  --진행테두리: #c4bea6;
+  --진행선: #bdb184;
+  --진행활성: #b8892d;
+  --오류색: #934c32;
+  --완료색: #4f5b2a;
+}
+
 .필사실:is([data-theme='매트릭스'], [data-theme='PC통신']) .지문머리 h2 {
   font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
   font-weight: 700;
@@ -1011,6 +1156,12 @@ button { font: inherit; }
 .테마견본[data-theme='우주'] { background: #211d37; color: #d8b6ff; }
 .테마견본[data-theme='매트릭스'] { background: #08190e; color: #9affaa; text-shadow: 0 0 7px rgba(99, 245, 131, .65); }
 .테마견본[data-theme='PC통신'] { background: #102287; color: #fff; }
+.테마견본[data-theme='항구'] { background: linear-gradient(135deg, #fff9f0 67%, #feae6f 67%); color: #01204e; }
+.테마견본[data-theme='낙관'] { background: linear-gradient(135deg, #f0f6f0 67%, #c93038 67%); color: #222323; }
+.테마견본[data-theme='정원'] { background: linear-gradient(135deg, #f9e8d9 67%, #ee7214 67%); color: #2e4834; }
+.테마견본[data-theme='자두'] { background: linear-gradient(135deg, #351f39 67%, #a0c1b8 67%); color: #f4e8c1; }
+.테마견본[data-theme='서가'] { background: linear-gradient(135deg, #16404d 67%, #dda853 67%); color: #fbf5dd; }
+.테마견본[data-theme='모과'] { background: linear-gradient(135deg, #f5efe3 67%, #b8892d 67%); color: #2f391c; }
 .설정선택 { display: flex; gap: 7px; }
 .설정선택 button { min-width: 72px; padding: 8px 13px; border: 1px solid var(--테두리); border-radius: 3px; background: var(--선택안함); color: var(--글); font-size: 12px; cursor: pointer; }
 .가장자리선택 input { display: block; width: 100%; margin: 0; accent-color: var(--강조); cursor: pointer; }
@@ -1150,9 +1301,10 @@ button { font: inherit; }
 .마침통계 div { display: flex; flex-direction: column; gap: 5px; }
 .마침통계 dt { color: var(--옅은글); font-size: 11px; }
 .마침통계 dd { margin: 0; color: var(--보조글); font-size: 12px; font-variant-numeric: tabular-nums; }
-.개인최고안내 { display: flex; align-items: center; gap: 7px; margin: 10px 0 0; color: var(--글); font-size: 11px; }
+.기록비교묶음 { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: 6px 18px; width: 100%; margin-top: 10px; text-align: left; }
+.개인최고안내 { display: flex; align-items: center; gap: 7px; margin: 0; color: var(--글); font-size: 11px; }
 .개인최고표시 { padding: 2px 5px; border: 1px solid var(--강조); border-radius: 2px; background: var(--선택바탕); color: var(--글); font-size: 10px; letter-spacing: .04em; }
-.정타율비교 { margin: 10px 0 0; color: var(--보조글); font-size: 11px; font-variant-numeric: tabular-nums; }
+.정타율비교 { margin: 0; color: var(--보조글); font-size: 11px; font-variant-numeric: tabular-nums; }
 .정타율비교 strong { color: var(--글); }
 .마침동작 { display: flex; flex-direction: column; align-items: center; gap: 9px; margin-left: auto; }
 .주버튼 { min-width: 132px; padding: 11px 14px; border: 1px solid var(--강조); border-radius: 2px; background: var(--강조); color: var(--역글); font-size: 12px; cursor: pointer; }

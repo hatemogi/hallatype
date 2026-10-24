@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { 끝글자 } from '@/글자';
 import { 지문틀 } from '@/본문';
 import { 따라그리기틀 } from '@/따라그리기';
@@ -41,10 +42,18 @@ it('필사 설정을 저장하고 잘못된 저장값은 기본값으로 복구�
   expect(필사설정읽기(storage)).toEqual(기본필사설정);
 });
 
-it('열다섯 테마가 선택 순서와 팔레트에 빠짐없이 반영된다', () => {
-  expect(필사테마순서).toHaveLength(15);
+it('스물한 테마가 선택 순서와 팔레트에 빠짐없이 반영된다', () => {
+  expect(필사테마순서).toHaveLength(21);
   expect(필사테마순서.slice(1, 4)).toEqual(['새벽', '오후', '밤']);
+  expect(필사테마순서.slice(-6)).toEqual(['항구', '낙관', '정원', '자두', '서가', '모과']);
   expect(Object.keys(필사팔레트들)).toEqual([...필사테마순서]);
+});
+
+it('모든 필사 테마의 첫 화면 색상이 정의되어 있다', () => {
+  const 첫화면 = readFileSync(new URL('../../src/views/PracticeEntry.vue', import.meta.url), 'utf8');
+  const 테마들 = [...첫화면.matchAll(/\.첫화면\[data-theme='([^']+)'\] \{/g)]
+    .map(([, 테마]) => 테마);
+  expect(테마들).toEqual(필사테마순서.slice(1));
 });
 
 it('슬라이더 다섯 눈금의 가운데가 기존 보통 강도다', () => {
