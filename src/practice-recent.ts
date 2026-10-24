@@ -1,5 +1,5 @@
 import { 테마별지문들, type 연습지문, type 지문테마 } from './practice-passages';
-import { 본문버전, 정타율, type 필사시도 } from './practice-progress';
+import { 본문버전, 정타도장, 정타율, type 칭찬도장종류, type 필사시도 } from './practice-progress';
 import { 완료리듬그래프, type 리듬막대 } from './practice-rhythm';
 
 export interface 최근완료기록 {
@@ -11,6 +11,7 @@ export interface 최근완료기록 {
   정타율: string;
   정타수: number;
   전체타수: number;
+  도장: 칭찬도장종류 | null;
   걸린시간: string;
   리듬막대들: Array<리듬막대 | null>;
 }
@@ -54,6 +55,7 @@ export function 최근완료기록들(시도들: readonly 필사시도[], 개수
         정타율: 정타율(완료.correctInputs, 완료.totalInputs),
         정타수: 완료.correctInputs,
         전체타수: 완료.totalInputs,
+        도장: 정타도장(완료.correctInputs, 완료.totalInputs),
         걸린시간: `${Math.floor(초 / 60)}분 ${초 % 60}초`,
         리듬막대들: 완료리듬그래프(지문.본문, 시도.입력들, 완료.elapsedMs),
       };

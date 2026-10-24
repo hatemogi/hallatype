@@ -19,7 +19,10 @@
         <div v-if="기록들.length" class="기록격자">
           <article v-for="기록 in 기록들" :key="기록.시도ID" class="기록카드">
             <p class="기록메타"><span class="기록주제">{{기록.테마}}</span><time :datetime="기록.완료시각">{{기록.완료일시}}</time></p>
-            <h2><a :href="`#practice?passage=${기록.지문.id}`" :aria-label="`${기록.테마}의 ${기록.지문.제목} 다시 입력하기`">{{기록.지문.제목}} <span aria-hidden="true">↗</span></a></h2>
+            <div class="기록제목줄">
+              <h2><a :href="`#practice?passage=${기록.지문.id}`" :aria-label="`${기록.테마}의 ${기록.지문.제목} 다시 입력하기`">{{기록.지문.제목}} <span aria-hidden="true">↗</span></a></h2>
+              <PraiseStamp v-if="기록.도장" :grade="기록.도장" />
+            </div>
             <div class="기록그래프머리"><span>이 글의 입력 리듬</span><span>정타율 × 속도</span></div>
             <div class="리듬그래프" role="img" :aria-label="`${기록.지문.제목}의 글 전체 진행 위치에 따른 정타와 상대적인 입력 속도. 오타는 다른 색으로 표시됩니다.`">
               <span v-for="(막대, 순서) in 기록.리듬막대들" :key="순서" class="리듬칸" aria-hidden="true">
@@ -44,6 +47,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import GeulsumMark from '@/components/GeulsumMark.vue';
+import PraiseStamp from '@/components/PraiseStamp.vue';
 import { 필사설정읽기, type 필사테마 } from '@/practice-settings';
 import { 진행작업읽기, 시도목록 } from '@/practice-progress';
 import { 최근완료기록들, type 최근완료기록 } from '@/practice-recent';
@@ -80,7 +84,8 @@ a:focus-visible { outline: 2px solid var(--강조); outline-offset: 4px; }
 .기록메타 { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 3px 12px; margin: 0 0 6px; font-size: 11px; }
 .기록주제 { color: var(--강조); font-weight: 700; }
 .기록메타 time { color: var(--보조글); font-variant-numeric: tabular-nums; }
-.기록카드 h2 { margin: 0 0 19px; font-size: 18px; font-weight: 600; }
+.기록제목줄 { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 32px; margin-bottom: 19px; }
+.기록카드 h2 { min-width: 0; margin: 0; font-size: 18px; font-weight: 600; }
 .기록카드 h2 a { color: var(--글); text-decoration: none; }
 .기록카드 h2 span { margin-left: 4px; color: var(--강조); font-size: 14px; }
 .기록그래프머리 { display: flex; justify-content: space-between; gap: 12px; color: var(--보조글); font-size: 11px; }
@@ -105,6 +110,6 @@ a:focus-visible { outline: 2px solid var(--강조); outline-offset: 4px; }
   .최근머리 { margin-bottom: 18px; }
   .기록격자 { grid-template-columns: 1fr; gap: 10px; }
   .기록카드 { padding: 15px; }
-  .기록카드 h2 { margin-bottom: 12px; }
+  .기록제목줄 { margin-bottom: 12px; }
 }
 </style>

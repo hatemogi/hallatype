@@ -114,8 +114,8 @@
               <button v-for="지문 in 현재지문들" :key="지문.id" type="button" class="지문선택버튼"
                 :class="{ 선택됨: 오늘지문.id === 지문.id }" :aria-pressed="오늘지문.id === 지문.id"
                 @click="지문선택(지문, $event)">
-                <strong>{{지문.제목}}</strong>
-                <span>{{지문.주제}} · <em :class="{ 완료: 지문상태(지문) === '완료' }">{{지문상태(지문)}}</em><small v-if="지문최고(지문) !== null" class="최고정타율"> · 최고 {{지문최고(지문)}}%</small></span>
+                <span class="지문목록머리"><strong>{{지문.제목}}</strong><PraiseStamp v-if="지문도장(지문)" :grade="지문도장(지문)!" compact /></span>
+                <span class="지문설명">{{지문.주제}} · <em :class="{ 완료: 지문상태(지문) === '완료' }">{{지문상태(지문)}}</em><small v-if="지문최고(지문) !== null" class="최고정타율"> · 최고 {{지문최고(지문)}}%</small></span>
               </button>
               <p v-if="글테마 === '즐겨찾기' && 현재지문들.length === 0" class="빈즐겨찾기">마음에 드는 글의 별을 누르면 이곳에 모입니다.</p>
             </div>
@@ -174,7 +174,7 @@
 
           <div v-if="결과화면보이기" class="마침">
             <div class="마침내용">
-              <p class="마침꼬리">한 편을 마쳤어요</p>
+              <div class="마침머리"><p class="마침꼬리">한 편을 마쳤어요</p><PraiseStamp v-if="이번도장" :grade="이번도장" compact /></div>
               <dl class="마침통계" aria-label="이번 필사 기록">
                 <div><dt>이번 정타율</dt><dd>{{정타율}}% ({{정타수}}/{{총입력타수}})</dd></div>
                 <div><dt>걸린 시간</dt><dd>{{걸린시간}}</dd></div>
@@ -209,6 +209,7 @@
 <script lang="ts">
 import { defineComponent, markRaw } from 'vue';
 import GeulsumMark from '@/components/GeulsumMark.vue';
+import PraiseStamp from '@/components/PraiseStamp.vue';
 import { 끝글자 } from '@/글자';
 import { 지문틀 } from '@/본문';
 import { 따라그리기틀 } from '@/따라그리기';
@@ -223,7 +224,8 @@ import { 날짜키, 테마별지문들,
 import { 다음미완료지문, 첫진입지문선택, 주제지문선택, 주제완료현황,
   지문모음선택, 지문모음완료현황 } from '@/practice-selection';
 import { 본문버전, 브라우저저장소, 시도목록, 시도시작, 시도완료, 시도중단, 입력묶음,
-  지문입력상태, 지문재개시도, 지문최고정타율, 정타율, 정타율표시, 이번이최고정타율인가,
+  지문입력상태, 지문재개시도, 지문최고정타율, 지문도장등급, 정타도장,
+  정타율, 정타율표시, 이번이최고정타율인가, type 칭찬도장종류,
   진행기록키인가, 진행작업읽기, 진행작업저장, 작업합치기, type 입력키, type 진행작업,
   type 필사시도, type 이어쓰기원본 } from '@/practice-progress';
 import { 기본필사설정, 필사설정, 필사설정읽기, 필사설정저장,
@@ -237,7 +239,7 @@ const 기본글테마 = Object.keys(테마별지문들) as 지문테마[];
 const 글테마선택지: 선택주제[] = [기본글테마[0], '즐겨찾기', ...기본글테마.slice(1)];
 
 export default defineComponent({
-  components: { GeulsumMark },
+  components: { GeulsumMark, PraiseStamp },
   props: {
     requestedPassageId: { type: String, default: undefined },
   },
@@ -405,6 +407,9 @@ export default defineComponent({
     지문최고(지문: 연습지문): string | null {
       const 최고 = 지문최고정타율(this.시도들, 지문.id, 본문버전(지문.본문));
       return 최고 === null ? null : 정타율표시(최고);
+    },
+    지문도장(지문: 연습지문): 칭찬도장종류 | null {
+      return 지문도장등급(this.시도들, 지문.id, 본문버전(지문.본문));
     },
     즐겨찾기인가(지문ID: string): boolean {
       return this.즐겨찾기IDs.includes(지문ID);
@@ -696,6 +701,9 @@ export default defineComponent({
     this.그림판?.종료();
   },
   computed: {
+    이번도장(): 칭찬도장종류 | null {
+      return this.결과화면보이기 ? 정타도장(this.정타수, this.총입력타수) : null;
+    },
     시도들(): 필사시도[] {
       return 시도목록(this.기록들);
     },
@@ -896,8 +904,10 @@ button { font: inherit; }
   cursor: pointer;
 }
 .글목록 .지문선택버튼:hover, .글목록 .지문선택버튼.선택됨 { border-color: var(--강조); background: var(--선택바탕); }
+.지문목록머리 { display: flex; align-items: center; justify-content: space-between; gap: 7px; width: 100%; min-width: 0; }
 .글목록 strong { font-size: 12px; }
-.글목록 .지문선택버튼 > span { color: var(--보조글); font-size: 10px; }
+.지문목록머리 strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.글목록 .지문설명 { color: var(--보조글); font-size: 10px; }
 .글목록 em { font-style: normal; }
 .글목록 em.완료 { color: var(--완료색); font-weight: 700; }
 .글목록 .최고정타율 { color: var(--보조글); font-size: inherit; font-variant-numeric: tabular-nums; }
@@ -989,6 +999,8 @@ button { font: inherit; }
   border-top: 1px solid var(--진행선);
 }
 .마침꼬리 { margin: 0 0 10px; }
+.마침머리 { display: flex; align-items: center; gap: 10px; }
+.마침머리 .마침꼬리 { margin: 0; }
 .마침내용 { min-width: 0; }
 .마침통계 { display: flex; flex-wrap: wrap; gap: 12px 26px; margin: 24px 0 0; padding: 15px 0 0; border-top: 1px solid var(--진행선); }
 .마침통계 div { display: flex; flex-direction: column; gap: 5px; }

@@ -197,6 +197,33 @@ export function 정타율표시(비율: number): string {
   return 표시 === '100.00' ? '100' : 표시;
 }
 
+/** 반올림된 표시값과 구별해 실제 모든 입력이 정타였는지 확인한다. */
+export function 완전정타인가(완료: 필사시도['완료']): boolean {
+  return !!완료 && 완료.totalInputs > 0 && 완료.correctInputs === 완료.totalInputs;
+}
+
+export type 칭찬도장종류 = '참잘했어요' | '잘했어요';
+
+/** 기록의 원래 타수로 등급을 정한다. 표시 정타율의 반올림은 사용하지 않는다. */
+export function 정타도장(정타수: number, 전체타수: number): 칭찬도장종류 | null {
+  if (전체타수 <= 0) { return null; }
+  if (정타수 === 전체타수) { return '참잘했어요'; }
+  return 정타수 * 100 >= 전체타수 * 98 ? '잘했어요' : null;
+}
+
+export function 지문도장등급(시도들: readonly 필사시도[], passageId: string,
+  contentVersion: string): 칭찬도장종류 | null {
+  let 등급: 칭찬도장종류 | null = null;
+  for (const 시도 of 시도들) {
+    if (시도.시작.passageId !== passageId || 시도.시작.contentVersion !== contentVersion ||
+        !시도.완료) { continue; }
+    const 이번 = 정타도장(시도.완료.correctInputs, 시도.완료.totalInputs);
+    if (이번 === '참잘했어요') { return 이번; }
+    if (이번 === '잘했어요') { 등급 = 이번; }
+  }
+  return 등급;
+}
+
 /** 화면에 표시하는 정타율을 기준으로 첫 기록, 갱신, 동률을 최고 기록으로 본다. */
 export function 이번이최고정타율인가(정타수: number, 전체타수: number,
   종전최고: number | null): boolean {
