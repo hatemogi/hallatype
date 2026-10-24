@@ -75,6 +75,13 @@ export const 테마별지문들: Record<지문테마, readonly 연습지문[]> =
   봄봄: 봄봄지문들,
 };
 
+/** 선택한 테마 안에서 다음 지문으로 이어 가고, 마지막이면 첫 지문으로 돌아간다. */
+export function 다음지문찾기(테마: 지문테마, 현재ID: string): 연습지문 {
+  const 지문들 = 테마별지문들[테마];
+  const 순서 = 지문들.findIndex((지문) => 지문.id === 현재ID);
+  return 지문들[(순서 + 1) % 지문들.length];
+}
+
 export function 날짜키(날짜: Date): string {
   return `${날짜.getFullYear()}-${String(날짜.getMonth() + 1).padStart(2, '0')}-${String(날짜.getDate()).padStart(2, '0')}`;
 }
