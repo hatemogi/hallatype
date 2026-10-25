@@ -17,11 +17,14 @@ export default defineConfig({
     vue(),
     VitePWA({
       filename: 'service-worker.js',
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       includeAssets: ['favicon.ico', 'img/icons/*.png'],
+      workbox: { globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}'] },
       manifest: {
-        name: '글숨 · 한 글자씩, 마음을 고르다.',
+        id: './',
+        name: '글숨',
         short_name: '글숨',
+        description: '좋은 문장을 천천히 따라 쓰며 잠시 나에게 집중하는 시간.',
         lang: 'ko',
         start_url: './',
         scope: './',
@@ -31,6 +34,7 @@ export default defineConfig({
         icons: [
           { src: 'img/icons/android-chrome-192x192.png', sizes: '192x192', type: 'image/png' },
           { src: 'img/icons/android-chrome-512x512.png', sizes: '512x512', type: 'image/png' },
+          { src: 'img/icons/maskable-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
     }),

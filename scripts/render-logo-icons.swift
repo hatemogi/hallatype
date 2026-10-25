@@ -37,6 +37,39 @@ func png(_ size: Int) -> Data {
     return data
 }
 
+func maskablePNG(_ size: Int) -> Data {
+    guard let bitmap = NSBitmapImageRep(
+        bitmapDataPlanes: nil,
+        pixelsWide: size,
+        pixelsHigh: size,
+        bitsPerSample: 8,
+        samplesPerPixel: 4,
+        hasAlpha: true,
+        isPlanar: false,
+        colorSpaceName: .deviceRGB,
+        bytesPerRow: 0,
+        bitsPerPixel: 0
+    ), let context = NSGraphicsContext(bitmapImageRep: bitmap) else {
+        fatalError("\(size)픽셀 마스커블 아이콘을 만들 수 없습니다.")
+    }
+
+    NSGraphicsContext.saveGraphicsState()
+    NSGraphicsContext.current = context
+    NSColor(srgbRed: 118 / 255, green: 107 / 255, blue: 89 / 255, alpha: 1).setFill()
+    NSRect(x: 0, y: 0, width: size, height: size).fill()
+    context.imageInterpolation = .high
+    let inset = CGFloat(size) * 0.1
+    logo.draw(in: NSRect(x: inset, y: inset, width: CGFloat(size) - 2 * inset, height: CGFloat(size) - 2 * inset),
+              from: .zero, operation: .sourceOver, fraction: 1)
+    context.flushGraphics()
+    NSGraphicsContext.restoreGraphicsState()
+
+    guard let data = bitmap.representation(using: .png, properties: [:]) else {
+        fatalError("\(size)픽셀 마스커블 PNG를 만들 수 없습니다.")
+    }
+    return data
+}
+
 func appendUInt16(_ value: Int, to data: inout Data) {
     data.append(UInt8(value & 0xff))
     data.append(UInt8((value >> 8) & 0xff))
@@ -79,4 +112,5 @@ for directory in ["public", "pages/public"] {
         }
         try images[size]!.write(to: base.appendingPathComponent("img/icons/\(name)"))
     }
+    try maskablePNG(512).write(to: base.appendingPathComponent("img/icons/maskable-512x512.png"))
 }
