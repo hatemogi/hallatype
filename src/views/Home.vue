@@ -315,7 +315,7 @@ const 지문삽화들: Record<string, string> = {
   UlRmQaTpLnVe: swimmingFreestyle,
 };
 const 어두운삽화테마들 = new Set(['밤', '숲', '커피', '매트릭스', 'PC통신', '서가',
-  '수면과 파문', '빗방울', '바람결', '흐르는 구름', '불멍']);
+  '수면과 파문', '빗방울', '바람결', '흐르는 구름', '불멍', '오로라']);
 export default defineComponent({
   components: { GeulsumMark, GeulsumTitle, PraiseStamp },
   props: {
@@ -1044,6 +1044,10 @@ button { font: inherit; }
 .테마견본[data-theme='불멍'] {
   background: radial-gradient(circle at 54% 100%, #a85a2d, #38221b 48%, #1d1211 85%);
   color: #fff0dc;
+}
+.테마견본[data-theme='오로라'] {
+  background: linear-gradient(130deg, #050b17 23%, #24504c 55%, #355068 70%, #140f30 100%);
+  color: #f2fbf5;
 }
 .설정선택 { display: flex; gap: 7px; }
 .설정선택 button { min-width: 72px; padding: 8px 13px; border: 1px solid var(--테두리); border-radius: 3px; background: var(--선택안함); color: var(--글); font-size: 13px; cursor: pointer; }
