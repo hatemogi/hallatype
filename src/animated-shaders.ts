@@ -1,5 +1,5 @@
 /** 수면 이외의 종이 애니메이션. 모든 효과는 글자를 다시 그리지 않고 배경만 그린다. */
-export const 움직이는테마들 = ['수면과 파문', '빗방울', '바람결', '흐르는 구름', '불멍', '오로라', '별똥별'] as const;
+export const 움직이는테마들 = ['수면과 파문', '매트릭스', '빗방울', '바람결', '흐르는 구름', '불멍', '인센스', '달빛 창가', '오로라', '별똥별'] as const;
 export type 움직이는테마 = typeof 움직이는테마들[number];
 
 export function 움직이는테마인가(테마: string): 테마 is 움직이는테마 {
@@ -19,6 +19,7 @@ uniform float u_motion;
 uniform float u_textBottom;
 uniform vec4 u_tuning; // 기본 세기, 감쇠, 빛, 글자 뒤 빛
 uniform vec4 u_ripples[12];
+uniform vec4 u_flow; // 입력 위치, 이어지는 세기, 글줄 방향
 
 float hash21(vec2 p) {
   return fract(sin(dot(p, vec2(127.1, 311.7))) * 4375.8545);
@@ -42,6 +43,12 @@ float typingRing(vec2 p, float speed) {
     sum += ring * exp(-age * u_tuning.y) * r.w * alive;
   }
   return min(sum, 1.15);
+}
+float flowWake(vec2 p) {
+  float aspect = u_size.x / max(u_size.y, 1.0);
+  vec2 d = vec2((p.x - u_flow.x + u_flow.w * 0.045) * aspect,
+    p.y - u_flow.y - 0.04);
+  return exp(-pow(d.x * 7.0, 2.0) - pow(d.y * 27.0, 2.0)) * u_flow.z;
 }
 `;
 
@@ -69,7 +76,7 @@ void main() {
   color += vec3(0.110, 0.160, 0.180) * min(rain, 1.0) * u_tuning.x * behind;
   float puddle = pow(max(0.0, sin(p.y * 77.0 + p.x * 12.0 - t * 0.75)), 12.0);
   color += vec3(0.015, 0.031, 0.037) * puddle * smoothstep(0.48, 1.0, p.y);
-  color += vec3(0.045, 0.085, 0.105) * typingRing(p, 0.23) * u_tuning.z * behind;
+  color += vec3(0.070, 0.110, 0.130) * flowWake(p) * 2.1 * u_tuning.z * behind;
   gl_FragColor = vec4(color, 1.0);
 }`;
 
@@ -100,7 +107,7 @@ void main() {
     pow((f.y - hash21(cell + 7.0)) * 32.0, 2.0)) *
     step(0.90, hash21(cell + 11.0));
   color += vec3(0.075, 0.100, 0.052) * leaf * behind;
-  color += vec3(0.055, 0.100, 0.075) * typingRing(p, 0.21) * u_tuning.z * behind;
+  color += vec3(0.080, 0.130, 0.085) * flowWake(p) * 2.1 * u_tuning.z * behind;
   gl_FragColor = vec4(color, 1.0);
 }`;
 
@@ -120,7 +127,7 @@ void main() {
   color += vec3(0.015, 0.021, 0.030) * haze;
   color += vec3(0.020, 0.026, 0.037) *
     exp(-pow(length((p - vec2(0.76, 0.14)) * vec2(1.4, 1.0)) * 2.0, 2.0));
-  color += vec3(0.068, 0.086, 0.111) * typingRing(p, 0.17) * u_tuning.z * behind;
+  color += vec3(0.090, 0.108, 0.135) * flowWake(p) * 2.0 * u_tuning.z * behind;
   gl_FragColor = vec4(color, 1.0);
 }`;
 
@@ -164,24 +171,134 @@ void main() {
   gl_FragColor = vec4(color, 1.0);
 }`;
 
+const 인센스 = `${공통}
+void main() {
+  vec2 p = vec2(v_uv.x, 1.0 - v_uv.y);
+  float t = u_time * u_motion;
+  vec3 color = mix(vec3(0.054, 0.064, 0.076), vec3(0.085, 0.078, 0.073), p.y);
+  color += vec3(0.016, 0.019, 0.022) *
+    exp(-pow(length((p - vec2(0.75, 0.53)) * vec2(1.5, 1.0)) * 2.4, 2.0));
+
+  // 향 끝에서 시작한 가는 연기가 위로 갈수록 여러 결로 풀어진다.
+  float rise = max(0.0, 0.69 - p.y);
+  float loose = smoothstep(0.0, 0.24, rise);
+  float width = 0.009 + rise * 0.13;
+  float gust = clamp((u_flow.x - 0.78) * 0.21 * u_flow.z *
+    exp(-pow((p.y - u_flow.y) * 2.8, 2.0)), -0.032, 0.032) *
+    loose * u_motion;
+  float center = 0.78 - rise * 0.21 +
+    (0.018 + rise * 0.042) * loose * sin(rise * 12.0 - t * 0.58) +
+    rise * 0.025 * sin(rise * 25.0 + t * 0.36) + gust;
+  float feather = noise(vec2(p.x * 17.0 + t * 0.08, p.y * 16.0 - t * 0.18));
+  float thread1 = exp(-pow((p.x - center - width * 0.28 *
+    loose * sin(rise * 31.0 + t * 0.62)) / (width * 0.27), 2.0));
+  float thread2 = exp(-pow((p.x - center + width * 0.38 *
+    loose * sin(rise * 23.0 - t * 0.43)) / (width * 0.34), 2.0));
+  float veil = exp(-pow((p.x - center) / (width * 1.15), 2.0));
+  float fade = (1.0 - smoothstep(0.689, 0.701, p.y)) *
+    (1.0 - smoothstep(0.48, 0.69, rise));
+  float smoke = (thread1 * 0.55 + thread2 * 0.43 + veil * 0.14) *
+    (0.45 + feather * 0.60) * fade;
+  float behind = mix(u_tuning.w, 1.0, smoothstep(u_textBottom - 0.04,
+    u_textBottom + 0.11, p.y));
+  color += vec3(0.28, 0.29, 0.29) * smoke * u_tuning.x * behind;
+
+  float stickX = 0.78 + (p.y - 0.69) * 0.14;
+  float stick = exp(-pow((p.x - stickX) * 320.0, 2.0)) *
+    smoothstep(0.685, 0.705, p.y);
+  float tip = exp(-pow((p.x - 0.78) * 170.0, 2.0) -
+    pow((p.y - 0.69) * 170.0, 2.0));
+  float halo = exp(-pow((p.x - 0.78) * 18.0, 2.0) -
+    pow((p.y - 0.69) * 17.0, 2.0));
+  color += vec3(0.13, 0.092, 0.067) * stick;
+  color += vec3(0.34, 0.14, 0.065) * tip * u_tuning.z;
+  color += vec3(0.07, 0.031, 0.016) * halo * u_tuning.z;
+  gl_FragColor = vec4(color, 1.0);
+}`;
+
+const 달빛창가 = `${공통}
+void main() {
+  vec2 p = vec2(v_uv.x, 1.0 - v_uv.y);
+  float t = u_time * u_motion;
+  vec3 color = mix(vec3(0.026, 0.046, 0.073), vec3(0.018, 0.033, 0.059), p.y);
+  float behind = mix(u_tuning.w, 1.0, smoothstep(u_textBottom - 0.05,
+    u_textBottom + 0.10, p.y));
+
+  // 창의 윤곽은 오른쪽 위에, 달빛은 종이를 가로질러 왼쪽 아래로 기운다.
+  float drift = 0.011 * sin(t * 0.26);
+  float rayX = p.x + p.y * 0.29 + drift;
+  float beam = smoothstep(0.56, 0.65, rayX) *
+    (1.0 - smoothstep(0.94, 1.03, rayX));
+  float frameShade = 1.0 - 0.55 * exp(-pow((rayX - 0.78) * 53.0, 2.0)) -
+    0.38 * exp(-pow((p.y - 0.45) * 55.0, 2.0));
+  float cloud = noise(vec2(p.x * 3.2 + t * 0.024, p.y * 2.9 - t * 0.012));
+  float shaft = beam * frameShade * (0.76 + 0.24 * cloud) *
+    (1.0 - smoothstep(0.75, 1.06, p.y));
+  color += vec3(0.126, 0.149, 0.177) * shaft * u_tuning.x * behind;
+
+  float window = smoothstep(0.59, 0.62, p.x) *
+    (1.0 - smoothstep(0.93, 0.96, p.x)) *
+    smoothstep(0.02, 0.05, p.y) *
+    (1.0 - smoothstep(0.25, 0.29, p.y));
+  float pane = (1.0 - 0.68 * exp(-pow((p.x - 0.77) * 85.0, 2.0))) *
+    (1.0 - 0.58 * exp(-pow((p.y - 0.16) * 105.0, 2.0)));
+  color += vec3(0.074, 0.090, 0.115) * window * pane * u_tuning.z * behind;
+
+  // 입력 위치의 빛결만 잠깐 숨 쉬고, 글자 자체는 움직이지 않는다.
+  float response = flowWake(p) * (0.45 + 0.55 * beam);
+  color += vec3(0.069, 0.088, 0.122) * response * u_tuning.z * behind;
+  gl_FragColor = vec4(color, 1.0);
+}`;
+
+const 매트릭스 = `${공통}
+uniform sampler2D u_glyphs;
+
+vec2 codeRain(vec2 p, float t, vec2 density, float layer) {
+  float column = floor(p.x * density.x);
+  float phase = hash21(vec2(column, layer * 29.0));
+  float speed = mix(0.085, 0.19, hash21(vec2(column + 7.0, layer * 13.0))) *
+    mix(0.58, 1.0, layer);
+  float head = mod(t * speed + phase * 1.4, 1.52) - 0.22;
+  float distance = head - p.y;
+  float lengthOfTrail = mix(0.24, 0.52, hash21(vec2(column + 17.0, layer * 5.0)));
+  float trail = step(0.0, distance) *
+    (1.0 - smoothstep(0.02, lengthOfTrail, distance));
+  vec2 grid = vec2(p.x * density.x, (p.y - t * speed) * density.y);
+  vec2 cell = floor(grid);
+  vec2 local = fract(grid);
+  float glyphId = floor(hash21(cell + vec2(layer * 19.0, layer * 37.0)) * 64.0);
+  vec2 atlasUv = vec2((mod(glyphId, 8.0) + local.x) / 8.0,
+    1.0 - (floor(glyphId / 8.0) + local.y) / 8.0);
+  float glyph = texture2D(u_glyphs, atlasUv).a;
+  float gap = step(0.20, hash21(cell + vec2(13.0, layer * 31.0)));
+  float headLight = exp(-pow(distance * 31.0, 2.0));
+  return vec2(glyph * trail * gap, glyph * headLight * trail * gap);
+}
+
+void main() {
+  vec2 p = vec2(v_uv.x, 1.0 - v_uv.y);
+  float t = u_time * u_motion;
+  vec3 color = mix(vec3(0.014, 0.055, 0.025), vec3(0.006, 0.036, 0.015), p.y);
+  float behind = max(1.0 - smoothstep(0.17, 0.28, p.y),
+    mix(u_tuning.w, 1.0, smoothstep(u_textBottom - 0.05,
+      u_textBottom + 0.10, p.y)));
+  float quiet = 0.62 + 0.38 * smoothstep(0.12, 0.47, abs(p.x - 0.5));
+  vec2 distant = codeRain(p, t, vec2(70.0, 46.0), 0.0);
+  vec2 nearby = codeRain(p, t, vec2(43.0, 29.0), 1.0);
+  color += vec3(0.035, 0.23, 0.065) * distant.x * behind * quiet;
+  color += vec3(0.055, 0.51, 0.10) * nearby.x * u_tuning.x * behind * quiet;
+  color += vec3(0.38, 0.76, 0.39) * nearby.y * u_tuning.z * behind * quiet;
+  color += vec3(0.030, 0.19, 0.055) * flowWake(p) * behind;
+  gl_FragColor = vec4(color, 1.0);
+}`;
+
 const 오로라 = `${공통}
 void main() {
   vec2 p = vec2(v_uv.x, 1.0 - v_uv.y);
   float t = u_time * u_motion;
   vec3 color = mix(vec3(0.018, 0.035, 0.065), vec3(0.014, 0.029, 0.053), p.y);
-  float presence = 0.0;
-  float aspect = u_size.x / max(u_size.y, 1.0);
-  for (int i = 0; i < 12; i++) {
-    vec4 r = u_ripples[i];
-    float age = r.z;
-    if (age < 0.0 || age > 3.2 / u_tuning.y) { continue; }
-    float alive = step(0.0, age) * (1.0 - smoothstep(0.15, 3.2 / u_tuning.y, age));
-    vec2 d = vec2((p.x - r.x) * aspect, p.y - r.y);
-    float drift = 0.018 * sin(age * 3.5 + p.y * 13.0) * u_motion;
-    presence += exp(-pow((d.x - drift) * 7.5, 2.0) - pow(d.y * 7.0, 2.0)) *
-      alive * r.w;
-  }
-  presence = min(presence, 1.25);
+  float presence = u_flow.z * exp(-pow((p.x - u_flow.x) * 3.2, 2.0) -
+    pow((p.y - u_flow.y) * 3.5, 2.0));
   vec2 flow = p + presence * vec2(
     0.047 * sin(p.y * 14.0 - t * 1.7),
     0.045 * sin(p.x * 13.0 + t * 1.4));
@@ -269,10 +386,13 @@ void main() {
 }`;
 
 export const 추가효과조각: Record<Exclude<움직이는테마, '수면과 파문'>, string> = {
+  매트릭스,
   빗방울: 비,
   바람결: 바람,
   '흐르는 구름': 구름,
   불멍: 불,
+  인센스,
+  '달빛 창가': 달빛창가,
   오로라,
   별똥별,
 };

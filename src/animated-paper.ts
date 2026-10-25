@@ -5,10 +5,13 @@ import galaxyUrl from './assets/milky-way.webp';
 export const 동적효과조절: Record<움직이는테마,
   { 기본세기: number; 타건세기: number; 감쇠속도: number; 빛강도: number; 글뒤세기: number }> = {
   '수면과 파문': { 기본세기: 0.58, 타건세기: 0.72, 감쇠속도: 1.55, 빛강도: 0.37, 글뒤세기: 0.85 },
+  매트릭스: { 기본세기: 0.90, 타건세기: 0.55, 감쇠속도: 1.5, 빛강도: 0.74, 글뒤세기: 0.28 },
   빗방울: { 기본세기: 0.94, 타건세기: 0.76, 감쇠속도: 1.7, 빛강도: 0.74, 글뒤세기: 0.65 },
   바람결: { 기본세기: 1.0, 타건세기: 0.72, 감쇠속도: 1.45, 빛강도: 0.7, 글뒤세기: 0.80 },
   '흐르는 구름': { 기본세기: 1.10, 타건세기: 0.78, 감쇠속도: 1.25, 빛강도: 0.82, 글뒤세기: 0.78 },
   불멍: { 기본세기: 0.95, 타건세기: 0.86, 감쇠속도: 1.65, 빛강도: 0.82, 글뒤세기: 0.72 },
+  인센스: { 기본세기: 0.90, 타건세기: 0.55, 감쇠속도: 1.5, 빛강도: 0.72, 글뒤세기: 0.67 },
+  '달빛 창가': { 기본세기: 0.94, 타건세기: 0.58, 감쇠속도: 1.6, 빛강도: 0.72, 글뒤세기: 0.58 },
   오로라: { 기본세기: 1.34, 타건세기: 0.86, 감쇠속도: 1.0, 빛강도: 1.05, 글뒤세기: 0.80 },
   별똥별: { 기본세기: 0.55, 타건세기: 0.92, 감쇠속도: 1.4, 빛강도: 0.90, 글뒤세기: 0.70 },
 };
@@ -16,6 +19,10 @@ const 공통조절 = {
   최대파문: 12,
   최대유성: 5,
   유성발생확률: 1 / 7,
+  흐름주입: 0.42,
+  흐름감쇠: 1.8,
+  흐름추종: 15,
+  흐름완충: 18,
   최대DPR: 1.5,
 } as const;
 
@@ -39,6 +46,7 @@ uniform float u_textBottom;
 uniform float u_motion;
 uniform vec4 u_ripples[12];
 uniform vec4 u_tuning; // 기본 물결, 감쇠, 금빛, 지문 뒤 물결
+uniform vec4 u_flow; // 입력 위치, 이어지는 세기, 글줄 방향
 
 void main() {
   vec2 p = vec2(v_uv.x, 1.0 - v_uv.y);
@@ -67,6 +75,8 @@ void main() {
     ripple += ring;
   }
   ripple = min(ripple, 1.15);
+  float flow = exp(-pow((p.x - u_flow.x + u_flow.w * 0.045) * aspect * 7.0, 2.0) -
+    pow((p.y - u_flow.y - 0.04) * 27.0, 2.0)) * u_flow.z;
 
   float quiet = smoothstep(0.04, 0.22, depth);
   float farFade = smoothstep(0.02, 0.28, depth);
@@ -82,8 +92,8 @@ void main() {
   float gold = (glint * 0.64 + glint2 * 0.26) * lane * facing * farFade * quiet;
   gold += ripple * 0.27 * smoothstep(0.0, 0.17, depth);
   color += surface * vec3(0.012, 0.055, 0.059) * depth;
-  color += vec3(0.60, 0.43, 0.22) * gold * u_tuning.z * mix(0.12, 1.0, belowText);
-  color += vec3(0.030, 0.090, 0.086) * (wave + ripple * 0.24) * surface * quiet *
+  color += vec3(0.60, 0.43, 0.22) * (gold + flow * 0.22) * u_tuning.z * mix(0.12, 1.0, belowText);
+  color += vec3(0.030, 0.090, 0.086) * (wave + ripple * 0.24 + flow * 0.45) * surface * quiet *
     mix(u_tuning.w, 1.0, belowText);
   float broadWave = 0.5 + 0.5 * sin(z * 10.0 + p.x * 13.0 + t * 0.38);
   color += vec3(0.014, 0.058, 0.060) * broadWave * u_tuning.x * quiet *
@@ -109,6 +119,7 @@ export class 동적종이효과 {
   private program: WebGLProgram | null = null;
   private buffer: WebGLBuffer | null = null;
   private galaxyTexture: WebGLTexture | null = null;
+  private glyphTexture: WebGLTexture | null = null;
   private galaxyImage: HTMLImageElement | null = null;
   private uniforms: Record<string, WebGLUniformLocation | null> = {};
   private observer: ResizeObserver | null = null;
@@ -122,6 +133,11 @@ export class 동적종이효과 {
   private mistakeAt: number | null = null;
   private mistakeDirection = 1;
   private ripples: 파문[] = [];
+  private flowTarget: { x: number; y: number } | null = null;
+  private flowPosition: { x: number; y: number } | null = null;
+  private flowEnergy = 0;
+  private flowVisible = 0;
+  private flowDirection = 1;
   private disposed = false;
   private valid = false;
 
@@ -177,11 +193,42 @@ export class 동적종이효과 {
     this.program = program;
     this.buffer = buffer;
     this.galaxyTexture = null;
+    this.glyphTexture = null;
     for (const name of ['u_size', 'u_time', 'u_horizon', 'u_textBottom',
-      'u_motion', 'u_tuning', 'u_ripples[0]', 'u_focus', 'u_mistake', 'u_galaxy', 'u_hasGalaxy']) {
+      'u_motion', 'u_tuning', 'u_ripples[0]', 'u_focus', 'u_mistake',
+      'u_galaxy', 'u_hasGalaxy', 'u_glyphs', 'u_flow']) {
       this.uniforms[name] = gl.getUniformLocation(program, name);
     }
+    if (this.theme === '매트릭스') { this.uploadGlyphs(); }
     if (this.galaxyImage?.complete && this.galaxyImage.naturalWidth) { this.uploadGalaxy(); }
+  }
+
+  private uploadGlyphs() {
+    const gl = this.gl;
+    if (!gl) { return; }
+    const atlas = document.createElement('canvas');
+    atlas.width = atlas.height = 256;
+    const ctx = atlas.getContext('2d');
+    const texture = gl.createTexture();
+    if (!ctx || !texture) { throw new Error('매트릭스 글자 텍스처를 만들 수 없습니다.'); }
+    const glyphs = [...'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
+    ctx.font = 'bold 25px "Hiragino Kaku Gothic ProN", "Yu Gothic", monospace';
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    for (let i = 0; i < 64; i++) {
+      ctx.fillText(glyphs[i % glyphs.length], (i % 8) * 32 + 16,
+        Math.floor(i / 8) * 32 + 17);
+    }
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, atlas);
+    this.glyphTexture = texture;
   }
 
   private loadGalaxy() {
@@ -237,11 +284,25 @@ export class 동적종이효과 {
       position = { x: Math.max(0.08, Math.min(0.92, px)),
         y: Math.max(0.07, Math.min(0.91, py)) };
     }
-    const strength = 동적효과조절[this.theme].타건세기;
-    this.ripples.push({ ...position, 시작: this.elapsed,
-      세기: wide ? strength * (meteor ? 1.2 : 2) : strength });
-    const limit = meteor ? 공통조절.최대유성 : 공통조절.최대파문;
-    if (this.ripples.length > limit) { this.ripples.shift(); }
+    if (!meteor) {
+      if (this.flowTarget) {
+        const dx = position.x - this.flowTarget.x;
+        if (dx > 0.005 && dx < 0.22) { this.flowDirection = 1; }
+        else if (dx < -0.005 && dx > -0.22) { this.flowDirection = -1; }
+      }
+      if (!this.flowPosition || Math.hypot(position.x - this.flowPosition.x,
+        position.y - this.flowPosition.y) > 0.25) { this.flowPosition = { ...position }; }
+      this.flowTarget = position;
+      this.flowEnergy = Math.min(1, this.flowEnergy + (wide ? 1.2 : 1) * 공통조절.흐름주입 *
+        동적효과조절[this.theme].타건세기);
+    }
+    if (meteor || (wide && this.theme === '수면과 파문')) {
+      const strength = 동적효과조절[this.theme].타건세기;
+      this.ripples.push({ ...position, 시작: this.elapsed,
+        세기: wide ? strength * (meteor ? 1.2 : 2) : strength });
+      const limit = meteor ? 공통조절.최대유성 : 공통조절.최대파문;
+      if (this.ripples.length > limit) { this.ripples.shift(); }
+    }
   }
 
   mistake() {
@@ -274,6 +335,14 @@ export class 동적종이효과 {
     const dt = Math.min(0.05, this.lastFrame ? (now - this.lastFrame) / 1000 : 0);
     this.elapsed += dt;
     this.lastFrame = now;
+    this.flowEnergy *= Math.exp(-dt * 공통조절.흐름감쇠);
+    this.flowVisible += (this.flowEnergy - this.flowVisible) *
+      (1 - Math.exp(-dt * 공통조절.흐름완충));
+    if (this.flowTarget && this.flowPosition) {
+      const follow = 1 - Math.exp(-dt * 공통조절.흐름추종);
+      this.flowPosition.x += (this.flowTarget.x - this.flowPosition.x) * follow;
+      this.flowPosition.y += (this.flowTarget.y - this.flowPosition.y) * follow;
+    }
     this.resize();
     gl.useProgram(this.program);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
@@ -290,6 +359,9 @@ export class 동적종이효과 {
     gl.uniform1f(uniform('u_horizon'), 0);
     gl.uniform1f(uniform('u_textBottom'), bottom);
     gl.uniform1f(uniform('u_motion'), this.media.matches ? 0.08 : 1);
+    gl.uniform4f(uniform('u_flow'), this.flowPosition?.x ?? 0.5,
+      this.flowPosition?.y ?? 0.5, this.flowVisible * (this.media.matches ? 0.18 : 1),
+      this.flowDirection);
     const tuning = 동적효과조절[this.theme];
     gl.uniform4f(uniform('u_tuning'), tuning.기본세기,
       tuning.감쇠속도, tuning.빛강도, tuning.글뒤세기);
@@ -323,6 +395,10 @@ export class 동적종이효과 {
       gl.bindTexture(gl.TEXTURE_2D, this.galaxyTexture);
       gl.uniform1i(uniform('u_galaxy'), 0);
       gl.uniform1f(uniform('u_hasGalaxy'), this.galaxyTexture ? 1 : 0);
+    } else if (this.theme === '매트릭스') {
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, this.glyphTexture);
+      gl.uniform1i(uniform('u_glyphs'), 0);
     }
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     this.ripples = this.ripples.filter(r => this.elapsed - r.시작 < 3.5);
@@ -335,7 +411,8 @@ export class 동적종이효과 {
   private visibilityChanged = () => {
     this.lastFrame = 0;
     if (document.hidden) { cancelAnimationFrame(this.frame); this.frame = 0; }
-    else { this.ripples = []; this.mistakeAt = null; this.schedule(); }
+    else { this.ripples = []; this.mistakeAt = null;
+      this.flowEnergy = this.flowVisible = 0; this.schedule(); }
   };
   private motionChanged = () => { this.lastFrame = 0; };
   private contextLost = (event: Event) => {
@@ -367,6 +444,7 @@ export class 동적종이효과 {
     }
     if (this.gl) {
       if (this.galaxyTexture) { this.gl.deleteTexture(this.galaxyTexture); }
+      if (this.glyphTexture) { this.gl.deleteTexture(this.glyphTexture); }
       if (this.buffer) { this.gl.deleteBuffer(this.buffer); }
       if (this.program) { this.gl.deleteProgram(this.program); }
     }
@@ -375,8 +453,13 @@ export class 동적종이효과 {
     this.program = null;
     this.galaxyImage = null;
     this.galaxyTexture = null;
+    this.glyphTexture = null;
     this.uniforms = {};
     this.ripples = [];
+    this.flowTarget = null;
+    this.flowPosition = null;
+    this.flowEnergy = 0;
+    this.flowVisible = 0;
     this.focusText = null;
     this.flameFocus = null;
     this.mistakeAt = null;

@@ -315,7 +315,8 @@ const 지문삽화들: Record<string, string> = {
   UlRmQaTpLnVe: swimmingFreestyle,
 };
 const 어두운삽화테마들 = new Set(['밤', '숲', '커피', '매트릭스', 'PC통신', '서가',
-  '수면과 파문', '빗방울', '바람결', '흐르는 구름', '불멍', '오로라', '별똥별']);
+  '수면과 파문', '빗방울', '바람결', '흐르는 구름', '불멍', '인센스',
+  '달빛 창가', '오로라', '별똥별']);
 export default defineComponent({
   components: { GeulsumMark, GeulsumTitle, PraiseStamp },
   props: {
@@ -1054,6 +1055,14 @@ button { font: inherit; }
 .테마견본[data-theme='불멍'] {
   background: radial-gradient(circle at 54% 100%, #a85a2d, #38221b 48%, #1d1211 85%);
   color: #fff0dc;
+}
+.테마견본[data-theme='인센스'] {
+  background: radial-gradient(circle at 70% 95%, #78634d, #30343a 42%, #12151b 85%);
+  color: #f4efe1;
+}
+.테마견본[data-theme='달빛 창가'] {
+  background: linear-gradient(135deg, #091424 16%, #1b3553 55%, #acc5df 72%, #1b3045 100%);
+  color: #f3f7fa;
 }
 .테마견본[data-theme='오로라'] {
   background: linear-gradient(135deg, #071421 12%, #177c96 29%, #319c53 45%, #6746a2 63%, #a83479 78%, #130f2c 100%);
