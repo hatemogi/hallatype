@@ -186,12 +186,6 @@
           </div>
         </article>
 
-        <div class="타자기롤러" aria-hidden="true">
-          <span class="롤러손잡이"></span>
-          <span class="롤러축"><span class="롤러눈금"></span></span>
-          <span class="롤러손잡이"></span>
-        </div>
-
         <section class="진행판" aria-label="필사 진행 상황">
           <div class="진행영역">
             <div class="진행문구">
@@ -1233,39 +1227,12 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
 .종이 {
   flex: 1;
   min-height: 220px;
-  margin: 0 22px -5px;
+  margin: 0 22px 0;
   padding: 18px clamp(18px, 3vw, 38px) 28px;
   border-radius: 2px 2px 0 0;
   box-shadow: 0 2px 10px var(--타자기그림자);
   overflow-y: auto;
   overscroll-behavior: contain;
-}
-.타자기롤러 { position: relative; z-index: 1; display: flex; align-items: center; flex: none; height: 27px; }
-.롤러손잡이 {
-  flex: none;
-  width: 21px;
-  height: 27px;
-  box-sizing: border-box;
-  border: 3px solid var(--타자기금속);
-  border-radius: 5px;
-  background: repeating-linear-gradient(0deg, var(--타자기금속) 0 2px, var(--타자기받침) 2px 4px);
-  box-shadow: 0 2px 2px var(--타자기그림자);
-}
-.롤러축 {
-  display: flex;
-  align-items: center;
-  flex: 1;
-  height: 15px;
-  background: var(--글);
-  border-radius: 2px;
-  box-shadow: inset 0 2px 0 color-mix(in srgb, var(--종이) 25%, transparent), 0 3px 3px var(--타자기그림자);
-}
-.롤러눈금 {
-  width: 100%;
-  height: 4px;
-  margin: 0 18px;
-  background: repeating-linear-gradient(90deg, var(--종이) 0 1px, transparent 1px 12px);
-  opacity: .45;
 }
 .지문머리 { padding-top: 12px; }
 .지문머리내용 { min-width: 0; }
@@ -1286,7 +1253,7 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
   position: relative;
   flex: none;
   max-width: none;
-  margin: -5px 0 0;
+  margin: -1px 0 0;
   padding: 17px 23px 12px;
   border: 1px solid var(--타자기받침);
   border-radius: 13px 13px 29px 29px;
@@ -1367,9 +1334,6 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
   .지문머리 h2 { font-size: 25px; }
   .가는선 { margin-top: 15px; }
   .캔버스영역 { margin-top: 14px; }
-  .타자기롤러 { height: 21px; }
-  .롤러손잡이 { width: 14px; height: 21px; border-width: 2px; }
-  .롤러축 { height: 12px; }
   .진행판 { padding: 13px 14px 10px; border-radius: 10px 10px 22px 22px; }
   .타자기통풍구 { margin-top: 11px; height: 4px; }
   .진행아래 { flex-direction: row; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
