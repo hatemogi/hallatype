@@ -264,8 +264,8 @@ onUnmounted(() => {
   --진행선: #896057;
 }
 .첫화면[data-theme='오로라'] {
-  --첫화면중심: #173c41;
-  --첫화면중간: #102533;
+  --첫화면중심: #26304d;
+  --첫화면중간: #14263a;
   --첫화면끝: #080d1c;
   --글: #edf7f3;
   --보조글: #bdd6d1;
@@ -274,6 +274,10 @@ onUnmounted(() => {
   --강조호버: #b2efd2;
   --역글: #102b2b;
   --진행선: #578284;
+  background:
+    radial-gradient(ellipse at 28% 30%, rgba(39, 141, 119, .27), transparent 48%),
+    radial-gradient(ellipse at 73% 59%, rgba(137, 58, 156, .24), transparent 47%),
+    radial-gradient(circle at 50% 42%, var(--첫화면중심) 0, var(--첫화면중간) 58%, var(--첫화면끝) 100%);
 }
 .첫화면안쪽 {
   box-sizing: border-box;

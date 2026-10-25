@@ -1046,7 +1046,7 @@ button { font: inherit; }
   color: #fff0dc;
 }
 .테마견본[data-theme='오로라'] {
-  background: linear-gradient(130deg, #050b17 23%, #24504c 55%, #355068 70%, #140f30 100%);
+  background: linear-gradient(135deg, #071421 12%, #177c96 29%, #319c53 45%, #6746a2 63%, #a83479 78%, #130f2c 100%);
   color: #f2fbf5;
 }
 .설정선택 { display: flex; gap: 7px; }

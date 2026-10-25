@@ -209,22 +209,28 @@ void main() {
   float arch = 0.31 + 0.075 * sin(flow.x * 6.0 - t * 0.27) +
     0.045 * sin(flow.x * 13.0 + t * 0.19);
   float edge = flow.y - arch - (wander - 0.5) * 0.11;
-  float veil1 = exp(-pow(edge * 4.8, 2.0));
-  float ridge = exp(-pow(edge * 13.0, 2.0));
-  float veil2 = exp(-pow((flow.y - 0.61 + 0.055 * sin(flow.x * 8.0 + t * 0.23)) * 5.8, 2.0));
-  float curtain = 0.45 + 0.55 * noise(vec2(flow.x * 19.0 - t * 0.17, flow.y * 3.0));
+  float cyan = exp(-pow((edge + 0.14) * 13.0, 2.0));
+  float green = exp(-pow((edge + 0.02) * 13.0, 2.0));
+  float violet = exp(-pow((edge - 0.10) * 13.0, 2.0));
+  float pink = exp(-pow((edge - 0.22) * 13.0, 2.0));
+  float lower = exp(-pow((flow.y - 0.75 + 0.045 * sin(flow.x * 8.0 + t * 0.23)) * 7.0, 2.0));
+  float curtain = 0.56 + 0.44 * noise(vec2(flow.x * 19.0 - t * 0.17, flow.y * 3.0));
   float folds = pow(0.5 + 0.5 * sin(flow.x * 26.0 +
     1.7 * noise(vec2(flow.x * 4.0, flow.y * 3.0)) - t * 0.30), 5.0);
   float breath = 0.78 + 0.22 * sin(t * 0.42 + flow.x * 4.0);
   float behind = mix(u_tuning.w, 1.0, smoothstep(u_textBottom - 0.06,
     u_textBottom + 0.10, p.y));
-  color += vec3(0.035, 0.230, 0.160) * veil1 * curtain * breath * u_tuning.x * behind;
-  color += vec3(0.024, 0.120, 0.100) * ridge * curtain * u_tuning.x * behind;
-  color += vec3(0.018, 0.090, 0.075) * folds * veil1 * u_tuning.x * behind;
-  color += vec3(0.105, 0.075, 0.185) * veil2 * curtain * u_tuning.x * behind;
+  float light = curtain * breath * u_tuning.x * behind;
+  color += vec3(0.015, 0.215, 0.255) * cyan * light;
+  color += vec3(0.045, 0.245, 0.085) * green * light;
+  color += vec3(0.185, 0.055, 0.265) * violet * light;
+  color += vec3(0.240, 0.040, 0.135) * pink * light;
+  color += vec3(0.020, 0.095, 0.150) * lower * curtain * u_tuning.x * behind;
+  color += vec3(0.035, 0.075, 0.090) * folds * (cyan + green + violet) * light;
   float dance = presence * (0.62 + 0.38 * sin(p.x * 21.0 - t * 2.4 + p.y * 9.0));
-  color += vec3(0.027, 0.130, 0.102) * dance * u_tuning.z * behind;
-  color += vec3(0.042, 0.032, 0.082) * dance * veil2 * u_tuning.z * behind;
+  vec3 pulse = mix(vec3(0.025, 0.170, 0.165), vec3(0.195, 0.055, 0.210),
+    0.5 + 0.5 * sin(t * 2.2 + p.x * 16.0));
+  color += pulse * dance * u_tuning.z * behind;
   gl_FragColor = vec4(color, 1.0);
 }`;
 
