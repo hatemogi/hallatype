@@ -314,7 +314,7 @@ const 가장자리단계이름 = ['선명하게', '조금 선명하게', '보통
 const 지문삽화들: Record<string, string> = {
   UlRmQaTpLnVe: swimmingFreestyle,
 };
-const 어두운삽화테마들 = new Set(['밤', '숲', '커피', '매트릭스', 'PC통신', '서가',
+const 어두운삽화테마들 = new Set(['밤', '숲', '청보리', '폭포', '커피', '매트릭스', 'PC통신', '서가',
   '수면과 파문', '빗방울', '바람결', '흐르는 구름', '불멍', '인센스',
   '달빛 창가', '오로라', '별똥별']);
 export default defineComponent({
@@ -1031,6 +1031,8 @@ button { font: inherit; }
 .테마견본[data-theme='새벽'] { background: #fafcfc; color: #30444f; }
 .테마견본[data-theme='밤'] { background: #222c31; color: #e2e7df; }
 .테마견본[data-theme='숲'] { background: #19392f; color: #b6d99e; }
+.테마견본[data-theme='청보리'] { background: #1e3423; color: #d3df8b; }
+.테마견본[data-theme='폭포'] { background: linear-gradient(160deg, #123039 45%, #315965 74%, #7f9ca3); color: #edf4ef; }
 .테마견본[data-theme='라벤더'] { background: #fcfaff; color: #675184; }
 .테마견본[data-theme='커피'] { background: #352922; color: #d8b58e; }
 .테마견본[data-theme='매트릭스'] { background: #08190e; color: #9affaa; text-shadow: 0 0 7px rgba(99, 245, 131, .65); }
@@ -1214,7 +1216,9 @@ button { font: inherit; }
   height: 100%;
   pointer-events: none;
   border-radius: 2px 2px 0 0;
+  z-index: 0;
 }
+.필사실[data-theme='커피'] .종이 { z-index: 2; }
 .종이외피.동적배경작동 .종이 { background: transparent; }
 .진행판 {
   box-sizing: border-box;

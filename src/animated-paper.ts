@@ -1,9 +1,23 @@
-import { 추가효과조각, type 움직이는테마 } from './animated-shaders';
+import { 추가효과조각, 커피김조각, 커피잔조각, type 움직이는테마 } from './animated-shaders';
 import galaxyUrl from './assets/milky-way.webp';
+import bambooUrl from './assets/bamboo-grove.webp';
+import barleyUrl from './assets/barley-field.webp';
+import waterfallUrl from './assets/distant-waterfall.webp';
+import coffeeCupUrl from './assets/coffee-tumbler.webp';
+
+const 풍경이미지: Partial<Record<움직이는테마, string>> = {
+  숲: bambooUrl,
+  청보리: barleyUrl,
+  폭포: waterfallUrl,
+};
 
 /** 종이 전체 뒤에서 동작하는 WebGL 효과. 테마별 강도는 여기에서 조절한다. */
 export const 동적효과조절: Record<움직이는테마,
   { 기본세기: number; 타건세기: number; 감쇠속도: number; 빛강도: number; 글뒤세기: number }> = {
+  숲: { 기본세기: 0.90, 타건세기: 0, 감쇠속도: 1.5, 빛강도: 0.90, 글뒤세기: 1.0 },
+  청보리: { 기본세기: 0.90, 타건세기: 0, 감쇠속도: 1.5, 빛강도: 0.90, 글뒤세기: 1.0 },
+  폭포: { 기본세기: 1.0, 타건세기: 0, 감쇠속도: 1.5, 빛강도: 0.85, 글뒤세기: 1.0 },
+  커피: { 기본세기: 0.90, 타건세기: 0, 감쇠속도: 1.5, 빛강도: 0.90, 글뒤세기: 1.0 },
   '수면과 파문': { 기본세기: 0.58, 타건세기: 0.72, 감쇠속도: 1.55, 빛강도: 0.37, 글뒤세기: 0.85 },
   매트릭스: { 기본세기: 0.90, 타건세기: 0.55, 감쇠속도: 1.5, 빛강도: 0.74, 글뒤세기: 0.28 },
   빗방울: { 기본세기: 0.94, 타건세기: 0.76, 감쇠속도: 1.7, 빛강도: 0.74, 글뒤세기: 0.65 },
@@ -23,6 +37,11 @@ const 공통조절 = {
   흐름감쇠: 1.8,
   흐름추종: 15,
   흐름완충: 18,
+  인센스바람추종: 2.4,
+  인센스바람완충: 3.4,
+  인센스오타주입: 0.8,
+  인센스오타감쇠: 3.5,
+  인센스오타완충: 12,
   최대DPR: 1.5,
 } as const;
 
@@ -119,8 +138,16 @@ export class 동적종이효과 {
   private program: WebGLProgram | null = null;
   private buffer: WebGLBuffer | null = null;
   private galaxyTexture: WebGLTexture | null = null;
+  private landscapeTexture: WebGLTexture | null = null;
   private glyphTexture: WebGLTexture | null = null;
+  private cupTexture: WebGLTexture | null = null;
+  private cupImage: HTMLImageElement | null = null;
+  private cupProgram: WebGLProgram | null = null;
+  private steamProgram: WebGLProgram | null = null;
+  private cupUniforms: Record<string, WebGLUniformLocation | null> = {};
+  private steamUniforms: Record<string, WebGLUniformLocation | null> = {};
   private galaxyImage: HTMLImageElement | null = null;
+  private landscapeImage: HTMLImageElement | null = null;
   private uniforms: Record<string, WebGLUniformLocation | null> = {};
   private observer: ResizeObserver | null = null;
   private media = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -132,6 +159,8 @@ export class 동적종이효과 {
   private flameFocus: { x: number; y: number } | null = null;
   private mistakeAt: number | null = null;
   private mistakeDirection = 1;
+  private incenseDentEnergy = 0;
+  private incenseDentVisible = 0;
   private ripples: 파문[] = [];
   private flowTarget: { x: number; y: number } | null = null;
   private flowPosition: { x: number; y: number } | null = null;
@@ -159,6 +188,9 @@ export class 동적종이효과 {
     catch (error) { console.warn(`${this.theme} 테마를 시작할 수 없습니다.`, error); this.destroy(); return false; }
     this.valid = true;
     if (this.theme === '별똥별') { this.loadGalaxy(); }
+    if (this.theme === '커피') { this.loadCoffeeCup(); }
+    const landscapeUrl = 풍경이미지[this.theme];
+    if (landscapeUrl) { this.loadLandscape(landscapeUrl); }
     this.resize();
     this.schedule();
     return true;
@@ -193,14 +225,57 @@ export class 동적종이효과 {
     this.program = program;
     this.buffer = buffer;
     this.galaxyTexture = null;
+    this.landscapeTexture = null;
     this.glyphTexture = null;
+    this.cupTexture = null;
+    this.cupProgram = null;
+    this.steamProgram = null;
     for (const name of ['u_size', 'u_time', 'u_horizon', 'u_textBottom',
       'u_motion', 'u_tuning', 'u_ripples[0]', 'u_focus', 'u_mistake',
-      'u_galaxy', 'u_hasGalaxy', 'u_glyphs', 'u_flow']) {
+      'u_galaxy', 'u_hasGalaxy', 'u_landscape', 'u_hasLandscape',
+      'u_glyphs', 'u_flow']) {
       this.uniforms[name] = gl.getUniformLocation(program, name);
     }
     if (this.theme === '매트릭스') { this.uploadGlyphs(); }
+    if (this.theme === '커피') {
+      try { this.initializeCoffee(); }
+      catch (error) { console.warn('커피 이미지와 김 효과를 시작할 수 없습니다.', error); }
+    }
     if (this.galaxyImage?.complete && this.galaxyImage.naturalWidth) { this.uploadGalaxy(); }
+    if (this.landscapeImage?.complete && this.landscapeImage.naturalWidth) {
+      this.uploadLandscape();
+    }
+    if (this.cupImage?.complete && this.cupImage.naturalWidth) { this.uploadCoffeeCup(); }
+  }
+
+  private initializeCoffee() {
+    const gl = this.gl;
+    if (!gl) { return; }
+    const makeProgram = (fragmentCode: string) => {
+      const vertex = 셰이더(gl, gl.VERTEX_SHADER, 꼭짓점);
+      const fragment = 셰이더(gl, gl.FRAGMENT_SHADER, fragmentCode);
+      const program = gl.createProgram();
+      if (!program) { throw new Error('커피 WebGL 프로그램을 만들 수 없습니다.'); }
+      gl.attachShader(program, vertex);
+      gl.attachShader(program, fragment);
+      gl.linkProgram(program);
+      gl.deleteShader(vertex);
+      gl.deleteShader(fragment);
+      if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        const 오류 = gl.getProgramInfoLog(program);
+        gl.deleteProgram(program);
+        throw new Error(오류 ?? '커피 WebGL 프로그램 연결 실패');
+      }
+      return program;
+    };
+    this.cupProgram = makeProgram(커피잔조각);
+    this.steamProgram = makeProgram(커피김조각);
+    for (const name of ['u_cupImage', 'u_cupRect']) {
+      this.cupUniforms[name] = gl.getUniformLocation(this.cupProgram, name);
+    }
+    for (const name of ['u_size', 'u_time', 'u_motion', 'u_tuning', 'u_cup']) {
+      this.steamUniforms[name] = gl.getUniformLocation(this.steamProgram, name);
+    }
   }
 
   private uploadGlyphs() {
@@ -257,6 +332,59 @@ export class 동적종이효과 {
     this.galaxyTexture = texture;
   }
 
+  private loadLandscape(url: string) {
+    const image = new Image();
+    this.landscapeImage = image;
+    image.onload = () => { if (!this.disposed && this.valid) { this.uploadLandscape(); } };
+    image.onerror = () => { console.warn(`${this.theme} 풍경 이미지를 불러올 수 없습니다.`); };
+    image.src = url;
+  }
+
+  private uploadLandscape() {
+    const gl = this.gl;
+    const image = this.landscapeImage;
+    if (!gl || !image || !image.naturalWidth || gl.isContextLost()) { return; }
+    const texture = gl.createTexture();
+    if (!texture) { return; }
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 0);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
+    if (this.landscapeTexture) { gl.deleteTexture(this.landscapeTexture); }
+    this.landscapeTexture = texture;
+  }
+
+  private loadCoffeeCup() {
+    const image = new Image();
+    this.cupImage = image;
+    image.onload = () => { if (!this.disposed && this.valid) { this.uploadCoffeeCup(); } };
+    image.onerror = () => { console.warn('커피 텀블러 이미지를 불러올 수 없습니다.'); };
+    image.src = coffeeCupUrl;
+  }
+
+  private uploadCoffeeCup() {
+    const gl = this.gl;
+    const image = this.cupImage;
+    if (!gl || !image || !image.naturalWidth || gl.isContextLost()) { return; }
+    const texture = gl.createTexture();
+    if (!texture) { return; }
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    // 이미지의 위쪽이 화면 위쪽에 오도록 일반 WebGL UV 방향에 맞춘다.
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+    if (this.cupTexture) { gl.deleteTexture(this.cupTexture); }
+    this.cupTexture = texture;
+  }
+
   setContentBottom(fraction: number) {
     this.sourceBottom = Math.max(0, Math.min(1, fraction));
   }
@@ -269,7 +397,7 @@ export class 동적종이효과 {
 
   typing(x: number, textY: number, wide = false) {
     if (!this.valid || document.hidden) { return; }
-    if (this.theme === '불멍') { return; }
+    if (this.theme === '불멍' || this.theme === '커피' || 풍경이미지[this.theme]) { return; }
     const meteor = this.theme === '별똥별';
     if (meteor && Math.random() >= 공통조절.유성발생확률) { return; }
     let position: { x: number; y: number };
@@ -306,7 +434,13 @@ export class 동적종이효과 {
   }
 
   mistake() {
-    if (this.theme !== '불멍' || !this.valid || document.hidden) { return; }
+    if ((this.theme !== '불멍' && this.theme !== '매트릭스' && this.theme !== '인센스') ||
+      !this.valid || document.hidden) { return; }
+    if (this.theme === '인센스') {
+      this.incenseDentEnergy = Math.min(1,
+        this.incenseDentEnergy + 공통조절.인센스오타주입);
+      return;
+    }
     this.mistakeAt = this.elapsed;
     this.mistakeDirection *= -1;
   }
@@ -324,6 +458,44 @@ export class 동적종이효과 {
     }
   };
 
+  private drawCoffee(paper: DOMRect) {
+    const gl = this.gl;
+    const image = this.cupImage;
+    const cupProgram = this.cupProgram;
+    const steamProgram = this.steamProgram;
+    if (!gl || !this.buffer || !image || !this.cupTexture || !cupProgram || !steamProgram) { return; }
+    // 기존 CSS 배치와 같은 크기와 위치: 오른쪽 2%, 바닥 0, 너비 88~112px.
+    const width = Math.max(88, Math.min(paper.width * 0.12, 112));
+    const height = width * image.naturalHeight / image.naturalWidth;
+    const x = (paper.width * 0.98 - width) / Math.max(paper.width, 1);
+    const w = width / Math.max(paper.width, 1);
+    const h = height / Math.max(paper.height, 1);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.cupTexture);
+    gl.useProgram(cupProgram);
+    const cupAttribute = gl.getAttribLocation(cupProgram, 'a_position');
+    gl.enableVertexAttribArray(cupAttribute);
+    gl.vertexAttribPointer(cupAttribute, 2, gl.FLOAT, false, 0, 0);
+    gl.uniform1i(this.cupUniforms.u_cupImage, 0);
+    gl.uniform4f(this.cupUniforms.u_cupRect, x, 0, w, h);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+    gl.useProgram(steamProgram);
+    const steamAttribute = gl.getAttribLocation(steamProgram, 'a_position');
+    gl.enableVertexAttribArray(steamAttribute);
+    gl.vertexAttribPointer(steamAttribute, 2, gl.FLOAT, false, 0, 0);
+    gl.uniform2f(this.steamUniforms.u_size, this.canvas.width, this.canvas.height);
+    gl.uniform1f(this.steamUniforms.u_time, this.elapsed);
+    gl.uniform1f(this.steamUniforms.u_motion, this.media.matches ? 0.08 : 1);
+    gl.uniform4f(this.steamUniforms.u_tuning, 동적효과조절.커피.기본세기, 0, 0, 0);
+    gl.uniform3f(this.steamUniforms.u_cup,
+      x + w / 2, 1 - h * 0.84, h / 0.31);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    gl.disable(gl.BLEND);
+  }
+
   private draw = (now: number) => {
     this.frame = 0;
     if (!this.valid || document.hidden || !this.gl || !this.program || !this.buffer) { return; }
@@ -336,14 +508,24 @@ export class 동적종이효과 {
     this.elapsed += dt;
     this.lastFrame = now;
     this.flowEnergy *= Math.exp(-dt * 공통조절.흐름감쇠);
+    const flowSmoothing = this.theme === '인센스'
+      ? 공통조절.인센스바람완충 : 공통조절.흐름완충;
     this.flowVisible += (this.flowEnergy - this.flowVisible) *
-      (1 - Math.exp(-dt * 공통조절.흐름완충));
+      (1 - Math.exp(-dt * flowSmoothing));
+    if (this.theme === '인센스') {
+      this.incenseDentEnergy *= Math.exp(-dt * 공통조절.인센스오타감쇠);
+      this.incenseDentVisible += (this.incenseDentEnergy - this.incenseDentVisible) *
+        (1 - Math.exp(-dt * 공통조절.인센스오타완충));
+    }
     if (this.flowTarget && this.flowPosition) {
-      const follow = 1 - Math.exp(-dt * 공통조절.흐름추종);
+      const followRate = this.theme === '인센스'
+        ? 공통조절.인센스바람추종 : 공통조절.흐름추종;
+      const follow = 1 - Math.exp(-dt * followRate);
       this.flowPosition.x += (this.flowTarget.x - this.flowPosition.x) * follow;
       this.flowPosition.y += (this.flowTarget.y - this.flowPosition.y) * follow;
     }
     this.resize();
+    gl.disable(gl.BLEND);
     gl.useProgram(this.program);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
     const attribute = gl.getAttribLocation(this.program, 'a_position');
@@ -375,6 +557,10 @@ export class 동적종이효과 {
       this.flameFocus.x += (target.x - this.flameFocus.x) * follow;
       this.flameFocus.y += (target.y - this.flameFocus.y) * follow;
       gl.uniform2f(uniform('u_focus'), this.flameFocus.x, this.flameFocus.y);
+    }
+    if (this.theme === '인센스') {
+      gl.uniform2f(uniform('u_mistake'), this.incenseDentVisible, 0);
+    } else if (this.theme === '불멍' || this.theme === '매트릭스') {
       gl.uniform2f(uniform('u_mistake'),
         this.mistakeAt === null ? -1 : this.elapsed - this.mistakeAt,
         this.mistakeDirection);
@@ -395,12 +581,18 @@ export class 동적종이효과 {
       gl.bindTexture(gl.TEXTURE_2D, this.galaxyTexture);
       gl.uniform1i(uniform('u_galaxy'), 0);
       gl.uniform1f(uniform('u_hasGalaxy'), this.galaxyTexture ? 1 : 0);
+    } else if (풍경이미지[this.theme]) {
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, this.landscapeTexture);
+      gl.uniform1i(uniform('u_landscape'), 0);
+      gl.uniform1f(uniform('u_hasLandscape'), this.landscapeTexture ? 1 : 0);
     } else if (this.theme === '매트릭스') {
       gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D, this.glyphTexture);
       gl.uniform1i(uniform('u_glyphs'), 0);
     }
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    if (this.theme === '커피') { this.drawCoffee(paper); }
     this.ripples = this.ripples.filter(r => this.elapsed - r.시작 < 3.5);
     this.schedule();
   };
@@ -412,7 +604,8 @@ export class 동적종이효과 {
     this.lastFrame = 0;
     if (document.hidden) { cancelAnimationFrame(this.frame); this.frame = 0; }
     else { this.ripples = []; this.mistakeAt = null;
-      this.flowEnergy = this.flowVisible = 0; this.schedule(); }
+      this.flowEnergy = this.flowVisible = 0;
+      this.incenseDentEnergy = this.incenseDentVisible = 0; this.schedule(); }
   };
   private motionChanged = () => { this.lastFrame = 0; };
   private contextLost = (event: Event) => {
@@ -427,7 +620,6 @@ export class 동적종이효과 {
     try { this.initialize(); this.valid = true; this.resize(); this.available(true); this.schedule(); }
     catch (error) { console.warn(`${this.theme} 테마를 복구할 수 없습니다.`, error); this.available(false); }
   };
-
   destroy() {
     this.disposed = true;
     this.valid = false;
@@ -442,18 +634,38 @@ export class 동적종이효과 {
       this.galaxyImage.onload = null;
       this.galaxyImage.onerror = null;
     }
+    if (this.landscapeImage) {
+      this.landscapeImage.onload = null;
+      this.landscapeImage.onerror = null;
+    }
+    if (this.cupImage) {
+      this.cupImage.onload = null;
+      this.cupImage.onerror = null;
+    }
     if (this.gl) {
       if (this.galaxyTexture) { this.gl.deleteTexture(this.galaxyTexture); }
+      if (this.landscapeTexture) { this.gl.deleteTexture(this.landscapeTexture); }
       if (this.glyphTexture) { this.gl.deleteTexture(this.glyphTexture); }
+      if (this.cupTexture) { this.gl.deleteTexture(this.cupTexture); }
+      if (this.cupProgram) { this.gl.deleteProgram(this.cupProgram); }
+      if (this.steamProgram) { this.gl.deleteProgram(this.steamProgram); }
       if (this.buffer) { this.gl.deleteBuffer(this.buffer); }
       if (this.program) { this.gl.deleteProgram(this.program); }
     }
+    this.cupProgram = null;
+    this.steamProgram = null;
+    this.cupUniforms = {};
+    this.steamUniforms = {};
     this.gl = null;
     this.buffer = null;
     this.program = null;
     this.galaxyImage = null;
+    this.landscapeImage = null;
+    this.cupImage = null;
     this.galaxyTexture = null;
+    this.landscapeTexture = null;
     this.glyphTexture = null;
+    this.cupTexture = null;
     this.uniforms = {};
     this.ripples = [];
     this.flowTarget = null;
@@ -463,5 +675,6 @@ export class 동적종이효과 {
     this.focusText = null;
     this.flameFocus = null;
     this.mistakeAt = null;
+    this.incenseDentEnergy = this.incenseDentVisible = 0;
   }
 }

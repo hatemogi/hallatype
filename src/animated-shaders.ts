@@ -1,5 +1,5 @@
 /** 수면 이외의 종이 애니메이션. 모든 효과는 글자를 다시 그리지 않고 배경만 그린다. */
-export const 움직이는테마들 = ['수면과 파문', '매트릭스', '빗방울', '바람결', '흐르는 구름', '불멍', '인센스', '달빛 창가', '오로라', '별똥별'] as const;
+export const 움직이는테마들 = ['숲', '청보리', '폭포', '커피', '수면과 파문', '매트릭스', '빗방울', '바람결', '흐르는 구름', '불멍', '인센스', '달빛 창가', '오로라', '별똥별'] as const;
 export type 움직이는테마 = typeof 움직이는테마들[number];
 
 export function 움직이는테마인가(테마: string): 테마 is 움직이는테마 {
@@ -51,6 +51,180 @@ float flowWake(vec2 p) {
   return exp(-pow(d.x * 7.0, 2.0) - pow(d.y * 27.0, 2.0)) * u_flow.z;
 }
 `;
+
+const 숲 = `${공통}
+uniform sampler2D u_landscape;
+uniform float u_hasLandscape;
+void main() {
+  vec2 p = vec2(v_uv.x, 1.0 - v_uv.y);
+  float t = u_time * u_motion;
+  vec3 color = vec3(0.098, 0.224, 0.184);
+  if (u_hasLandscape > 0.5) {
+    // 사진을 종이 전체에 이어 놓고, 위쪽 잎만 바람에 조금씩 움직인다.
+    float canopy = 1.0 - smoothstep(0.32, 0.96, p.y);
+    float wind = (0.006 * sin(t * 0.48 - p.x * 4.0) +
+      0.0015 * sin(t * 0.67 + p.x * 9.0)) * canopy * canopy;
+    // 가로로 긴 사진을 종이에 맞게 중앙에서 잘라 대나무 비율을 지킨다.
+    float crop = min(0.88, u_size.x / max(u_size.y * 3.0, 1.0));
+    vec2 uv = vec2(0.5 + (p.x - 0.5) * crop + wind, p.y);
+    float haze = 1.0 - smoothstep(0.03, 0.84, p.y);
+    vec2 blur = 15.0 * haze * vec2(crop / max(u_size.x, 1.0),
+      1.0 / max(u_size.y, 1.0));
+    vec3 grove = texture2D(u_landscape, uv).rgb;
+    if (haze > 0.01) {
+      grove = grove * 0.36 +
+        (texture2D(u_landscape, uv + vec2(blur.x, 0.0)).rgb +
+        texture2D(u_landscape, uv - vec2(blur.x, 0.0)).rgb +
+        texture2D(u_landscape, uv + vec2(0.0, blur.y)).rgb +
+        texture2D(u_landscape, uv - vec2(0.0, blur.y)).rgb) * 0.16;
+    }
+    float light = 0.97 + 0.03 * sin(p.x * 8.0 - t * 0.45 + p.y * 3.0);
+    grove *= vec3(0.53, 0.57, 0.61) * light;
+    float reveal = mix(0.32, 0.86, smoothstep(0.0, 0.92, p.y)) * u_tuning.x;
+    color = mix(color, grove, reveal);
+  }
+  gl_FragColor = vec4(color, 1.0);
+}`;
+
+const 청보리 = `${공통}
+uniform sampler2D u_landscape;
+uniform float u_hasLandscape;
+void main() {
+  vec2 p = vec2(v_uv.x, 1.0 - v_uv.y);
+  float t = u_time * u_motion;
+  vec3 color = vec3(0.112, 0.178, 0.125);
+  if (u_hasLandscape > 0.5 && p.y > 0.78) {
+    float top = 1.0 - smoothstep(0.78, 0.99, p.y);
+    float breeze = (0.0045 * sin(t * 0.68 - p.x * 7.0 + p.y * 8.0) +
+      0.0015 * sin(t * 0.91 + p.x * 13.0)) * top * top;
+    vec2 uv = vec2(0.5 + (p.x - 0.5) * 0.88 + breeze,
+      0.22 + (p.y - 0.78));
+    vec3 field = texture2D(u_landscape,
+      clamp(uv, vec2(0.01), vec2(0.99))).rgb;
+    // 가는 이삭의 이동에 넓은 명암의 물결을 섞어 바람 방향이 읽히게 한다.
+    float gust = 0.95 + 0.05 * sin(p.x * 13.0 - t * 0.88 + p.y * 6.0);
+    field *= vec3(0.49, 0.54, 0.47) * gust;
+    float reveal = smoothstep(0.78, 0.84, p.y) *
+      0.88 * u_tuning.x;
+    color = mix(color, field, reveal);
+  }
+  gl_FragColor = vec4(color, 1.0);
+}`;
+
+const 폭포 = `${공통}
+uniform sampler2D u_landscape;
+uniform float u_hasLandscape;
+void main() {
+  vec2 p = vec2(v_uv.x, 1.0 - v_uv.y);
+  float t = u_time * u_motion;
+  vec3 color = mix(vec3(0.055, 0.098, 0.111),
+    vec3(0.039, 0.080, 0.091), p.y);
+  if (u_hasLandscape > 0.5) {
+    // 사진의 가로세로 비율을 유지한 채 종이 아래쪽에만 보여 준다.
+    float top = 0.53;
+    float height = 1.0 - top;
+    float aspect = u_size.x / max(u_size.y, 1.0);
+    float regionAspect = aspect / height;
+    float coverX = min(1.0, regionAspect / 1.776);
+    float coverY = min(1.0, 1.776 / regionAspect);
+    float imageCenterX = mix(0.68, 0.5, coverX);
+    vec2 uv = vec2(imageCenterX + (p.x - 0.5) * coverX,
+      0.5 + ((p.y - top) / height - 0.5) * coverY);
+    vec3 landscape = texture2D(u_landscape, clamp(uv, vec2(0.0), vec2(1.0))).rgb;
+    float reveal = smoothstep(top, top + 0.16, p.y);
+    color = mix(color, landscape * vec3(0.43, 0.53, 0.58),
+      reveal * 0.89 * u_tuning.x);
+
+    // 물보라는 실제 폭포의 낙하지점과 같은 사진 좌표에서 올라온다.
+    float fallX = 0.5 + (0.70 - imageCenterX) / coverX;
+    float fallY = top + height * (0.5 + (0.63 - 0.5) / coverY);
+    vec2 d = vec2((p.x - fallX) * aspect, p.y - fallY);
+    float plume = exp(-pow(d.x / 0.22, 2.0) -
+      pow((d.y + 0.023) / 0.071, 2.0));
+    float drifting = noise(vec2(p.x * 24.0 + t * 0.06,
+      p.y * 30.0 - t * 0.11));
+    float wisps = noise(vec2(p.x * 48.0 - t * 0.09,
+      p.y * 39.0 - t * 0.18));
+    float mist = plume * (0.22 + drifting * 0.50 + wisps * 0.24);
+
+    vec2 spraySpace = vec2(d.x * 55.0, d.y * 105.0);
+    vec2 cell = floor(spraySpace + vec2(t * 0.15, -t * 0.60));
+    vec2 speck = fract(spraySpace + vec2(t * 0.15, -t * 0.60));
+    vec2 center = vec2(hash21(cell + 4.0), hash21(cell + 19.0));
+    float droplets = exp(-pow(length((speck - center) * vec2(1.1, 1.7)) * 6.5, 2.0)) *
+      step(0.78, hash21(cell + 37.0)) * plume;
+    color += vec3(0.18, 0.22, 0.23) * mist * reveal * u_tuning.z;
+    color += vec3(0.13, 0.18, 0.19) * droplets * reveal * u_tuning.z;
+  }
+  gl_FragColor = vec4(color, 1.0);
+}`;
+
+const 커피 = `${공통}
+void main() {
+  vec2 p = vec2(v_uv.x, 1.0 - v_uv.y);
+  vec3 color = mix(vec3(0.205, 0.157, 0.132),
+    vec3(0.167, 0.117, 0.097), p.y);
+  gl_FragColor = vec4(color, 1.0);
+}`;
+
+/** 배경과 같은 WebGL 컨텍스트에서 텀블러 이미지 위에 그리는 커피 김. */
+export const 커피김조각 = `${공통}
+uniform vec3 u_cup; // 종이 안에서의 텀블러 중심 x, 커피 수면 y, 이미지 높이 배율
+void main() {
+  vec2 p = vec2(v_uv.x, 1.0 - v_uv.y);
+  float aspect = u_size.x / max(u_size.y, 1.0);
+  float t = u_time * u_motion;
+  // 커피 수면에서 시작해 입구를 지나며 옅고 넓게 풀어지는 수증기.
+  float scale = max(u_cup.z, 0.01);
+  float steamX = (p.x - u_cup.x) * aspect / scale;
+  float rise = (u_cup.y - p.y) / scale;
+  float drift = smoothstep(0.0, 0.16, rise) *
+    (0.035 * sin(rise * 10.0 - t * 0.38) +
+      0.018 * sin(rise * 17.0 + t * 0.22));
+  float spread = 0.045 + rise * 0.31;
+  float veil = exp(-pow((steamX - drift) / spread, 2.0));
+  float softEdge = exp(-pow((steamX - drift -
+    0.048 * sin(rise * 9.0 + t * 0.20)) / (spread * 0.78), 2.0));
+  float billow = 0.72 * veil + 0.28 * softEdge;
+  float variation = 0.64 + 0.36 * noise(vec2(
+    steamX * 8.0 + t * 0.10, rise * 15.0 - t * 0.16));
+  float fade = smoothstep(0.0, 0.012, rise) *
+    (1.0 - smoothstep(0.19, 0.37, rise));
+  float strands = 0.0;
+  for (int i = 0; i < 2; i++) {
+    float side = float(i) * 2.0 - 1.0;
+    float fan = smoothstep(0.01, 0.17, rise);
+    float center = drift + side * 0.038 * fan +
+      (0.012 + rise * 0.033) * fan *
+      sin(rise * (19.0 + float(i) * 3.0) -
+        t * (0.72 + float(i) * 0.11) + float(i) * 1.7);
+    float feather = 0.018 + rise * 0.042;
+    float thread = exp(-pow((steamX - center) / feather, 2.0));
+    float uneven = 0.72 + 0.28 * noise(vec2(
+      rise * 17.0 - t * 0.35, float(i) * 3.7));
+    strands += thread * uneven;
+  }
+  float nearCup = exp(-pow(steamX / (0.052 + rise * 0.10), 2.0)) *
+    (1.0 - smoothstep(0.025, 0.10, rise));
+  float alpha = (0.22 * billow * variation +
+    0.44 * min(strands, 1.15)) * fade;
+  alpha += 0.14 * nearCup * smoothstep(0.0, 0.008, rise);
+  gl_FragColor = vec4(vec3(0.75, 0.68, 0.59),
+    min(alpha * u_tuning.x, 0.72));
+}`;
+
+/** 투명 텀블러 이미지를 원래 비율과 위치로 종이 위에 그린다. */
+export const 커피잔조각 = `${공통}
+uniform sampler2D u_cupImage;
+uniform vec4 u_cupRect; // 왼쪽, 아래쪽, 너비, 높이 (종이 정규화 좌표)
+void main() {
+  vec2 uv = (v_uv - u_cupRect.xy) / u_cupRect.zw;
+  if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) { discard; }
+  vec4 cup = texture2D(u_cupImage, uv);
+  float gray = dot(cup.rgb, vec3(0.213, 0.715, 0.072));
+  vec3 color = mix(vec3(gray), cup.rgb, 0.85) * 0.92;
+  gl_FragColor = vec4(color, cup.a * 0.90);
+}`;
 
 const 비 = `${공통}
 void main() {
@@ -172,6 +346,7 @@ void main() {
 }`;
 
 const 인센스 = `${공통}
+uniform vec2 u_mistake;
 void main() {
   vec2 p = vec2(v_uv.x, 1.0 - v_uv.y);
   float t = u_time * u_motion;
@@ -183,18 +358,25 @@ void main() {
   float rise = max(0.0, 0.69 - p.y);
   float loose = smoothstep(0.0, 0.24, rise);
   float width = 0.009 + rise * 0.13;
-  float gust = clamp((u_flow.x - 0.78) * 0.21 * u_flow.z *
-    exp(-pow((p.y - u_flow.y) * 2.8, 2.0)), -0.032, 0.032) *
-    loose * u_motion;
+  // 입력 위치는 바람의 좌우 방향만 정한다. 연기가 글자를 향해 따라가지는 않는다.
+  float windDirection = 2.0 * smoothstep(0.32, 0.68, u_flow.x) - 1.0;
+  float breeze = 0.006 * windDirection * u_flow.z *
+    smoothstep(0.08, 0.44, rise) * u_motion;
   float center = 0.78 - rise * 0.21 +
     (0.018 + rise * 0.042) * loose * sin(rise * 12.0 - t * 0.58) +
-    rise * 0.025 * sin(rise * 25.0 + t * 0.36) + gust;
+    rise * 0.025 * sin(rise * 25.0 + t * 0.36) + breeze;
+  // 오타가 나면 향 끝은 고정한 채 연기 중간 결만 잠깐 접혔다 풀린다.
+  float crease = u_mistake.x * u_motion;
+  float dent = crease * exp(-pow((rise - 0.23) * 8.0, 2.0));
+  float smokeCenter = center + 0.010 * dent *
+    sin((rise - 0.23) * 18.0 + 0.8);
+  float smokeWidth = width * (1.0 - 0.18 * dent);
   float feather = noise(vec2(p.x * 17.0 + t * 0.08, p.y * 16.0 - t * 0.18));
-  float thread1 = exp(-pow((p.x - center - width * 0.28 *
-    loose * sin(rise * 31.0 + t * 0.62)) / (width * 0.27), 2.0));
-  float thread2 = exp(-pow((p.x - center + width * 0.38 *
-    loose * sin(rise * 23.0 - t * 0.43)) / (width * 0.34), 2.0));
-  float veil = exp(-pow((p.x - center) / (width * 1.15), 2.0));
+  float thread1 = exp(-pow((p.x - smokeCenter - smokeWidth * 0.28 *
+    loose * sin(rise * 31.0 + t * 0.62)) / (smokeWidth * 0.27), 2.0));
+  float thread2 = exp(-pow((p.x - smokeCenter + smokeWidth * 0.38 *
+    loose * sin(rise * 23.0 - t * 0.43)) / (smokeWidth * 0.34), 2.0));
+  float veil = exp(-pow((p.x - smokeCenter) / (smokeWidth * 1.15), 2.0));
   float fade = (1.0 - smoothstep(0.689, 0.701, p.y)) *
     (1.0 - smoothstep(0.48, 0.69, rise));
   float smoke = (thread1 * 0.55 + thread2 * 0.43 + veil * 0.14) *
@@ -252,6 +434,7 @@ void main() {
 
 const 매트릭스 = `${공통}
 uniform sampler2D u_glyphs;
+uniform vec2 u_mistake;
 
 vec2 codeRain(vec2 p, float t, vec2 density, float layer) {
   float column = floor(p.x * density.x);
@@ -283,8 +466,15 @@ void main() {
     mix(u_tuning.w, 1.0, smoothstep(u_textBottom - 0.05,
       u_textBottom + 0.10, p.y)));
   float quiet = 0.62 + 0.38 * smoothstep(0.12, 0.47, abs(p.x - 0.5));
-  vec2 distant = codeRain(p, t, vec2(70.0, 46.0), 0.0);
-  vec2 nearby = codeRain(p, t, vec2(43.0, 29.0), 1.0);
+  float shock = 0.0;
+  if (u_mistake.x >= 0.0 && u_mistake.x < 0.85) {
+    shock = u_mistake.y * 0.012 * sin(u_mistake.x * 34.0) *
+      exp(-u_mistake.x * 6.0) * u_motion;
+  }
+  vec2 distant = codeRain(p + vec2(shock * 0.45, 0.0),
+    t, vec2(70.0, 46.0), 0.0);
+  vec2 nearby = codeRain(p + vec2(shock, 0.0),
+    t, vec2(43.0, 29.0), 1.0);
   color += vec3(0.035, 0.23, 0.065) * distant.x * behind * quiet;
   color += vec3(0.055, 0.51, 0.10) * nearby.x * u_tuning.x * behind * quiet;
   color += vec3(0.38, 0.76, 0.39) * nearby.y * u_tuning.z * behind * quiet;
@@ -386,6 +576,10 @@ void main() {
 }`;
 
 export const 추가효과조각: Record<Exclude<움직이는테마, '수면과 파문'>, string> = {
+  숲,
+  청보리,
+  폭포,
+  커피,
   매트릭스,
   빗방울: 비,
   바람결: 바람,
