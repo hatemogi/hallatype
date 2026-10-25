@@ -177,6 +177,8 @@ export default class 그림판틀 {
     private 효과프레임 = 0;
     private readonly 마스크들: MaskSet;
     private readonly 키영역들 = new Map<string, 비트맵>();
+    private 투명배경 = false;
+    private 마지막글줄하단 = 0;
     // 본문의 어느 부분을 보일 것인가?
     private viewPort: [number, number, number, number] = [0, 0, 0, 0];
 
@@ -204,6 +206,21 @@ export default class 그림판틀 {
 
     public 글꼴확대방식설정(방식: 글꼴확대방식) {
         this.글꼴확대방식 = 방식;
+    }
+
+    public 투명배경설정(사용: boolean) { this.투명배경 = 사용; }
+    public get 글줄하단비율(): number {
+        return this.ctx.canvas.height ? this.마지막글줄하단 / this.ctx.canvas.height : 1;
+    }
+    public 화면가로비율(위치: 위치틀): number {
+        const 칸 = this.글자칸들.get(this.위치키(위치));
+        return 칸 ? (칸.화면위치.열 * 16 + 칸.너비 / 2) *
+            해상도배율(this.글꼴확대방식) / this.ctx.canvas.width : 0.5;
+    }
+    public 화면세로비율(위치: 위치틀): number {
+        const 칸 = this.글자칸들.get(this.위치키(위치));
+        return 칸 ? (칸.화면위치.행 * 44 + 22) *
+            해상도배율(this.글꼴확대방식) / this.ctx.canvas.height : 0.5;
     }
 
     public 보기설정(팔레트: 필사팔레트, 한줄칸수: number, 커서깜빡임: boolean) {
@@ -312,8 +329,10 @@ export default class 그림판틀 {
         const 배율 = 해상도배율(this.글꼴확대방식);
         this.ctx.canvas.width = Math.round(Math.max(this.한줄칸수 * 16 + 6, 오른쪽끝 + 6) * 배율);
         this.ctx.canvas.height = Math.round(Math.max(this.최소높이, (마지막행 + 1) * 44) * 배율);
+        this.마지막글줄하단 = Math.round((마지막행 + 1) * 44 * 배율);
         this.ctx.setTransform?.(1, 0, 0, 1, 0, 0);
-        this.바탕지우기(this.팔레트.종이);
+        if (this.투명배경) { this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height); }
+        else { this.바탕지우기(this.팔레트.종이); }
         for (const { 화면위치: 위치, 색자, 너비 } of 그릴칸들) {
             this.글자그리기(위치, 색자, 너비);
         }
@@ -331,8 +350,7 @@ export default class 그림판틀 {
             const 칸 = this.글자칸들.get(키);
             if (!칸) { continue; }
             const [x, y] = this.textToGraphic(칸.화면위치);
-            this.ctx.fillStyle = this.종이색();
-            this.논리영역칠하기(x, y, 칸.너비, 44);
+            this.영역지우기(x, y, 칸.너비, 44);
             const {value, done} = this.본문.글자스트림(문서위치).next();
             if (done || value.배경색 !== this.팔레트.커서) {
                 if (this.커서키 === 키) { this.커서키 = undefined; }
@@ -357,8 +375,7 @@ export default class 그림판틀 {
             if (!칸) { return; }
             const [x, y] = this.textToGraphic(칸.화면위치);
             this.커서보임 = !this.커서보임;
-            this.ctx.fillStyle = this.종이색();
-            this.논리영역칠하기(x, y + 32, 칸.너비, 4);
+            this.영역지우기(x, y + 32, 칸.너비, 4);
             if (this.커서보임) { this.바탕칠하기(칸.화면위치, 칸.너비, this.팔레트.커서, false); }
         }, 500);
     }
@@ -431,6 +448,19 @@ export default class 그림판틀 {
         return `rgba(${r}, ${g}, ${b}, ${a / 255.0})`;
     }
 
+    private 영역지우기(x: number, y: number, 너비: number, 높이: number) {
+        if (!this.투명배경) {
+            this.ctx.fillStyle = this.종이색();
+            this.논리영역칠하기(x, y, 너비, 높이);
+            return;
+        }
+        const 배율 = 해상도배율(this.글꼴확대방식);
+        const 왼쪽 = Math.round(x * 배율);
+        const 위 = Math.round(y * 배율);
+        this.ctx.clearRect(왼쪽, 위, Math.round((x + 너비) * 배율) - 왼쪽,
+            Math.round((y + 높이) * 배율) - 위);
+    }
+
     private 바탕칠하기(위치: 위치틀, 너비: number, 배경색: color.RGBA, 오타효과: boolean) {
         if (배경색 === color.흰색) {
             return;
@@ -450,8 +480,7 @@ export default class 그림판틀 {
         const 칸 = this.글자칸들.get(효과.키);
         if (!칸) { return; }
         const [x, y] = this.textToGraphic(칸.화면위치);
-        this.ctx.fillStyle = this.종이색();
-        this.논리영역칠하기(x, y + 32, 칸.너비, 4);
+        this.영역지우기(x, y + 32, 칸.너비, 4);
         this.바탕칠하기(칸.화면위치, 칸.너비, 활성 ? this.팔레트.안내 : this.팔레트.커서, 활성);
     }
 
@@ -496,7 +525,16 @@ export default class 그림판틀 {
                         ? 키분리.색[(키분리.영역[원본행] & (1 << (원본너비 - 원본열 - 1))) !== 0 ? 0 : 1]
                         : 색;
                     const 위치 = (py * 너비 + px) * 4;
-                    if (불투명도 === 255) {
+                    if (this.투명배경) {
+                        const 앞알파 = 불투명도 * 픽셀색[3] / (255 * 255);
+                        const 뒤알파 = 이미지.data[위치 + 3] / 255;
+                        const 합성알파 = 앞알파 + 뒤알파 * (1 - 앞알파);
+                        for (let 채널 = 0; 채널 < 3; 채널++) {
+                            이미지.data[위치 + 채널] = Math.round((픽셀색[채널] * 앞알파 +
+                                이미지.data[위치 + 채널] * 뒤알파 * (1 - 앞알파)) / 합성알파);
+                        }
+                        이미지.data[위치 + 3] = Math.round(합성알파 * 255);
+                    } else if (불투명도 === 255) {
                         이미지.data.set(픽셀색, 위치);
                     } else {
                         const 비율 = 불투명도 / 255;

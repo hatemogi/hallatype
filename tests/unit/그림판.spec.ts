@@ -21,6 +21,36 @@ describe('타자 연습 캔버스 글꼴', () => {
         return { 그림판: new 그림판틀(ctx, {} as 본문틀), 요청, 이미지들 };
     };
 
+    it('수면용 투명 배경에서도 글자와 진행 위치를 원래 배치로 그린다', () => {
+        const 지문 = new 지문틀();
+        지문.글쓰기('가');
+        지문.쓰기(지문.위치, 끝글자);
+        const 본문 = new 따라그리기틀(지문);
+        const 지운영역: number[][] = [];
+        const 이미지들: ImageData[] = [];
+        const ctx = {
+            canvas: { width: 0, height: 0 },
+            setTransform: vi.fn(),
+            clearRect: (x: number, y: number, w: number, h: number) => 지운영역.push([x, y, w, h]),
+            fillRect: vi.fn(),
+            getImageData: (_x: number, _y: number, w: number, h: number) =>
+                ({ width: w, height: h, data: new Uint8ClampedArray(w * h * 4) } as ImageData),
+            putImageData: (이미지: ImageData) => 이미지들.push(이미지),
+        } as unknown as CanvasRenderingContext2D;
+        const 그림판 = new 그림판틀(ctx, 본문, { 한줄칸수: 22, 최소높이: 210, 커서깜빡임: false });
+        그림판.투명배경설정(true);
+        그림판.그리기();
+        expect(지운영역[0]).toEqual([0, 0, ctx.canvas.width, ctx.canvas.height]);
+        expect(이미지들.some(이미지 => 이미지.data.some((값, i) => i % 4 === 3 && 값 > 0))).toBe(true);
+        expect(그림판.화면가로비율(new 위치틀())).toBeGreaterThan(0);
+        expect(그림판.화면세로비율(new 위치틀())).toBeCloseTo(22 / 210);
+        expect(그림판.글줄하단비율).toBeCloseTo(44 / 210);
+        본문.입력('KeyR', false);
+        그림판.변경그리기([new 위치틀()]);
+        expect(지운영역).toContainEqual([0, 0, 32, 44]);
+        그림판.종료();
+    });
+
     it('한글 자소를 32×32로 그려 실제 획을 채운다', () => {
         const { 그림판, 요청, 이미지들 } = 화면();
         const 글자 = new 색칠할글자(글자틀.생성('가'.charCodeAt(0)), [검정, 검정, 검정], 흰색);

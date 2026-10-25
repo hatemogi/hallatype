@@ -114,6 +114,8 @@
         </aside>
 
         <div class="필사패널">
+        <div class="종이외피" :class="{ 수면작동: 수면사용가능 }">
+        <canvas id="수면캔버스" v-show="수면사용가능" aria-hidden="true"></canvas>
         <article class="종이" aria-labelledby="지문제목">
           <div class="종이상단">
             <span>필사 노트 <span class="가운데점">·</span> {{오늘날짜}}</span>
@@ -178,6 +180,7 @@
               :aria-label="`${오늘지문.제목} 필사 지문. 키보드로 따라 입력하세요.`"></canvas>
           </div>
         </article>
+        </div>
 
         <section class="진행판" aria-label="필사 진행 상황">
           <div class="진행영역">
@@ -283,6 +286,7 @@ import { 끝글자 } from '@/글자';
 import { 지문틀 } from '@/본문';
 import { 따라그리기틀 } from '@/따라그리기';
 import 그림판틀 from '@/그림판';
+import { 수면파문 } from '@/water-ripples';
 import { 빈리듬그래프, 완료리듬그래프, type 리듬막대 } from '@/practice-rhythm';
 import { 지문찾기 } from '@/practice-recent';
 import { 즐겨찾기바꾸기, 즐겨찾기읽기, 즐겨찾기저장, 즐겨찾기저장키,
@@ -309,7 +313,7 @@ const 가장자리단계이름 = ['선명하게', '조금 선명하게', '보통
 const 지문삽화들: Record<string, string> = {
   UlRmQaTpLnVe: swimmingFreestyle,
 };
-const 어두운삽화테마들 = new Set(['밤', '숲', '커피', '매트릭스', 'PC통신', '서가']);
+const 어두운삽화테마들 = new Set(['밤', '숲', '커피', '매트릭스', 'PC통신', '서가', '수면과 파문']);
 export default defineComponent({
   components: { GeulsumMark, GeulsumTitle, PraiseStamp },
   props: {
@@ -358,6 +362,9 @@ export default defineComponent({
       기록오류: false,
       이어쓰기복원됨: false,
       그림판: null as 그림판틀 | null,
+      수면: null as 수면파문 | null,
+      수면사용가능: false,
+      폭관찰기: null as ResizeObserver | null,
       본문: null as 따라그리기틀 | null,
     };
   },
@@ -598,8 +605,36 @@ export default defineComponent({
       this.그림판?.안티앨리어싱강도설정(단계별안티앨리어싱강도[this.설정.안티앨리어싱단계]);
       this.그림판?.글꼴확대방식설정(글자크기별글꼴[this.설정.글자크기].확대방식);
       this.현재한줄칸수 = this.한줄칸수();
+      this.수면연결();
       this.그림판?.보기설정(팔레트, this.현재한줄칸수,
         this.설정.커서깜빡임);
+      this.수면?.setContentBottom(this.그림판?.글줄하단비율 ?? 0.5);
+      this.$nextTick(() => this.화면크기변경());
+    },
+    수면연결() {
+      if (this.설정.테마 !== '수면과 파문') {
+        this.수면?.destroy();
+        this.수면 = null;
+        this.수면사용가능 = false;
+        this.그림판?.투명배경설정(false);
+        return;
+      }
+      if (!this.수면) {
+        const 효과 = markRaw(new 수면파문(
+          document.getElementById('수면캔버스') as HTMLCanvasElement,
+          document.getElementById('캔버스') as HTMLCanvasElement,
+          (가능) => {
+            this.수면사용가능 = 가능;
+            this.그림판?.투명배경설정(가능);
+            this.그림판?.그리기();
+            this.수면?.setContentBottom(this.그림판?.글줄하단비율 ?? 0.5);
+          },
+        ));
+        this.수면사용가능 = 효과.start();
+        if (this.수면사용가능) { this.수면 = 효과; }
+      }
+      this.그림판?.투명배경설정(this.수면사용가능);
+      this.수면?.setContentBottom(this.그림판?.글줄하단비율 ?? 0.5);
     },
     한줄칸수(): number {
       const 너비 = document.querySelector('.캔버스영역')?.clientWidth ?? window.innerWidth - 80;
@@ -617,6 +652,7 @@ export default defineComponent({
       this.현재한줄칸수 = 칸수;
       this.그림판?.보기설정(필사팔레트들[this.설정.테마], 칸수,
         this.설정.커서깜빡임);
+      this.수면?.setContentBottom(this.그림판?.글줄하단비율 ?? 0.5);
     },
 
     reset(새로시작 = false) {
@@ -668,7 +704,7 @@ export default defineComponent({
         }
       }
       const 캔버스 = document.getElementById('캔버스') as HTMLCanvasElement;
-      const ctx = 캔버스.getContext('2d', { alpha: false }) as CanvasRenderingContext2D;
+      const ctx = 캔버스.getContext('2d', { alpha: true }) as CanvasRenderingContext2D;
       this.현재한줄칸수 = this.한줄칸수();
       const 그림판 = markRaw(new 그림판틀(ctx, 본문, {
         팔레트, 한줄칸수: this.현재한줄칸수,
@@ -679,8 +715,11 @@ export default defineComponent({
         영문글꼴: false,
       }));
       this.그림판 = 그림판;
+      this.수면연결();
       그림판.그리기();
+      this.수면?.setContentBottom(그림판.글줄하단비율);
       this.$nextTick(() => {
+        this.화면크기변경();
         const 종이 = document.querySelector('.종이');
         if (종이) { 종이.scrollTop = 0; }
       });
@@ -759,6 +798,9 @@ export default defineComponent({
           self.저장대기(시작);
         }
         const 직전오타 = self.입력상태 === '오타';
+        const 이전획 = 본문.진행획수;
+        const 이전위치 = 본문.위치;
+        const 이전글자 = 본문.지문글자(이전위치);
         const 바뀐위치 = 본문.입력(e.code, e.shiftKey);
         self.입력기록추가({ code: e.code, shift: e.shiftKey,
           elapsedMs: Math.max(0, Math.round(performance.now() - self.시작시각!)) });
@@ -770,6 +812,13 @@ export default defineComponent({
           그림판.변경그리기(바뀐위치);
         }
         self.진행률 = 본문.진행률;
+        if (본문.진행획수 > 이전획) {
+          const 문장끝 = 본문.끝 || ((이전글자.다음행 ||
+            '.!?。！？'.includes(String.fromCodePoint(이전글자.코드[0]))) &&
+            (이전위치.행 !== 본문.위치.행 || 이전위치.열 !== 본문.위치.열));
+          self.수면?.ripple(그림판.화면가로비율(이전위치),
+            그림판.화면세로비율(이전위치), 문장끝);
+        }
         if (본문.끝) {
           const 걸린밀리초 = Math.max(1000, performance.now() - self.시작시각);
           self.완료초 = Math.max(1, Math.round(걸린밀리초 / 1000));
@@ -817,6 +866,10 @@ export default defineComponent({
     window.addEventListener('pagehide', this.입력기록저장);
     window.addEventListener('storage', this.다른탭기록반영);
     window.addEventListener('resize', this.화면크기변경);
+    if (typeof ResizeObserver !== 'undefined') {
+      this.폭관찰기 = markRaw(new ResizeObserver(() => this.화면크기변경()));
+      this.폭관찰기.observe(document.querySelector('.캔버스영역')!);
+    }
     this.날짜확인타이머 = setInterval(this.날짜변경확인, 60000);
     this.reset(this.지문상태(this.오늘지문) === '완료');
   },
@@ -828,10 +881,14 @@ export default defineComponent({
     window.removeEventListener('pagehide', this.입력기록저장);
     window.removeEventListener('storage', this.다른탭기록반영);
     window.removeEventListener('resize', this.화면크기변경);
+    this.폭관찰기?.disconnect();
+    this.폭관찰기 = null;
     if (this.날짜확인타이머 !== null) { clearInterval(this.날짜확인타이머); }
     this.입력기록저장();
     window.onkeydown = null;
     this.그림판?.종료();
+    this.수면?.destroy();
+    this.수면 = null;
   },
   computed: {
     현재삽화(): string | undefined {
@@ -960,6 +1017,10 @@ button { font: inherit; }
 .테마견본[data-theme='매트릭스'] { background: #08190e; color: #9affaa; text-shadow: 0 0 7px rgba(99, 245, 131, .65); }
 .테마견본[data-theme='PC통신'] { background: #102287; color: #fff; }
 .테마견본[data-theme='서가'] { background: linear-gradient(135deg, #16404d 67%, #dda853 67%); color: #fbf5dd; }
+.테마견본[data-theme='수면과 파문'] {
+  background: linear-gradient(180deg, #07171a 0 62%, #244443 80%, #b29055 100%);
+  color: #f0efdc;
+}
 .설정선택 { display: flex; gap: 7px; }
 .설정선택 button { min-width: 72px; padding: 8px 13px; border: 1px solid var(--테두리); border-radius: 3px; background: var(--선택안함); color: var(--글); font-size: 13px; cursor: pointer; }
 .가장자리선택 input { display: block; width: 100%; margin: 0; accent-color: var(--강조); cursor: pointer; }
@@ -1095,6 +1156,15 @@ button { font: inherit; }
 .가는선 { width: 42px; height: 1px; margin: 34px auto 0; background: var(--진행선); }
 .캔버스영역 { display: flex; justify-content: center; max-width: 930px; margin: 26px auto 0; overflow: hidden; }
 #캔버스 { display: block; width: 100%; height: auto; image-rendering: auto; }
+#수면캔버스 {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  border-radius: 2px 2px 0 0;
+}
+.필사실[data-theme='수면과 파문'] .종이외피.수면작동 .종이 { background: transparent; }
 .진행판 {
   box-sizing: border-box;
   max-width: 960px;
@@ -1202,11 +1272,13 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
 }
 .필사실[data-theme='매트릭스'] .종이 { box-shadow: inset 0 0 38px rgba(43, 202, 82, .06); }
 .필사실[data-theme='PC통신'] .종이 { box-shadow: none; }
+.종이외피 { position: relative; flex: 1; min-height: 220px; margin: 0 12px; }
 .종이 {
   position: relative;
-  flex: 1;
-  min-height: 220px;
-  margin: 0 12px;
+  z-index: 1;
+  box-sizing: border-box;
+  height: 100%;
+  margin: 0;
   padding: 18px clamp(18px, 3vw, 38px) 28px;
   border-radius: 2px 2px 0 0;
   box-shadow: 0 2px 10px var(--타자기그림자);
@@ -1320,7 +1392,8 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
   .글목록 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; }
   .글목록 .지문선택버튼 { min-height: 56px; }
   .필사패널 { flex: 1; padding-top: 3px; }
-  .종이 { margin: 0 6px; padding: 13px 16px 22px; }
+  .종이외피 { margin: 0 6px; }
+  .종이 { padding: 13px 16px 22px; }
   .지문머리 { padding-top: 8px; }
   .지문머리.도장찍힘 { gap: 12px; }
   .도장묶음 { gap: 5px; }
