@@ -1,5 +1,5 @@
 /** 수면 이외의 종이 애니메이션. 모든 효과는 글자를 다시 그리지 않고 배경만 그린다. */
-export const 움직이는테마들 = ['숲', '청보리', '폭포', '커피', '수면과 파문', '매트릭스', '빗방울', '바람결', '흐르는 구름', '불멍', '인센스', '달빛 창가', '오로라', '별똥별'] as const;
+export const 움직이는테마들 = ['숲', '청보리', '폭포', '커피', '촛불', '수면과 파문', '매트릭스', '빗방울', '흐르는 구름', '불멍', '인센스', '오로라', '별똥별'] as const;
 export type 움직이는테마 = typeof 움직이는테마들[number];
 
 export function 움직이는테마인가(테마: string): 테마 is 움직이는테마 {
@@ -176,6 +176,18 @@ void main() {
   gl_FragColor = vec4(color, 1.0);
 }`;
 
+const 촛불 = `${공통}
+uniform vec3 u_candle; // 심지 x, 심지 y, 초 높이
+void main() {
+  vec2 p = vec2(v_uv.x, 1.0 - v_uv.y);
+  float aspect = u_size.x / max(u_size.y, 1.0);
+  vec3 color = mix(vec3(0.090, 0.074, 0.073), vec3(0.065, 0.052, 0.057), p.y);
+  vec2 fromWick = vec2((p.x - u_candle.x) * aspect, p.y - u_candle.y);
+  float candlelight = exp(-pow(fromWick.x * 2.2, 2.0) - pow(fromWick.y * 2.5, 2.0));
+  color += vec3(0.105, 0.057, 0.025) * candlelight * u_tuning.z;
+  gl_FragColor = vec4(color, 1.0);
+}`;
+
 /** 배경과 같은 WebGL 컨텍스트에서 텀블러 이미지 위에 그리는 커피 김. */
 export const 커피김조각 = `${공통}
 uniform vec3 u_cup; // 종이 안에서의 텀블러 중심 x, 커피 수면 y, 이미지 높이 배율
@@ -222,17 +234,49 @@ void main() {
     min(alpha * u_tuning.x, 0.72));
 }`;
 
-/** 투명 텀블러 이미지를 원래 비율과 위치로 종이 위에 그린다. */
-export const 커피잔조각 = `${공통}
-uniform sampler2D u_cupImage;
-uniform vec4 u_cupRect; // 왼쪽, 아래쪽, 너비, 높이 (종이 정규화 좌표)
+/** 심지에서 시작하는 작고 부드러운 불꽃과 주변 빛. */
+export const 촛불꽃조각 = `${공통}
+uniform vec3 u_candle; // 심지 x, 심지 y, 초 높이
 void main() {
-  vec2 uv = (v_uv - u_cupRect.xy) / u_cupRect.zw;
+  vec2 p = vec2(v_uv.x, 1.0 - v_uv.y);
+  float aspect = u_size.x / max(u_size.y, 1.0);
+  float t = u_time * u_motion;
+  float scale = max(u_candle.z, 0.01);
+  float y = (u_candle.y - p.y) / scale;
+  float x = (p.x - u_candle.x) * aspect / scale;
+  float height = 0.30 + 0.016 * sin(t * 2.1) + 0.010 * sin(t * 3.3 + 1.2);
+  float progress = clamp(y / height, 0.0, 1.0);
+  float sway = (0.010 * sin(t * 1.6) + 0.005 * sin(t * 2.9 + 0.7)) *
+    smoothstep(0.0, 0.7, progress);
+  float width = 0.008 + 0.045 * pow(max(sin(progress * 3.14159), 0.0), 0.85);
+  float body = (1.0 - smoothstep(width * 0.67, width, abs(x - sway))) *
+    smoothstep(-0.003, 0.013, y) * (1.0 - smoothstep(height - 0.023, height, y));
+  float core = (1.0 - smoothstep(width * 0.18, width * 0.53, abs(x - sway))) *
+    smoothstep(0.005, 0.027, y) * (1.0 - smoothstep(height * 0.55, height * 0.84, y));
+  float glow = exp(-pow(x / 0.19, 2.0) - pow((y - 0.09) / 0.23, 2.0));
+  float flicker = 0.94 + 0.06 * sin(t * 3.1 + 0.8);
+  vec3 color = mix(vec3(0.91, 0.45, 0.13), vec3(1.0, 0.87, 0.51),
+    clamp(progress * 0.55 + core * 0.6, 0.0, 1.0));
+  float alpha = min(glow * 0.22 * u_tuning.z + body * 0.96 + core * 0.45, 0.98);
+  float belowText = smoothstep(u_textBottom - 0.04, u_textBottom + 0.07, p.y);
+  gl_FragColor = vec4(color, alpha * flicker * u_tuning.x * mix(0.82, 1.0, belowText));
+}`;
+
+/** 투명 소품 이미지를 원래 비율과 위치로 종이 위에 그린다. */
+export const 소품이미지조각 = `${공통}
+uniform sampler2D u_propImage;
+uniform vec4 u_propRect; // 왼쪽, 아래쪽, 너비, 높이 (종이 정규화 좌표)
+uniform float u_dimBehindText;
+void main() {
+  vec2 uv = (v_uv - u_propRect.xy) / u_propRect.zw;
   if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) { discard; }
-  vec4 cup = texture2D(u_cupImage, uv);
-  float gray = dot(cup.rgb, vec3(0.213, 0.715, 0.072));
-  vec3 color = mix(vec3(gray), cup.rgb, 0.85) * 0.92;
-  gl_FragColor = vec4(color, cup.a * 0.90);
+  vec4 prop = texture2D(u_propImage, uv);
+  float gray = dot(prop.rgb, vec3(0.213, 0.715, 0.072));
+  vec3 color = mix(vec3(gray), prop.rgb, 0.85) * 0.92;
+  float belowText = smoothstep(u_textBottom - 0.04, u_textBottom + 0.07,
+    1.0 - v_uv.y);
+  float legibility = mix(1.0, mix(0.14, 1.0, belowText), u_dimBehindText);
+  gl_FragColor = vec4(color, prop.a * 0.90 * legibility);
 }`;
 
 const 비 = `${공통}
@@ -260,37 +304,6 @@ void main() {
   float puddle = pow(max(0.0, sin(p.y * 77.0 + p.x * 12.0 - t * 0.75)), 12.0);
   color += vec3(0.015, 0.031, 0.037) * puddle * smoothstep(0.48, 1.0, p.y);
   color += vec3(0.070, 0.110, 0.130) * flowWake(p) * 2.1 * u_tuning.z * behind;
-  gl_FragColor = vec4(color, 1.0);
-}`;
-
-const 바람 = `${공통}
-void main() {
-  vec2 p = vec2(v_uv.x, 1.0 - v_uv.y);
-  float t = u_time * u_motion;
-  vec3 color = mix(vec3(0.037, 0.079, 0.067), vec3(0.022, 0.061, 0.057), p.y);
-  float ribbons = 0.0;
-  for (int i = 0; i < 4; i++) {
-    float layer = float(i);
-    float center = 0.13 + layer * 0.21 +
-      0.055 * sin(p.x * (7.0 + layer) - t * (0.45 + layer * 0.09) + layer * 1.7);
-    float line = exp(-pow((p.y - center) * (22.0 - layer * 2.0), 2.0));
-    float broken = 0.56 + 0.44 * sin(p.x * 9.0 - t * 0.50 + layer * 2.2);
-    ribbons += line * broken;
-  }
-  float soft = 0.5 + 0.5 * sin(p.y * 20.0 +
-    1.2 * sin(p.x * 6.0 - t * 0.35) - p.x * 10.0 + t * 0.35);
-  float behind = mix(u_tuning.w, 1.0, smoothstep(u_textBottom - 0.05,
-    u_textBottom + 0.10, p.y));
-  color += vec3(0.045, 0.125, 0.095) * ribbons * u_tuning.x * behind;
-  color += vec3(0.018, 0.055, 0.045) * soft * u_tuning.x * behind;
-  vec2 drift = vec2((p.x - t * 0.035) * 18.0, p.y * 10.0 + sin(t * 0.3) * 0.2);
-  vec2 cell = floor(drift);
-  vec2 f = fract(drift);
-  float leaf = exp(-pow((f.x - hash21(cell + 3.0)) * 20.0, 2.0) -
-    pow((f.y - hash21(cell + 7.0)) * 32.0, 2.0)) *
-    step(0.90, hash21(cell + 11.0));
-  color += vec3(0.075, 0.100, 0.052) * leaf * behind;
-  color += vec3(0.080, 0.130, 0.085) * flowWake(p) * 2.1 * u_tuning.z * behind;
   gl_FragColor = vec4(color, 1.0);
 }`;
 
@@ -404,40 +417,6 @@ void main() {
   color += vec3(0.13, 0.092, 0.067) * stick;
   color += vec3(0.34, 0.14, 0.065) * tip * u_tuning.z;
   color += vec3(0.07, 0.031, 0.016) * halo * u_tuning.z;
-  gl_FragColor = vec4(color, 1.0);
-}`;
-
-const 달빛창가 = `${공통}
-void main() {
-  vec2 p = vec2(v_uv.x, 1.0 - v_uv.y);
-  float t = u_time * u_motion;
-  vec3 color = mix(vec3(0.026, 0.046, 0.073), vec3(0.018, 0.033, 0.059), p.y);
-  float behind = mix(u_tuning.w, 1.0, smoothstep(u_textBottom - 0.05,
-    u_textBottom + 0.10, p.y));
-
-  // 창의 윤곽은 오른쪽 위에, 달빛은 종이를 가로질러 왼쪽 아래로 기운다.
-  float drift = 0.011 * sin(t * 0.26);
-  float rayX = p.x + p.y * 0.29 + drift;
-  float beam = smoothstep(0.56, 0.65, rayX) *
-    (1.0 - smoothstep(0.94, 1.03, rayX));
-  float frameShade = 1.0 - 0.55 * exp(-pow((rayX - 0.78) * 53.0, 2.0)) -
-    0.38 * exp(-pow((p.y - 0.45) * 55.0, 2.0));
-  float cloud = noise(vec2(p.x * 3.2 + t * 0.024, p.y * 2.9 - t * 0.012));
-  float shaft = beam * frameShade * (0.76 + 0.24 * cloud) *
-    (1.0 - smoothstep(0.75, 1.06, p.y));
-  color += vec3(0.126, 0.149, 0.177) * shaft * u_tuning.x * behind;
-
-  float window = smoothstep(0.59, 0.62, p.x) *
-    (1.0 - smoothstep(0.93, 0.96, p.x)) *
-    smoothstep(0.02, 0.05, p.y) *
-    (1.0 - smoothstep(0.25, 0.29, p.y));
-  float pane = (1.0 - 0.68 * exp(-pow((p.x - 0.77) * 85.0, 2.0))) *
-    (1.0 - 0.58 * exp(-pow((p.y - 0.16) * 105.0, 2.0)));
-  color += vec3(0.074, 0.090, 0.115) * window * pane * u_tuning.z * behind;
-
-  // 입력 위치의 빛결만 잠깐 숨 쉬고, 글자 자체는 움직이지 않는다.
-  float response = flowWake(p) * (0.45 + 0.55 * beam);
-  color += vec3(0.069, 0.088, 0.122) * response * u_tuning.z * behind;
   gl_FragColor = vec4(color, 1.0);
 }`;
 
@@ -589,13 +568,12 @@ export const 추가효과조각: Record<Exclude<움직이는테마, '수면과 �
   청보리,
   폭포,
   커피,
+  촛불,
   매트릭스,
   빗방울: 비,
-  바람결: 바람,
   '흐르는 구름': 구름,
   불멍: 불,
   인센스,
-  '달빛 창가': 달빛창가,
   오로라,
   별똥별,
 };

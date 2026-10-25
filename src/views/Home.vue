@@ -314,9 +314,8 @@ const 가장자리단계이름 = ['선명하게', '조금 선명하게', '보통
 const 지문삽화들: Record<string, string> = {
   UlRmQaTpLnVe: swimmingFreestyle,
 };
-const 어두운삽화테마들 = new Set(['밤', '숲', '청보리', '폭포', '커피', '매트릭스', 'PC통신', '서가',
-  '수면과 파문', '빗방울', '바람결', '흐르는 구름', '불멍', '인센스',
-  '달빛 창가', '오로라', '별똥별']);
+const 어두운삽화테마들 = new Set(['밤', '숲', '청보리', '폭포', '커피', '촛불', '매트릭스', 'PC통신', '서가',
+  '수면과 파문', '빗방울', '흐르는 구름', '불멍', '인센스', '오로라', '별똥별']);
 export default defineComponent({
   components: { GeulsumMark, GeulsumTitle, PraiseStamp },
   props: {
@@ -1035,6 +1034,7 @@ button { font: inherit; }
 .테마견본[data-theme='폭포'] { background: linear-gradient(160deg, #123039 45%, #315965 74%, #7f9ca3); color: #edf4ef; }
 .테마견본[data-theme='라벤더'] { background: #fcfaff; color: #675184; }
 .테마견본[data-theme='커피'] { background: #352922; color: #d8b58e; }
+.테마견본[data-theme='촛불'] { background: radial-gradient(circle at 74% 68%, #583323, #181417 68%); color: #f4c892; }
 .테마견본[data-theme='매트릭스'] { background: #08190e; color: #9affaa; text-shadow: 0 0 7px rgba(99, 245, 131, .65); }
 .테마견본[data-theme='PC통신'] { background: #102287; color: #fff; }
 .테마견본[data-theme='서가'] { background: linear-gradient(135deg, #16404d 67%, #dda853 67%); color: #fbf5dd; }
@@ -1045,10 +1045,6 @@ button { font: inherit; }
 .테마견본[data-theme='빗방울'] {
   background: linear-gradient(145deg, #08151e 45%, #284552 70%, #789ba9 100%);
   color: #f3f7f4;
-}
-.테마견본[data-theme='바람결'] {
-  background: linear-gradient(155deg, #0b1d19 40%, #295844 73%, #7ba482 100%);
-  color: #f2f7e8;
 }
 .테마견본[data-theme='흐르는 구름'] {
   background: linear-gradient(160deg, #141f36 37%, #405574 74%, #8b9db5 100%);
@@ -1061,10 +1057,6 @@ button { font: inherit; }
 .테마견본[data-theme='인센스'] {
   background: radial-gradient(circle at 70% 95%, #78634d, #30343a 42%, #12151b 85%);
   color: #f4efe1;
-}
-.테마견본[data-theme='달빛 창가'] {
-  background: linear-gradient(135deg, #091424 16%, #1b3553 55%, #acc5df 72%, #1b3045 100%);
-  color: #f3f7fa;
 }
 .테마견본[data-theme='오로라'] {
   background: linear-gradient(135deg, #071421 12%, #177c96 29%, #319c53 45%, #6746a2 63%, #a83479 78%, #130f2c 100%);
@@ -1218,7 +1210,8 @@ button { font: inherit; }
   border-radius: 2px 2px 0 0;
   z-index: 0;
 }
-.필사실[data-theme='커피'] .종이 { z-index: 2; }
+.필사실[data-theme='커피'] .종이,
+.필사실[data-theme='촛불'] .종이 { z-index: 2; }
 .종이외피.동적배경작동 .종이 { background: transparent; }
 .진행판 {
   box-sizing: border-box;

@@ -1,14 +1,20 @@
-import { 추가효과조각, 커피김조각, 커피잔조각, type 움직이는테마 } from './animated-shaders';
+import { 추가효과조각, 커피김조각, 소품이미지조각, 촛불꽃조각,
+  type 움직이는테마 } from './animated-shaders';
 import galaxyUrl from './assets/milky-way.webp';
 import bambooUrl from './assets/bamboo-grove.webp';
 import barleyUrl from './assets/barley-field.webp';
 import waterfallUrl from './assets/distant-waterfall.webp';
 import coffeeCupUrl from './assets/coffee-tumbler.webp';
+import candleUrl from './assets/ivory-candle.webp';
 
 const 풍경이미지: Partial<Record<움직이는테마, string>> = {
   숲: bambooUrl,
   청보리: barleyUrl,
   폭포: waterfallUrl,
+};
+const 소품이미지: Partial<Record<움직이는테마, string>> = {
+  커피: coffeeCupUrl,
+  촛불: candleUrl,
 };
 
 /** 종이 전체 뒤에서 동작하는 WebGL 효과. 테마별 강도는 여기에서 조절한다. */
@@ -18,14 +24,13 @@ export const 동적효과조절: Record<움직이는테마,
   청보리: { 기본세기: 0.90, 타건세기: 0, 감쇠속도: 1.5, 빛강도: 0.90, 글뒤세기: 1.0 },
   폭포: { 기본세기: 1.0, 타건세기: 0, 감쇠속도: 1.5, 빛강도: 0.85, 글뒤세기: 1.0 },
   커피: { 기본세기: 0.90, 타건세기: 0, 감쇠속도: 1.5, 빛강도: 0.90, 글뒤세기: 1.0 },
+  촛불: { 기본세기: 0.98, 타건세기: 0, 감쇠속도: 1.5, 빛강도: 0.85, 글뒤세기: 1.0 },
   '수면과 파문': { 기본세기: 0.58, 타건세기: 0.72, 감쇠속도: 1.55, 빛강도: 0.37, 글뒤세기: 0.85 },
   매트릭스: { 기본세기: 0.90, 타건세기: 0.55, 감쇠속도: 1.5, 빛강도: 0.74, 글뒤세기: 0.28 },
   빗방울: { 기본세기: 0.94, 타건세기: 0.76, 감쇠속도: 1.7, 빛강도: 0.74, 글뒤세기: 0.65 },
-  바람결: { 기본세기: 1.0, 타건세기: 0.72, 감쇠속도: 1.45, 빛강도: 0.7, 글뒤세기: 0.80 },
   '흐르는 구름': { 기본세기: 1.10, 타건세기: 0.78, 감쇠속도: 1.25, 빛강도: 0.82, 글뒤세기: 0.78 },
   불멍: { 기본세기: 0.95, 타건세기: 0.86, 감쇠속도: 1.65, 빛강도: 0.82, 글뒤세기: 0.72 },
   인센스: { 기본세기: 0.90, 타건세기: 0.55, 감쇠속도: 1.5, 빛강도: 0.72, 글뒤세기: 0.67 },
-  '달빛 창가': { 기본세기: 0.94, 타건세기: 0.58, 감쇠속도: 1.6, 빛강도: 0.72, 글뒤세기: 0.58 },
   오로라: { 기본세기: 1.34, 타건세기: 0.86, 감쇠속도: 1.0, 빛강도: 1.05, 글뒤세기: 0.80 },
   별똥별: { 기본세기: 0.55, 타건세기: 0.92, 감쇠속도: 1.4, 빛강도: 0.90, 글뒤세기: 0.70 },
 };
@@ -140,12 +145,12 @@ export class 동적종이효과 {
   private galaxyTexture: WebGLTexture | null = null;
   private landscapeTexture: WebGLTexture | null = null;
   private glyphTexture: WebGLTexture | null = null;
-  private cupTexture: WebGLTexture | null = null;
-  private cupImage: HTMLImageElement | null = null;
-  private cupProgram: WebGLProgram | null = null;
-  private steamProgram: WebGLProgram | null = null;
-  private cupUniforms: Record<string, WebGLUniformLocation | null> = {};
-  private steamUniforms: Record<string, WebGLUniformLocation | null> = {};
+  private propTexture: WebGLTexture | null = null;
+  private propImage: HTMLImageElement | null = null;
+  private propProgram: WebGLProgram | null = null;
+  private overlayProgram: WebGLProgram | null = null;
+  private propUniforms: Record<string, WebGLUniformLocation | null> = {};
+  private overlayUniforms: Record<string, WebGLUniformLocation | null> = {};
   private galaxyImage: HTMLImageElement | null = null;
   private landscapeImage: HTMLImageElement | null = null;
   private uniforms: Record<string, WebGLUniformLocation | null> = {};
@@ -188,7 +193,8 @@ export class 동적종이효과 {
     catch (error) { console.warn(`${this.theme} 테마를 시작할 수 없습니다.`, error); this.destroy(); return false; }
     this.valid = true;
     if (this.theme === '별똥별') { this.loadGalaxy(); }
-    if (this.theme === '커피') { this.loadCoffeeCup(); }
+    const propUrl = 소품이미지[this.theme];
+    if (propUrl) { this.loadProp(propUrl); }
     const landscapeUrl = 풍경이미지[this.theme];
     if (landscapeUrl) { this.loadLandscape(landscapeUrl); }
     this.resize();
@@ -227,54 +233,57 @@ export class 동적종이효과 {
     this.galaxyTexture = null;
     this.landscapeTexture = null;
     this.glyphTexture = null;
-    this.cupTexture = null;
-    this.cupProgram = null;
-    this.steamProgram = null;
+    this.propTexture = null;
+    this.propProgram = null;
+    this.overlayProgram = null;
     for (const name of ['u_size', 'u_time', 'u_horizon', 'u_textBottom',
       'u_motion', 'u_tuning', 'u_ripples[0]', 'u_focus', 'u_mistake',
       'u_galaxy', 'u_hasGalaxy', 'u_landscape', 'u_hasLandscape',
-      'u_landscapeSize', 'u_glyphs', 'u_flow']) {
+      'u_landscapeSize', 'u_glyphs', 'u_flow', 'u_candle']) {
       this.uniforms[name] = gl.getUniformLocation(program, name);
     }
     if (this.theme === '매트릭스') { this.uploadGlyphs(); }
-    if (this.theme === '커피') {
-      try { this.initializeCoffee(); }
-      catch (error) { console.warn('커피 이미지와 김 효과를 시작할 수 없습니다.', error); }
+    if (소품이미지[this.theme]) {
+      try { this.initializeProp(); }
+      catch (error) { console.warn(`${this.theme} 소품 효과를 시작할 수 없습니다.`, error); }
     }
     if (this.galaxyImage?.complete && this.galaxyImage.naturalWidth) { this.uploadGalaxy(); }
     if (this.landscapeImage?.complete && this.landscapeImage.naturalWidth) {
       this.uploadLandscape();
     }
-    if (this.cupImage?.complete && this.cupImage.naturalWidth) { this.uploadCoffeeCup(); }
+    if (this.propImage?.complete && this.propImage.naturalWidth) { this.uploadProp(); }
   }
 
-  private initializeCoffee() {
+  private initializeProp() {
     const gl = this.gl;
     if (!gl) { return; }
     const makeProgram = (fragmentCode: string) => {
       const vertex = 셰이더(gl, gl.VERTEX_SHADER, 꼭짓점);
       const fragment = 셰이더(gl, gl.FRAGMENT_SHADER, fragmentCode);
       const program = gl.createProgram();
-      if (!program) { throw new Error('커피 WebGL 프로그램을 만들 수 없습니다.'); }
+      if (!program) { throw new Error('소품 WebGL 프로그램을 만들 수 없습니다.'); }
       gl.attachShader(program, vertex);
       gl.attachShader(program, fragment);
       gl.linkProgram(program);
       gl.deleteShader(vertex);
       gl.deleteShader(fragment);
+      gl.deleteShader(vertex);
+      gl.deleteShader(fragment);
       if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
         const 오류 = gl.getProgramInfoLog(program);
         gl.deleteProgram(program);
-        throw new Error(오류 ?? '커피 WebGL 프로그램 연결 실패');
+        throw new Error(오류 ?? '소품 WebGL 프로그램 연결 실패');
       }
       return program;
     };
-    this.cupProgram = makeProgram(커피잔조각);
-    this.steamProgram = makeProgram(커피김조각);
-    for (const name of ['u_cupImage', 'u_cupRect']) {
-      this.cupUniforms[name] = gl.getUniformLocation(this.cupProgram, name);
+    this.propProgram = makeProgram(소품이미지조각);
+    this.overlayProgram = makeProgram(this.theme === '커피' ? 커피김조각 : 촛불꽃조각);
+    for (const name of ['u_propImage', 'u_propRect', 'u_textBottom', 'u_dimBehindText']) {
+      this.propUniforms[name] = gl.getUniformLocation(this.propProgram, name);
     }
-    for (const name of ['u_size', 'u_time', 'u_motion', 'u_tuning', 'u_cup']) {
-      this.steamUniforms[name] = gl.getUniformLocation(this.steamProgram, name);
+    for (const name of ['u_size', 'u_time', 'u_motion', 'u_tuning', 'u_textBottom',
+      'u_cup', 'u_candle']) {
+      this.overlayUniforms[name] = gl.getUniformLocation(this.overlayProgram, name);
     }
   }
 
@@ -358,17 +367,17 @@ export class 동적종이효과 {
     this.landscapeTexture = texture;
   }
 
-  private loadCoffeeCup() {
+  private loadProp(url: string) {
     const image = new Image();
-    this.cupImage = image;
-    image.onload = () => { if (!this.disposed && this.valid) { this.uploadCoffeeCup(); } };
-    image.onerror = () => { console.warn('커피 텀블러 이미지를 불러올 수 없습니다.'); };
-    image.src = coffeeCupUrl;
+    this.propImage = image;
+    image.onload = () => { if (!this.disposed && this.valid) { this.uploadProp(); } };
+    image.onerror = () => { console.warn(`${this.theme} 소품 이미지를 불러올 수 없습니다.`); };
+    image.src = url;
   }
 
-  private uploadCoffeeCup() {
+  private uploadProp() {
     const gl = this.gl;
-    const image = this.cupImage;
+    const image = this.propImage;
     if (!gl || !image || !image.naturalWidth || gl.isContextLost()) { return; }
     const texture = gl.createTexture();
     if (!texture) { return; }
@@ -381,8 +390,8 @@ export class 동적종이효과 {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-    if (this.cupTexture) { gl.deleteTexture(this.cupTexture); }
-    this.cupTexture = texture;
+    if (this.propTexture) { gl.deleteTexture(this.propTexture); }
+    this.propTexture = texture;
   }
 
   setContentBottom(fraction: number) {
@@ -397,7 +406,7 @@ export class 동적종이효과 {
 
   typing(x: number, textY: number, wide = false) {
     if (!this.valid || document.hidden) { return; }
-    if (this.theme === '불멍' || this.theme === '커피' || 풍경이미지[this.theme]) { return; }
+    if (this.theme === '불멍' || 소품이미지[this.theme] || 풍경이미지[this.theme]) { return; }
     const meteor = this.theme === '별똥별';
     if (meteor && Math.random() >= 공통조절.유성발생확률) { return; }
     let position: { x: number; y: number };
@@ -458,40 +467,54 @@ export class 동적종이효과 {
     }
   };
 
-  private drawCoffee(paper: DOMRect) {
-    const gl = this.gl;
-    const image = this.cupImage;
-    const cupProgram = this.cupProgram;
-    const steamProgram = this.steamProgram;
-    if (!gl || !this.buffer || !image || !this.cupTexture || !cupProgram || !steamProgram) { return; }
-    // 기존 CSS 배치와 같은 크기와 위치: 오른쪽 2%, 바닥 0, 너비 88~112px.
-    const width = Math.max(88, Math.min(paper.width * 0.12, 112));
+  private propGeometry(paper: DOMRect) {
+    const image = this.propImage;
+    if (!image?.naturalWidth) { return null; }
+    const width = this.theme === '커피'
+      ? Math.max(88, Math.min(paper.width * 0.12, 112))
+      : paper.width < 500 ? 72 : Math.max(112, Math.min(paper.width * 0.15, 146));
     const height = width * image.naturalHeight / image.naturalWidth;
     const x = (paper.width * 0.98 - width) / Math.max(paper.width, 1);
     const w = width / Math.max(paper.width, 1);
     const h = height / Math.max(paper.height, 1);
+    return { x, w, h, center: x + w / 2,
+      originY: this.theme === '커피' ? 1 - h * 0.84 : 1 - h * 0.90,
+      scale: this.theme === '커피' ? h / 0.31 : h };
+  }
+
+  private drawProp(paper: DOMRect, textBottom: number) {
+    const gl = this.gl;
+    const propProgram = this.propProgram;
+    const overlayProgram = this.overlayProgram;
+    const rect = this.propGeometry(paper);
+    if (!gl || !this.buffer || !rect || !this.propTexture || !propProgram || !overlayProgram) { return; }
+    const { x, w, h } = rect;
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, this.cupTexture);
-    gl.useProgram(cupProgram);
-    const cupAttribute = gl.getAttribLocation(cupProgram, 'a_position');
-    gl.enableVertexAttribArray(cupAttribute);
-    gl.vertexAttribPointer(cupAttribute, 2, gl.FLOAT, false, 0, 0);
-    gl.uniform1i(this.cupUniforms.u_cupImage, 0);
-    gl.uniform4f(this.cupUniforms.u_cupRect, x, 0, w, h);
+    gl.bindTexture(gl.TEXTURE_2D, this.propTexture);
+    gl.useProgram(propProgram);
+    const propAttribute = gl.getAttribLocation(propProgram, 'a_position');
+    gl.enableVertexAttribArray(propAttribute);
+    gl.vertexAttribPointer(propAttribute, 2, gl.FLOAT, false, 0, 0);
+    gl.uniform1i(this.propUniforms.u_propImage, 0);
+    gl.uniform4f(this.propUniforms.u_propRect, x, 0, w, h);
+    gl.uniform1f(this.propUniforms.u_textBottom, textBottom);
+    gl.uniform1f(this.propUniforms.u_dimBehindText, this.theme === '촛불' ? 1 : 0);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
-    gl.useProgram(steamProgram);
-    const steamAttribute = gl.getAttribLocation(steamProgram, 'a_position');
-    gl.enableVertexAttribArray(steamAttribute);
-    gl.vertexAttribPointer(steamAttribute, 2, gl.FLOAT, false, 0, 0);
-    gl.uniform2f(this.steamUniforms.u_size, this.canvas.width, this.canvas.height);
-    gl.uniform1f(this.steamUniforms.u_time, this.elapsed);
-    gl.uniform1f(this.steamUniforms.u_motion, this.media.matches ? 0.08 : 1);
-    gl.uniform4f(this.steamUniforms.u_tuning, 동적효과조절.커피.기본세기, 0, 0, 0);
-    gl.uniform3f(this.steamUniforms.u_cup,
-      x + w / 2, 1 - h * 0.84, h / 0.31);
+    gl.useProgram(overlayProgram);
+    const overlayAttribute = gl.getAttribLocation(overlayProgram, 'a_position');
+    gl.enableVertexAttribArray(overlayAttribute);
+    gl.vertexAttribPointer(overlayAttribute, 2, gl.FLOAT, false, 0, 0);
+    gl.uniform2f(this.overlayUniforms.u_size, this.canvas.width, this.canvas.height);
+    gl.uniform1f(this.overlayUniforms.u_time, this.elapsed);
+    gl.uniform1f(this.overlayUniforms.u_motion, this.media.matches ? 0.08 : 1);
+    gl.uniform1f(this.overlayUniforms.u_textBottom, textBottom);
+    const tuning = 동적효과조절[this.theme];
+    gl.uniform4f(this.overlayUniforms.u_tuning, tuning.기본세기, 0, tuning.빛강도, 0);
+    gl.uniform3f(this.overlayUniforms[this.theme === '커피' ? 'u_cup' : 'u_candle'],
+      rect.center, rect.originY, rect.scale);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     gl.disable(gl.BLEND);
   }
@@ -547,6 +570,11 @@ export class 동적종이효과 {
     const tuning = 동적효과조절[this.theme];
     gl.uniform4f(uniform('u_tuning'), tuning.기본세기,
       tuning.감쇠속도, tuning.빛강도, tuning.글뒤세기);
+    if (this.theme === '촛불') {
+      const rect = this.propGeometry(paper);
+      gl.uniform3f(uniform('u_candle'), rect?.center ?? 0.84,
+        rect?.originY ?? 0.65, rect?.scale ?? 0.3);
+    }
     if (this.theme === '불멍') {
       const target = this.focusText
         ? { x: (text.left + this.focusText.x * text.width - paper.left) / Math.max(paper.width, 1),
@@ -594,7 +622,7 @@ export class 동적종이효과 {
       gl.uniform1i(uniform('u_glyphs'), 0);
     }
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-    if (this.theme === '커피') { this.drawCoffee(paper); }
+    if (소품이미지[this.theme]) { this.drawProp(paper, bottom); }
     this.ripples = this.ripples.filter(r => this.elapsed - r.시작 < 3.5);
     this.schedule();
   };
@@ -640,34 +668,34 @@ export class 동적종이효과 {
       this.landscapeImage.onload = null;
       this.landscapeImage.onerror = null;
     }
-    if (this.cupImage) {
-      this.cupImage.onload = null;
-      this.cupImage.onerror = null;
+    if (this.propImage) {
+      this.propImage.onload = null;
+      this.propImage.onerror = null;
     }
     if (this.gl) {
       if (this.galaxyTexture) { this.gl.deleteTexture(this.galaxyTexture); }
       if (this.landscapeTexture) { this.gl.deleteTexture(this.landscapeTexture); }
       if (this.glyphTexture) { this.gl.deleteTexture(this.glyphTexture); }
-      if (this.cupTexture) { this.gl.deleteTexture(this.cupTexture); }
-      if (this.cupProgram) { this.gl.deleteProgram(this.cupProgram); }
-      if (this.steamProgram) { this.gl.deleteProgram(this.steamProgram); }
+      if (this.propTexture) { this.gl.deleteTexture(this.propTexture); }
+      if (this.propProgram) { this.gl.deleteProgram(this.propProgram); }
+      if (this.overlayProgram) { this.gl.deleteProgram(this.overlayProgram); }
       if (this.buffer) { this.gl.deleteBuffer(this.buffer); }
       if (this.program) { this.gl.deleteProgram(this.program); }
     }
-    this.cupProgram = null;
-    this.steamProgram = null;
-    this.cupUniforms = {};
-    this.steamUniforms = {};
+    this.propProgram = null;
+    this.overlayProgram = null;
+    this.propUniforms = {};
+    this.overlayUniforms = {};
     this.gl = null;
     this.buffer = null;
     this.program = null;
     this.galaxyImage = null;
     this.landscapeImage = null;
-    this.cupImage = null;
+    this.propImage = null;
     this.galaxyTexture = null;
     this.landscapeTexture = null;
     this.glyphTexture = null;
-    this.cupTexture = null;
+    this.propTexture = null;
     this.uniforms = {};
     this.ripples = [];
     this.flowTarget = null;
