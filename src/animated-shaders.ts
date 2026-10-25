@@ -114,47 +114,56 @@ void main() {
 const 폭포 = `${공통}
 uniform sampler2D u_landscape;
 uniform float u_hasLandscape;
+uniform vec2 u_landscapeSize;
 void main() {
   vec2 p = vec2(v_uv.x, 1.0 - v_uv.y);
   float t = u_time * u_motion;
   vec3 color = mix(vec3(0.055, 0.098, 0.111),
     vec3(0.039, 0.080, 0.091), p.y);
   if (u_hasLandscape > 0.5) {
-    // 사진의 가로세로 비율을 유지한 채 종이 아래쪽에만 보여 준다.
-    float top = 0.53;
+    // 넓은 폭포의 중앙을 유지하며 종이 아래쪽에 사진 비율대로 펼친다.
+    float top = 0.48;
     float height = 1.0 - top;
     float aspect = u_size.x / max(u_size.y, 1.0);
     float regionAspect = aspect / height;
     float coverX = min(1.0, regionAspect / 1.776);
     float coverY = min(1.0, 1.776 / regionAspect);
-    float imageCenterX = mix(0.68, 0.5, coverX);
-    vec2 uv = vec2(imageCenterX + (p.x - 0.5) * coverX,
+    vec2 uv = vec2(0.5 + (p.x - 0.5) * coverX,
       0.5 + ((p.y - top) / height - 0.5) * coverY);
-    vec3 landscape = texture2D(u_landscape, clamp(uv, vec2(0.0), vec2(1.0))).rgb;
-    float reveal = smoothstep(top, top + 0.16, p.y);
-    color = mix(color, landscape * vec3(0.43, 0.53, 0.58),
-      reveal * 0.89 * u_tuning.x);
+    // 물줄기의 질감만 아주 작게 움직여 사진의 절벽과 수평선은 고정한다.
+    float fallBody = smoothstep(0.32, 0.40, uv.y) *
+      (1.0 - smoothstep(0.57, 0.70, uv.y));
+    vec2 imageUv = uv + vec2(0.0, fallBody * 0.0025 *
+      sin(uv.x * 85.0 + uv.y * 35.0 - t * 1.2));
+    vec2 sampleUv = clamp(imageUv, vec2(0.0), vec2(1.0));
+    vec3 landscape = texture2D(u_landscape, sampleUv).rgb;
+    vec2 texel = 2.0 / max(u_landscapeSize, vec2(1.0));
+    vec3 nearby = (texture2D(u_landscape, sampleUv + vec2(texel.x, 0.0)).rgb +
+      texture2D(u_landscape, sampleUv - vec2(texel.x, 0.0)).rgb +
+      texture2D(u_landscape, sampleUv + vec2(0.0, texel.y)).rgb +
+      texture2D(u_landscape, sampleUv - vec2(0.0, texel.y)).rgb) * 0.25;
+    landscape = clamp((landscape + (landscape - nearby) * 0.42 - 0.46) * 1.14 + 0.46,
+      vec3(0.0), vec3(1.0));
+    float reveal = smoothstep(top, top + 0.13, p.y);
+    float textContrast = mix(0.67, 1.0,
+      smoothstep(u_textBottom - 0.02, u_textBottom + 0.09, p.y));
+    color = mix(color, landscape * vec3(0.58, 0.66, 0.70) * textContrast,
+      reveal * 0.96 * u_tuning.x);
 
-    // 물보라는 실제 폭포의 낙하지점과 같은 사진 좌표에서 올라온다.
-    float fallX = 0.5 + (0.70 - imageCenterX) / coverX;
-    float fallY = top + height * (0.5 + (0.63 - 0.5) / coverY);
-    vec2 d = vec2((p.x - fallX) * aspect, p.y - fallY);
-    float plume = exp(-pow(d.x / 0.22, 2.0) -
-      pow((d.y + 0.023) / 0.071, 2.0));
-    float drifting = noise(vec2(p.x * 24.0 + t * 0.06,
-      p.y * 30.0 - t * 0.11));
-    float wisps = noise(vec2(p.x * 48.0 - t * 0.09,
-      p.y * 39.0 - t * 0.18));
-    float mist = plume * (0.22 + drifting * 0.50 + wisps * 0.24);
+    // 낙하지점 전반에서 굵은 안개와 가는 물보라가 서로 다른 속도로 위로 흐른다.
+    float basin = 0.62 + 0.013 * sin(uv.x * 10.0 + t * 0.52);
+    float plume = exp(-pow((uv.y - basin) / 0.16, 2.0));
+    float broad = noise(vec2(uv.x * 8.0 + t * 0.12,
+      uv.y * 12.0 + t * 0.62));
+    float wisps = noise(vec2(uv.x * 22.0 - t * 0.17,
+      uv.y * 25.0 + t * 1.05));
+    float uneven = 0.75 + 0.25 * noise(vec2(uv.x * 5.0, t * 0.28));
+    float mist = plume * (0.07 + smoothstep(0.32, 0.70, broad) * 0.48 +
+      wisps * 0.18) * uneven;
 
-    vec2 spraySpace = vec2(d.x * 55.0, d.y * 105.0);
-    vec2 cell = floor(spraySpace + vec2(t * 0.15, -t * 0.60));
-    vec2 speck = fract(spraySpace + vec2(t * 0.15, -t * 0.60));
-    vec2 center = vec2(hash21(cell + 4.0), hash21(cell + 19.0));
-    float droplets = exp(-pow(length((speck - center) * vec2(1.1, 1.7)) * 6.5, 2.0)) *
-      step(0.78, hash21(cell + 37.0)) * plume;
-    color += vec3(0.18, 0.22, 0.23) * mist * reveal * u_tuning.z;
-    color += vec3(0.13, 0.18, 0.19) * droplets * reveal * u_tuning.z;
+    float textMist = mix(0.52, 1.0,
+      smoothstep(u_textBottom - 0.03, u_textBottom + 0.10, p.y));
+    color += vec3(0.27, 0.30, 0.30) * mist * reveal * textMist * u_tuning.z;
   }
   gl_FragColor = vec4(color, 1.0);
 }`;

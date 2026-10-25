@@ -233,7 +233,7 @@ export class 동적종이효과 {
     for (const name of ['u_size', 'u_time', 'u_horizon', 'u_textBottom',
       'u_motion', 'u_tuning', 'u_ripples[0]', 'u_focus', 'u_mistake',
       'u_galaxy', 'u_hasGalaxy', 'u_landscape', 'u_hasLandscape',
-      'u_glyphs', 'u_flow']) {
+      'u_landscapeSize', 'u_glyphs', 'u_flow']) {
       this.uniforms[name] = gl.getUniformLocation(program, name);
     }
     if (this.theme === '매트릭스') { this.uploadGlyphs(); }
@@ -586,6 +586,8 @@ export class 동적종이효과 {
       gl.bindTexture(gl.TEXTURE_2D, this.landscapeTexture);
       gl.uniform1i(uniform('u_landscape'), 0);
       gl.uniform1f(uniform('u_hasLandscape'), this.landscapeTexture ? 1 : 0);
+      gl.uniform2f(uniform('u_landscapeSize'), this.landscapeImage?.naturalWidth ?? 1,
+        this.landscapeImage?.naturalHeight ?? 1);
     } else if (this.theme === '매트릭스') {
       gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D, this.glyphTexture);
