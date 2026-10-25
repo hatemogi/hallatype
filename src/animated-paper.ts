@@ -14,6 +14,8 @@ export const 동적효과조절: Record<움직이는테마,
 };
 const 공통조절 = {
   최대파문: 12,
+  최대유성: 5,
+  유성발생확률: 1 / 7,
   최대DPR: 1.5,
 } as const;
 
@@ -210,15 +212,25 @@ export class 동적종이효과 {
 
   typing(x: number, textY: number, wide = false) {
     if (!this.valid || document.hidden) { return; }
-    const paper = this.canvas.getBoundingClientRect();
-    const text = this.text.getBoundingClientRect();
-    const px = (text.left + x * text.width - paper.left) / Math.max(paper.width, 1);
-    const py = (text.top + textY * text.height - paper.top) / Math.max(paper.height, 1);
+    const meteor = this.theme === '별똥별';
+    if (meteor && Math.random() >= 공통조절.유성발생확률) { return; }
+    let position: { x: number; y: number };
+    if (meteor) {
+      // 타건 위치와 무관하게 종이 전체에서 고르게 나타난다.
+      position = { x: 0.08 + Math.random() * 0.84, y: 0.08 + Math.random() * 0.80 };
+    } else {
+      const paper = this.canvas.getBoundingClientRect();
+      const text = this.text.getBoundingClientRect();
+      const px = (text.left + x * text.width - paper.left) / Math.max(paper.width, 1);
+      const py = (text.top + textY * text.height - paper.top) / Math.max(paper.height, 1);
+      position = { x: Math.max(0.08, Math.min(0.92, px)),
+        y: Math.max(0.07, Math.min(0.91, py)) };
+    }
     const strength = 동적효과조절[this.theme].타건세기;
-    this.ripples.push({ x: Math.max(0.08, Math.min(0.92, px)),
-      y: Math.max(0.07, Math.min(0.91, py)),
-      시작: this.elapsed, 세기: wide ? strength * 2 : strength });
-    if (this.ripples.length > 공통조절.최대파문) { this.ripples.shift(); }
+    this.ripples.push({ ...position, 시작: this.elapsed,
+      세기: wide ? strength * (meteor ? 1.2 : 2) : strength });
+    const limit = meteor ? 공통조절.최대유성 : 공통조절.최대파문;
+    if (this.ripples.length > limit) { this.ripples.shift(); }
   }
 
   private resize = () => {

@@ -244,7 +244,11 @@ void main() {
   float behind = mix(u_tuning.w, 1.0, smoothstep(u_textBottom - 0.05,
     u_textBottom + 0.10, p.y));
   if (u_hasGalaxy > 0.5) {
-    vec3 galaxy = texture2D(u_galaxy, p).rgb;
+    // 넉넉히 확대해 가장자리를 감춘 채 카메라가 천천히 이동하는 느낌을 낸다.
+    float zoom = 0.93 + 0.012 * sin(t * 0.09);
+    vec2 camera = vec2(0.016 * sin(t * 0.12), 0.012 * cos(t * 0.085));
+    vec2 galaxyUv = (p - 0.5) * zoom + 0.5 + camera;
+    vec3 galaxy = texture2D(u_galaxy, galaxyUv).rgb;
     color += pow(galaxy, vec3(1.18)) * u_tuning.x * behind;
   }
   vec2 grid = p * vec2(37.0, 23.0);
@@ -261,17 +265,20 @@ void main() {
     vec4 r = u_ripples[i];
     float age = r.z;
     if (age < 0.0 || age > 1.45) { continue; }
-    float seed = hash21(vec2(r.x * 83.0 + float(i), r.y * 61.0));
-    float side = r.x < 0.25 ? 1.0 : (r.x > 0.75 ? -1.0 : (seed > 0.5 ? 1.0 : -1.0));
-    vec2 direction = normalize(vec2(side * 0.91, 0.42));
-    vec2 head = r.xy + vec2(side * (-0.065 + age * 0.23 * u_motion),
-      -0.045 + age * 0.12 * u_motion);
+    float seed = hash21(r.xy * vec2(83.0, 61.0));
+    float size = mix(0.55, 1.55, hash21(r.xy * vec2(169.0, 237.0)));
+    float side = r.x < 0.20 ? 1.0 : (r.x > 0.80 ? -1.0 : (seed > 0.5 ? 1.0 : -1.0));
+    float vertical = r.y > 0.75 ? -1.0 : 1.0;
+    vec2 direction = normalize(vec2(side * 0.97, vertical * 0.24));
+    vec2 head = r.xy + vec2(side * age * 0.19 * u_motion,
+      vertical * age * 0.045 * u_motion);
     vec2 d = vec2((p.x - head.x) * aspect, p.y - head.y);
     float along = dot(d, direction);
     float across = abs(d.x * direction.y - d.y * direction.x);
-    float tail = exp(-pow(across * 90.0, 2.0)) *
-      smoothstep(-0.20, -0.045, along) * (1.0 - smoothstep(-0.015, 0.025, along));
-    float core = exp(-dot(d, d) * 4600.0);
+    float tail = exp(-pow(across * 90.0 / size, 2.0)) *
+      smoothstep(-0.16 * size, -0.035 * size, along) *
+      (1.0 - smoothstep(-0.015 * size, 0.025 * size, along));
+    float core = exp(-dot(d, d) * 4600.0 / (size * size));
     float fade = 1.0 - smoothstep(0.42, 1.45, age);
     streak += tail * fade * r.w;
     headGlow += core * fade * r.w;
