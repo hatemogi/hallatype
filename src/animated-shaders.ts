@@ -1,5 +1,5 @@
 /** 수면 이외의 종이 애니메이션. 모든 효과는 글자를 다시 그리지 않고 배경만 그린다. */
-export const 움직이는테마들 = ['숲', '청보리', '폭포', '커피', '촛불', '수면과 파문', '매트릭스', '빗방울', '흐르는 구름', '불멍', '인센스', '오로라', '별똥별'] as const;
+export const 움직이는테마들 = ['청보리', '폭포', '커피', '촛불', '수면과 파문', '매트릭스', '빗방울', '흐르는 구름', '불멍', '인센스', '오로라', '별똥별'] as const;
 export type 움직이는테마 = typeof 움직이는테마들[number];
 
 export function 움직이는테마인가(테마: string): 테마 is 움직이는테마 {
@@ -51,40 +51,6 @@ float flowWake(vec2 p) {
   return exp(-pow(d.x * 7.0, 2.0) - pow(d.y * 27.0, 2.0)) * u_flow.z;
 }
 `;
-
-const 숲 = `${공통}
-uniform sampler2D u_landscape;
-uniform float u_hasLandscape;
-void main() {
-  vec2 p = vec2(v_uv.x, 1.0 - v_uv.y);
-  float t = u_time * u_motion;
-  vec3 color = vec3(0.098, 0.224, 0.184);
-  if (u_hasLandscape > 0.5) {
-    // 사진을 종이 전체에 이어 놓고, 위쪽 잎만 바람에 조금씩 움직인다.
-    float canopy = 1.0 - smoothstep(0.32, 0.96, p.y);
-    float wind = (0.006 * sin(t * 0.48 - p.x * 4.0) +
-      0.0015 * sin(t * 0.67 + p.x * 9.0)) * canopy * canopy;
-    // 가로로 긴 사진을 종이에 맞게 중앙에서 잘라 대나무 비율을 지킨다.
-    float crop = min(0.88, u_size.x / max(u_size.y * 3.0, 1.0));
-    vec2 uv = vec2(0.5 + (p.x - 0.5) * crop + wind, p.y);
-    float haze = 1.0 - smoothstep(0.03, 0.84, p.y);
-    vec2 blur = 15.0 * haze * vec2(crop / max(u_size.x, 1.0),
-      1.0 / max(u_size.y, 1.0));
-    vec3 grove = texture2D(u_landscape, uv).rgb;
-    if (haze > 0.01) {
-      grove = grove * 0.36 +
-        (texture2D(u_landscape, uv + vec2(blur.x, 0.0)).rgb +
-        texture2D(u_landscape, uv - vec2(blur.x, 0.0)).rgb +
-        texture2D(u_landscape, uv + vec2(0.0, blur.y)).rgb +
-        texture2D(u_landscape, uv - vec2(0.0, blur.y)).rgb) * 0.16;
-    }
-    float light = 0.97 + 0.03 * sin(p.x * 8.0 - t * 0.45 + p.y * 3.0);
-    grove *= vec3(0.53, 0.57, 0.61) * light;
-    float reveal = mix(0.32, 0.86, smoothstep(0.0, 0.92, p.y)) * u_tuning.x;
-    color = mix(color, grove, reveal);
-  }
-  gl_FragColor = vec4(color, 1.0);
-}`;
 
 const 청보리 = `${공통}
 uniform sampler2D u_landscape;
@@ -564,7 +530,6 @@ void main() {
 }`;
 
 export const 추가효과조각: Record<Exclude<움직이는테마, '수면과 파문'>, string> = {
-  숲,
   청보리,
   폭포,
   커피,

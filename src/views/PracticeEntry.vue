@@ -109,6 +109,10 @@ onUnmounted(() => {
   font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
   -webkit-font-smoothing: antialiased;
 }
+.첫화면[data-theme='한지'] {
+  background: linear-gradient(rgba(255, 253, 248, .30), rgba(255, 253, 248, .30)),
+    url('@/assets/hanji-paper.webp') center / cover;
+}
 .첫화면[data-theme='새벽'] {
   --첫화면중심: #fafcfc;
   --첫화면중간: #e9f0f2;

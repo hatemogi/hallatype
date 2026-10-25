@@ -1,14 +1,12 @@
 import { 추가효과조각, 커피김조각, 소품이미지조각, 촛불꽃조각,
   type 움직이는테마 } from './animated-shaders';
 import galaxyUrl from './assets/milky-way.webp';
-import bambooUrl from './assets/bamboo-grove.webp';
 import barleyUrl from './assets/barley-field.webp';
 import waterfallUrl from './assets/distant-waterfall.webp';
 import coffeeCupUrl from './assets/coffee-tumbler.webp';
 import candleUrl from './assets/ivory-candle.webp';
 
 const 풍경이미지: Partial<Record<움직이는테마, string>> = {
-  숲: bambooUrl,
   청보리: barleyUrl,
   폭포: waterfallUrl,
 };
@@ -20,7 +18,6 @@ const 소품이미지: Partial<Record<움직이는테마, string>> = {
 /** 종이 전체 뒤에서 동작하는 WebGL 효과. 테마별 강도는 여기에서 조절한다. */
 export const 동적효과조절: Record<움직이는테마,
   { 기본세기: number; 타건세기: number; 감쇠속도: number; 빛강도: number; 글뒤세기: number }> = {
-  숲: { 기본세기: 0.90, 타건세기: 0, 감쇠속도: 1.5, 빛강도: 0.90, 글뒤세기: 1.0 },
   청보리: { 기본세기: 0.90, 타건세기: 0, 감쇠속도: 1.5, 빛강도: 0.90, 글뒤세기: 1.0 },
   폭포: { 기본세기: 1.0, 타건세기: 0, 감쇠속도: 1.5, 빛강도: 0.85, 글뒤세기: 1.0 },
   커피: { 기본세기: 0.90, 타건세기: 0, 감쇠속도: 1.5, 빛강도: 0.90, 글뒤세기: 1.0 },

@@ -71,11 +71,11 @@ it('열아홉 테마가 선택 순서와 팔레트에 빠짐없이 반영된다'
   expect(Object.keys(필사팔레트들)).toEqual([...필사테마순서]);
 });
 
-it('모든 필사 테마의 첫 화면 색상이 정의되어 있다', () => {
+it('모든 필사 테마의 첫 화면 스타일이 정의되어 있다', () => {
   const 첫화면 = readFileSync(new URL('../../src/views/PracticeEntry.vue', import.meta.url), 'utf8');
   const 테마들 = [...첫화면.matchAll(/\.첫화면\[data-theme='([^']+)'\] \{/g)]
     .map(([, 테마]) => 테마);
-  expect(테마들).toEqual(필사테마순서.slice(1));
+  expect(테마들).toEqual([...필사테마순서]);
 });
 
 it('슬라이더 다섯 눈금은 이전 강도의 절반이고 최댓값은 150이다', () => {

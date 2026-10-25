@@ -624,7 +624,7 @@ export default defineComponent({
         this.동적배경?.destroy();
         this.동적배경 = null;
         this.동적배경사용가능 = false;
-        this.그림판?.투명배경설정(false);
+        this.그림판?.투명배경설정(this.설정.테마 === '한지' || this.설정.테마 === '숲');
         return;
       }
       if (this.동적배경?.theme !== this.설정.테마) {
@@ -1027,9 +1027,10 @@ button { font: inherit; }
 .테마버튼:last-child:nth-child(3n + 1) { grid-column: 2; }
 .테마버튼.선택됨, .설정선택 button.선택됨 { border-color: var(--강조); background: var(--선택바탕); }
 .테마견본 { display: grid; place-items: center; width: 100%; height: 38px; background: #fff; color: #454037; font-family: 'AppleMyungjo', 'Batang', serif; font-size: 19px; }
+.테마견본[data-theme='한지'] { background: #f8f4ed url('@/assets/hanji-paper.webp') center / cover; color: #454037; }
 .테마견본[data-theme='새벽'] { background: #fafcfc; color: #30444f; }
 .테마견본[data-theme='밤'] { background: #222c31; color: #e2e7df; }
-.테마견본[data-theme='숲'] { background: #19392f; color: #b6d99e; }
+.테마견본[data-theme='숲'] { background: #19392f url('@/assets/distant-forest.webp') center / cover; color: #e6efe4; }
 .테마견본[data-theme='청보리'] { background: #1e3423; color: #d3df8b; }
 .테마견본[data-theme='폭포'] { background: linear-gradient(160deg, #123039 45%, #315965 74%, #7f9ca3); color: #edf4ef; }
 .테마견본[data-theme='라벤더'] { background: #fcfaff; color: #675184; }
@@ -1332,6 +1333,23 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
   box-shadow: 0 2px 10px var(--타자기그림자);
   overflow-y: auto;
   overscroll-behavior: contain;
+}
+.필사실[data-theme='한지'] .종이 {
+  background: linear-gradient(rgba(255, 255, 255, .35), rgba(255, 255, 255, .35)),
+    url('@/assets/hanji-paper.webp') center / cover;
+}
+.필사실[data-theme='숲'] .종이::before {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: 30%;
+  background: url('@/assets/distant-forest.webp') center 54% / cover no-repeat;
+  filter: brightness(.6);
+  opacity: .86;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 42%);
+  mask-image: linear-gradient(to bottom, transparent, #000 42%);
+  pointer-events: none;
+  z-index: -1;
 }
 .지문머리 { padding-top: 12px; }
 .지문머리내용 { min-width: 0; }
