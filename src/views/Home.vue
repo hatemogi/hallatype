@@ -114,8 +114,8 @@
         </aside>
 
         <div class="필사패널">
-        <div class="종이외피" :class="{ 수면작동: 수면사용가능 }">
-        <canvas id="수면캔버스" v-show="수면사용가능" aria-hidden="true"></canvas>
+        <div class="종이외피" :class="{ 동적배경작동: 동적배경사용가능 }">
+        <canvas id="효과캔버스" v-show="동적배경사용가능" aria-hidden="true"></canvas>
         <article class="종이" aria-labelledby="지문제목">
           <div class="종이상단">
             <span>필사 노트 <span class="가운데점">·</span> {{오늘날짜}}</span>
@@ -286,7 +286,8 @@ import { 끝글자 } from '@/글자';
 import { 지문틀 } from '@/본문';
 import { 따라그리기틀 } from '@/따라그리기';
 import 그림판틀 from '@/그림판';
-import { 수면파문 } from '@/water-ripples';
+import { 동적종이효과 } from '@/animated-paper';
+import { 움직이는테마인가 } from '@/animated-shaders';
 import { 빈리듬그래프, 완료리듬그래프, type 리듬막대 } from '@/practice-rhythm';
 import { 지문찾기 } from '@/practice-recent';
 import { 즐겨찾기바꾸기, 즐겨찾기읽기, 즐겨찾기저장, 즐겨찾기저장키,
@@ -313,7 +314,8 @@ const 가장자리단계이름 = ['선명하게', '조금 선명하게', '보통
 const 지문삽화들: Record<string, string> = {
   UlRmQaTpLnVe: swimmingFreestyle,
 };
-const 어두운삽화테마들 = new Set(['밤', '숲', '커피', '매트릭스', 'PC통신', '서가', '수면과 파문']);
+const 어두운삽화테마들 = new Set(['밤', '숲', '커피', '매트릭스', 'PC통신', '서가',
+  '수면과 파문', '빗방울', '바람결', '흐르는 구름', '불멍']);
 export default defineComponent({
   components: { GeulsumMark, GeulsumTitle, PraiseStamp },
   props: {
@@ -362,8 +364,8 @@ export default defineComponent({
       기록오류: false,
       이어쓰기복원됨: false,
       그림판: null as 그림판틀 | null,
-      수면: null as 수면파문 | null,
-      수면사용가능: false,
+      동적배경: null as 동적종이효과 | null,
+      동적배경사용가능: false,
       폭관찰기: null as ResizeObserver | null,
       본문: null as 따라그리기틀 | null,
     };
@@ -605,36 +607,42 @@ export default defineComponent({
       this.그림판?.안티앨리어싱강도설정(단계별안티앨리어싱강도[this.설정.안티앨리어싱단계]);
       this.그림판?.글꼴확대방식설정(글자크기별글꼴[this.설정.글자크기].확대방식);
       this.현재한줄칸수 = this.한줄칸수();
-      this.수면연결();
+      this.동적배경연결();
       this.그림판?.보기설정(팔레트, this.현재한줄칸수,
         this.설정.커서깜빡임);
-      this.수면?.setContentBottom(this.그림판?.글줄하단비율 ?? 0.5);
+      this.동적배경?.setContentBottom(this.그림판?.글줄하단비율 ?? 0.5);
       this.$nextTick(() => this.화면크기변경());
     },
-    수면연결() {
-      if (this.설정.테마 !== '수면과 파문') {
-        this.수면?.destroy();
-        this.수면 = null;
-        this.수면사용가능 = false;
+    동적배경연결() {
+      if (!움직이는테마인가(this.설정.테마)) {
+        this.동적배경?.destroy();
+        this.동적배경 = null;
+        this.동적배경사용가능 = false;
         this.그림판?.투명배경설정(false);
         return;
       }
-      if (!this.수면) {
-        const 효과 = markRaw(new 수면파문(
-          document.getElementById('수면캔버스') as HTMLCanvasElement,
+      if (this.동적배경?.theme !== this.설정.테마) {
+        this.동적배경?.destroy();
+        this.동적배경 = null;
+        this.동적배경사용가능 = false;
+      }
+      if (!this.동적배경) {
+        const 효과 = markRaw(new 동적종이효과(
+          document.getElementById('효과캔버스') as HTMLCanvasElement,
           document.getElementById('캔버스') as HTMLCanvasElement,
+          this.설정.테마,
           (가능) => {
-            this.수면사용가능 = 가능;
+            this.동적배경사용가능 = 가능;
             this.그림판?.투명배경설정(가능);
             this.그림판?.그리기();
-            this.수면?.setContentBottom(this.그림판?.글줄하단비율 ?? 0.5);
+            this.동적배경?.setContentBottom(this.그림판?.글줄하단비율 ?? 0.5);
           },
         ));
-        this.수면사용가능 = 효과.start();
-        if (this.수면사용가능) { this.수면 = 효과; }
+        this.동적배경사용가능 = 효과.start();
+        if (this.동적배경사용가능) { this.동적배경 = 효과; }
       }
-      this.그림판?.투명배경설정(this.수면사용가능);
-      this.수면?.setContentBottom(this.그림판?.글줄하단비율 ?? 0.5);
+      this.그림판?.투명배경설정(this.동적배경사용가능);
+      this.동적배경?.setContentBottom(this.그림판?.글줄하단비율 ?? 0.5);
     },
     한줄칸수(): number {
       const 너비 = document.querySelector('.캔버스영역')?.clientWidth ?? window.innerWidth - 80;
@@ -652,7 +660,7 @@ export default defineComponent({
       this.현재한줄칸수 = 칸수;
       this.그림판?.보기설정(필사팔레트들[this.설정.테마], 칸수,
         this.설정.커서깜빡임);
-      this.수면?.setContentBottom(this.그림판?.글줄하단비율 ?? 0.5);
+      this.동적배경?.setContentBottom(this.그림판?.글줄하단비율 ?? 0.5);
     },
 
     reset(새로시작 = false) {
@@ -715,9 +723,9 @@ export default defineComponent({
         영문글꼴: false,
       }));
       this.그림판 = 그림판;
-      this.수면연결();
+      this.동적배경연결();
       그림판.그리기();
-      this.수면?.setContentBottom(그림판.글줄하단비율);
+      this.동적배경?.setContentBottom(그림판.글줄하단비율);
       this.$nextTick(() => {
         this.화면크기변경();
         const 종이 = document.querySelector('.종이');
@@ -816,7 +824,7 @@ export default defineComponent({
           const 문장끝 = 본문.끝 || ((이전글자.다음행 ||
             '.!?。！？'.includes(String.fromCodePoint(이전글자.코드[0]))) &&
             (이전위치.행 !== 본문.위치.행 || 이전위치.열 !== 본문.위치.열));
-          self.수면?.ripple(그림판.화면가로비율(이전위치),
+          self.동적배경?.typing(그림판.화면가로비율(이전위치),
             그림판.화면세로비율(이전위치), 문장끝);
         }
         if (본문.끝) {
@@ -887,8 +895,8 @@ export default defineComponent({
     this.입력기록저장();
     window.onkeydown = null;
     this.그림판?.종료();
-    this.수면?.destroy();
-    this.수면 = null;
+    this.동적배경?.destroy();
+    this.동적배경 = null;
   },
   computed: {
     현재삽화(): string | undefined {
@@ -1020,6 +1028,22 @@ button { font: inherit; }
 .테마견본[data-theme='수면과 파문'] {
   background: linear-gradient(180deg, #07171a 0 62%, #244443 80%, #b29055 100%);
   color: #f0efdc;
+}
+.테마견본[data-theme='빗방울'] {
+  background: linear-gradient(145deg, #08151e 45%, #284552 70%, #789ba9 100%);
+  color: #f3f7f4;
+}
+.테마견본[data-theme='바람결'] {
+  background: linear-gradient(155deg, #0b1d19 40%, #295844 73%, #7ba482 100%);
+  color: #f2f7e8;
+}
+.테마견본[data-theme='흐르는 구름'] {
+  background: linear-gradient(160deg, #141f36 37%, #405574 74%, #8b9db5 100%);
+  color: #f8f7f2;
+}
+.테마견본[data-theme='불멍'] {
+  background: radial-gradient(circle at 54% 100%, #a85a2d, #38221b 48%, #1d1211 85%);
+  color: #fff0dc;
 }
 .설정선택 { display: flex; gap: 7px; }
 .설정선택 button { min-width: 72px; padding: 8px 13px; border: 1px solid var(--테두리); border-radius: 3px; background: var(--선택안함); color: var(--글); font-size: 13px; cursor: pointer; }
@@ -1156,7 +1180,7 @@ button { font: inherit; }
 .가는선 { width: 42px; height: 1px; margin: 34px auto 0; background: var(--진행선); }
 .캔버스영역 { display: flex; justify-content: center; max-width: 930px; margin: 26px auto 0; overflow: hidden; }
 #캔버스 { display: block; width: 100%; height: auto; image-rendering: auto; }
-#수면캔버스 {
+#효과캔버스 {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -1164,7 +1188,7 @@ button { font: inherit; }
   pointer-events: none;
   border-radius: 2px 2px 0 0;
 }
-.필사실[data-theme='수면과 파문'] .종이외피.수면작동 .종이 { background: transparent; }
+.종이외피.동적배경작동 .종이 { background: transparent; }
 .진행판 {
   box-sizing: border-box;
   max-width: 960px;

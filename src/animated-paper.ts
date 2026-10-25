@@ -1,10 +1,15 @@
-/** 필사 종이 전체 뒤에서 동작하는 WebGL 1 수면. 수치는 아래 한곳에서 조절한다. */
-export const 수면조절 = {
-  기본물결: 0.58,
-  타건파문: 0.72,
-  감쇠속도: 1.55,
-  금빛강도: 0.37,
-  지문뒤물결: 0.85,
+import { 추가효과조각, type 움직이는테마 } from './animated-shaders';
+
+/** 종이 전체 뒤에서 동작하는 WebGL 효과. 테마별 강도는 여기에서 조절한다. */
+export const 동적효과조절: Record<움직이는테마,
+  { 기본세기: number; 타건세기: number; 감쇠속도: number; 빛강도: number; 글뒤세기: number }> = {
+  '수면과 파문': { 기본세기: 0.58, 타건세기: 0.72, 감쇠속도: 1.55, 빛강도: 0.37, 글뒤세기: 0.85 },
+  빗방울: { 기본세기: 0.94, 타건세기: 0.76, 감쇠속도: 1.7, 빛강도: 0.74, 글뒤세기: 0.65 },
+  바람결: { 기본세기: 1.0, 타건세기: 0.72, 감쇠속도: 1.45, 빛강도: 0.7, 글뒤세기: 0.80 },
+  '흐르는 구름': { 기본세기: 1.10, 타건세기: 0.78, 감쇠속도: 1.25, 빛강도: 0.82, 글뒤세기: 0.78 },
+  불멍: { 기본세기: 0.95, 타건세기: 0.72, 감쇠속도: 1.65, 빛강도: 0.75, 글뒤세기: 0.72 },
+};
+const 공통조절 = {
   최대파문: 12,
   최대DPR: 1.5,
 } as const;
@@ -19,7 +24,7 @@ void main() {
   gl_Position = vec4(a_position, 0.0, 1.0);
 }`;
 
-const 조각 = `
+const 수면조각 = `
 precision mediump float;
 varying vec2 v_uv;
 uniform vec2 u_size;
@@ -94,7 +99,7 @@ function 셰이더(gl: WebGLRenderingContext, 종류: number, 코드: string): W
   return shader;
 }
 
-export class 수면파문 {
+export class 동적종이효과 {
   private gl: WebGLRenderingContext | null = null;
   private program: WebGLProgram | null = null;
   private buffer: WebGLBuffer | null = null;
@@ -110,6 +115,7 @@ export class 수면파문 {
   private valid = false;
 
   constructor(private canvas: HTMLCanvasElement, private text: HTMLCanvasElement,
+    readonly theme: 움직이는테마,
     private available: (value: boolean) => void) {}
 
   start(): boolean {
@@ -117,11 +123,13 @@ export class 수면파문 {
     this.canvas.addEventListener('webglcontextrestored', this.contextRestored);
     document.addEventListener('visibilitychange', this.visibilityChanged);
     this.media.addEventListener('change', this.motionChanged);
-    this.observer = new ResizeObserver(() => this.resize());
-    this.observer.observe(this.canvas.parentElement!);
+    if (typeof ResizeObserver !== 'undefined') {
+      this.observer = new ResizeObserver(() => this.resize());
+      this.observer.observe(this.canvas.parentElement!);
+    }
     window.addEventListener('resize', this.resize);
     try { this.initialize(); }
-    catch (error) { console.warn('수면 테마를 시작할 수 없습니다.', error); this.destroy(); return false; }
+    catch (error) { console.warn(`${this.theme} 테마를 시작할 수 없습니다.`, error); this.destroy(); return false; }
     this.valid = true;
     this.resize();
     this.schedule();
@@ -132,7 +140,8 @@ export class 수면파문 {
     const gl = this.canvas.getContext('webgl', { alpha: false, antialias: false, depth: false });
     if (!gl) { throw new Error('WebGL을 사용할 수 없습니다.'); }
     const vertex = 셰이더(gl, gl.VERTEX_SHADER, 꼭짓점);
-    const fragment = 셰이더(gl, gl.FRAGMENT_SHADER, 조각);
+    const fragment = 셰이더(gl, gl.FRAGMENT_SHADER,
+      this.theme === '수면과 파문' ? 수면조각 : 추가효과조각[this.theme]);
     const program = gl.createProgram();
     if (!program) { throw new Error('WebGL 프로그램을 만들 수 없습니다.'); }
     gl.attachShader(program, vertex);
@@ -165,22 +174,23 @@ export class 수면파문 {
     this.sourceBottom = Math.max(0, Math.min(1, fraction));
   }
 
-  ripple(x: number, textY: number, wide = false) {
+  typing(x: number, textY: number, wide = false) {
     if (!this.valid || document.hidden) { return; }
     const paper = this.canvas.getBoundingClientRect();
     const text = this.text.getBoundingClientRect();
     const px = (text.left + x * text.width - paper.left) / Math.max(paper.width, 1);
     const py = (text.top + textY * text.height - paper.top) / Math.max(paper.height, 1);
+    const strength = 동적효과조절[this.theme].타건세기;
     this.ripples.push({ x: Math.max(0.08, Math.min(0.92, px)),
       y: Math.max(0.07, Math.min(0.91, py)),
-      시작: this.elapsed, 세기: wide ? 수면조절.타건파문 * 2 : 수면조절.타건파문 });
-    if (this.ripples.length > 수면조절.최대파문) { this.ripples.shift(); }
+      시작: this.elapsed, 세기: wide ? strength * 2 : strength });
+    if (this.ripples.length > 공통조절.최대파문) { this.ripples.shift(); }
   }
 
   private resize = () => {
     if (!this.gl || !this.canvas.parentElement) { return; }
     const bounds = this.canvas.parentElement.getBoundingClientRect();
-    const dpr = Math.min(window.devicePixelRatio || 1, 수면조절.최대DPR);
+    const dpr = Math.min(window.devicePixelRatio || 1, 공통조절.최대DPR);
     const width = Math.max(1, Math.round(bounds.width * dpr));
     const height = Math.max(1, Math.round(bounds.height * dpr));
     if (this.canvas.width !== width || this.canvas.height !== height) {
@@ -216,8 +226,9 @@ export class 수면파문 {
     gl.uniform1f(uniform('u_horizon'), 0);
     gl.uniform1f(uniform('u_textBottom'), bottom);
     gl.uniform1f(uniform('u_motion'), this.media.matches ? 0.08 : 1);
-    gl.uniform4f(uniform('u_tuning'), 수면조절.기본물결,
-      수면조절.감쇠속도, 수면조절.금빛강도, 수면조절.지문뒤물결);
+    const tuning = 동적효과조절[this.theme];
+    gl.uniform4f(uniform('u_tuning'), tuning.기본세기,
+      tuning.감쇠속도, tuning.빛강도, tuning.글뒤세기);
     const values = new Float32Array(48);
     for (let i = 0; i < 12; i++) {
       const ripple = this.ripples[i];
@@ -253,7 +264,7 @@ export class 수면파문 {
   private contextRestored = () => {
     if (this.disposed) { return; }
     try { this.initialize(); this.valid = true; this.resize(); this.available(true); this.schedule(); }
-    catch (error) { console.warn('수면 테마를 복구할 수 없습니다.', error); this.available(false); }
+    catch (error) { console.warn(`${this.theme} 테마를 복구할 수 없습니다.`, error); this.available(false); }
   };
 
   destroy() {
