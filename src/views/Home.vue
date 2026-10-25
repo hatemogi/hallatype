@@ -180,6 +180,12 @@
           </div>
         </article>
 
+        <div class="타자기롤러" aria-hidden="true">
+          <span class="롤러손잡이"></span>
+          <span class="롤러축"><span class="롤러눈금"></span></span>
+          <span class="롤러손잡이"></span>
+        </div>
+
         <section class="진행판" aria-label="필사 진행 상황">
           <div class="진행영역">
             <div class="진행문구">
@@ -228,6 +234,7 @@
             <span>띄어쓰기와 줄바꿈은 건너뛰어도 괜찮아요.</span>
             <button type="button" class="글자버튼" aria-keyshortcuts="Alt+R" @click="다시쓰기">처음부터 다시 쓰기 <span aria-hidden="true">↺</span></button>
           </div>
+          <div class="타자기통풍구" aria-hidden="true"></div>
         </section>
 
         </div>
@@ -905,8 +912,7 @@ export default defineComponent({
   letter-spacing: -.02em;
 }
 .필사실:is([data-theme='매트릭스'], [data-theme='PC통신']) .브랜드문양,
-.필사실:is([data-theme='매트릭스'], [data-theme='PC통신']) .종이,
-.필사실:is([data-theme='매트릭스'], [data-theme='PC통신']) .진행판 {
+.필사실:is([data-theme='매트릭스'], [data-theme='PC통신']) .종이 {
   border-radius: 0;
 }
 
@@ -1178,7 +1184,7 @@ button { font: inherit; }
 .주버튼 span { margin-left: 12px; }
 button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
 /* 글 선택, 입력, 결과가 같은 높이 안에서 이어지는 작업대 */
-.페이지 { display: flex; flex-direction: column; height: 100dvh; }
+.페이지 { display: flex; flex-direction: column; height: 100dvh; min-height: 680px; }
 .상단 { flex: none; height: 62px; }
 .작업공간 {
   display: grid;
@@ -1206,16 +1212,57 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
 .지문서랍 { display: flex; flex-direction: column; flex: 1; min-height: 0; margin-top: 20px; }
 .글목록 { display: flex; flex-direction: column; flex: 1; min-height: 0; gap: 6px; overflow-y: auto; overscroll-behavior: contain; padding-right: 3px; }
 .글목록 .지문선택버튼 { flex: none; min-height: 51px; padding: 9px 11px; }
-.필사패널 { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.필사패널 {
+  /* 저장된 색상 테마에서 재질을 파생시켜 테마 변경을 즉시 반영한다. */
+  --타자기몸체: var(--선택바탕);
+  --타자기금속: var(--강조);
+  --타자기받침: var(--테두리);
+  --타자기그림자: color-mix(in srgb, var(--글) 12%, transparent);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding-top: 8px;
+  padding-bottom: 9px;
+}
 .필사실[data-theme='매트릭스'] .종이 { box-shadow: inset 0 0 38px rgba(43, 202, 82, .06); }
 .필사실[data-theme='PC통신'] .종이 { box-shadow: none; }
 .종이 {
   flex: 1;
-  min-height: 0;
-  margin: 0;
+  min-height: 220px;
+  margin: 0 22px -5px;
   padding: 18px clamp(18px, 3vw, 38px) 28px;
+  border-radius: 2px 2px 0 0;
+  box-shadow: 0 2px 10px var(--타자기그림자);
   overflow-y: auto;
   overscroll-behavior: contain;
+}
+.타자기롤러 { position: relative; z-index: 1; display: flex; align-items: center; flex: none; height: 27px; }
+.롤러손잡이 {
+  flex: none;
+  width: 21px;
+  height: 27px;
+  box-sizing: border-box;
+  border: 3px solid var(--타자기금속);
+  border-radius: 5px;
+  background: repeating-linear-gradient(0deg, var(--타자기금속) 0 2px, var(--타자기받침) 2px 4px);
+  box-shadow: 0 2px 2px var(--타자기그림자);
+}
+.롤러축 {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  height: 15px;
+  background: var(--글);
+  border-radius: 2px;
+  box-shadow: inset 0 2px 0 color-mix(in srgb, var(--종이) 25%, transparent), 0 3px 3px var(--타자기그림자);
+}
+.롤러눈금 {
+  width: 100%;
+  height: 4px;
+  margin: 0 18px;
+  background: repeating-linear-gradient(90deg, var(--종이) 0 1px, transparent 1px 12px);
+  opacity: .45;
 }
 .지문머리 { padding-top: 12px; }
 .분류 { margin-bottom: 8px; }
@@ -1223,7 +1270,37 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
 .출처 { margin-top: 7px; }
 .가는선 { margin-top: 18px; }
 .캔버스영역 { margin-top: 16px; }
-.진행판 { flex: none; max-width: none; margin: 8px 0 0; padding: 12px 19px; }
+.진행판 {
+  position: relative;
+  flex: none;
+  max-width: none;
+  margin: -5px 0 0;
+  padding: 17px 23px 12px;
+  border: 1px solid var(--타자기받침);
+  border-radius: 13px 13px 29px 29px;
+  background: var(--타자기몸체);
+  box-shadow: inset 0 2px 0 var(--종이), 0 7px 0 var(--타자기받침), 0 14px 20px var(--타자기그림자);
+}
+.타자기통풍구 {
+  width: 74px;
+  height: 5px;
+  margin: 14px auto 0;
+  background: repeating-linear-gradient(90deg, var(--타자기금속) 0 2px, transparent 2px 6px);
+  opacity: .45;
+}
+.진행판 .글자버튼, .진행판 .주버튼 {
+  min-height: 38px;
+  padding: 8px 15px;
+  border: 1px solid var(--타자기받침);
+  border-radius: 20px;
+  box-shadow: 0 3px 0 var(--타자기받침);
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.진행판 .글자버튼 { background: var(--종이); color: var(--글); }
+.진행판 .마침통계 dt { color: var(--보조글); }
+.진행판 .기록안내[role="alert"] { color: color-mix(in srgb, var(--오류색) 80%, var(--글)); }
+.진행판 .글자버튼:hover { border-color: var(--타자기금속); text-decoration: none; }
+.진행판 .글자버튼:active, .진행판 .주버튼:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--타자기받침); }
 .진행아래 { margin-top: 9px; }
 .마침 { max-width: none; gap: 18px; margin-top: 10px; padding-top: 11px; }
 .마침내용 { flex: 1; }
@@ -1232,7 +1309,7 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
 .마침동작 { flex: none; }
 
 @media (max-width: 850px) {
-  .페이지 { padding: 0 14px; }
+  .페이지 { padding: 0 14px; min-height: 660px; }
   .상단 { height: 56px; }
   .상단문구 { display: none; }
   .상단동작 { gap: 8px; }
@@ -1270,20 +1347,31 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
   .주제관리선택 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .글목록 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; }
   .글목록 .지문선택버튼 { min-height: 56px; }
-  .필사패널 { flex: 1; }
-  .종이 { padding: 13px 16px 22px; }
+  .필사패널 { flex: 1; padding-top: 3px; }
+  .종이 { margin-right: 10px; margin-left: 10px; padding: 13px 16px 22px; }
   .지문머리 { padding-top: 8px; }
   .지문머리 h2 { font-size: 25px; }
   .가는선 { margin-top: 15px; }
   .캔버스영역 { margin-top: 14px; }
-  .진행판 { margin-top: 7px; padding: 10px 14px; }
-  .진행아래 { flex-direction: row; align-items: center; gap: 8px; margin-top: 8px; }
+  .타자기롤러 { height: 21px; }
+  .롤러손잡이 { width: 14px; height: 21px; border-width: 2px; }
+  .롤러축 { height: 12px; }
+  .진행판 { padding: 13px 14px 10px; border-radius: 10px 10px 22px 22px; }
+  .타자기통풍구 { margin-top: 11px; height: 4px; }
+  .진행아래 { flex-direction: row; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .진행판 .글자버튼, .진행판 .주버튼 { min-height: 44px; padding: 8px 12px; }
   .마침 { align-items: start; flex-wrap: wrap; gap: 8px; }
   .마침내용 { flex-basis: 100%; }
   .마침통계 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
   .마침통계 dd { font-size: 11px; }
   .마침동작 { width: auto; margin: 0; }
   .주버튼 { padding: 8px 11px; }
+}
+
+@media (max-width: 600px) {
+  .브랜드글자 small { display: none; }
+  .상단동작 { gap: 6px; }
+  .최근버튼, .설정버튼 { white-space: nowrap; }
 }
 
 @media (max-width: 380px) {
@@ -1294,6 +1382,7 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
 
 @media (prefers-reduced-motion: reduce) {
   .진행막대 span { transition: none; }
+  .진행판 .글자버튼, .진행판 .주버튼 { transition: none; }
 }
 
 </style>
