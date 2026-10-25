@@ -1,3 +1,16 @@
+.공식주소 {
+  display: inline-block;
+  width: 7.386em;
+  height: 1em;
+  overflow: hidden;
+  background: currentColor;
+  -webkit-mask: url('./assets/dailytyping-typewriter.png') center / contain no-repeat;
+  mask: url('./assets/dailytyping-typewriter.png') center / contain no-repeat;
+  text-indent: -9999px;
+  vertical-align: -.15em;
+  white-space: nowrap;
+}
+
 .필사실 {
   --화면: #f4f1e9;
   --장식빛: rgba(219, 206, 182, .25);

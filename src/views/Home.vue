@@ -4,7 +4,7 @@
       <header class="상단">
         <a class="브랜드" href="#" aria-label="글숨 첫 화면으로 이동">
           <GeulsumMark :key="`문양-${설정.테마}`" class="브랜드문양" />
-          <span class="브랜드글자"><GeulsumTitle :key="`타이틀-${설정.테마}`" class="브랜드타이틀" :src="연필타이틀" :width="1736" :height="906" :gap-reduction="55" /><small>dailytyping.com</small></span>
+          <span class="브랜드글자"><GeulsumTitle :key="`타이틀-${설정.테마}`" class="브랜드타이틀" :src="연필타이틀" :width="1736" :height="906" :gap-reduction="55" /><small class="공식주소">dailytyping.com</small></span>
         </a>
         <div class="상단동작">
           <span class="상단문구">한 글자씩, 마음을 고르다.</span>
@@ -997,7 +997,7 @@ button { font: inherit; }
 .브랜드:focus-visible { outline: 2px solid var(--강조); outline-offset: 4px; }
 .브랜드글자 { display: flex; align-items: center; gap: 9px; color: var(--글); }
 .브랜드타이틀 { display: block; width: 49px; height: auto; color: var(--글); }
-.브랜드글자 small { color: var(--글); font-size: 12px; font-weight: 500; letter-spacing: 0; }
+.브랜드글자 small { color: var(--글); font-size: 14px; }
 .상단문구 { color: var(--보조글); font-size: 12px; letter-spacing: .03em; }
 .단축키버튼 { width: 31px; height: 31px; padding: 0; border: 1px solid var(--테두리); border-radius: 3px; background: var(--선택안함); color: var(--보조글); font-size: 15px; cursor: pointer; }
 .단축키버튼:hover { border-color: var(--강조); color: var(--글); }

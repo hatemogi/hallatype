@@ -4,7 +4,7 @@
   <main v-else class="첫화면" :data-theme="테마">
     <div class="첫화면안쪽">
       <header class="첫화면상단">
-        <div class="첫화면브랜드"><GeulsumMark :key="`문양-${테마}`" /><span class="도메인">dailytyping.com</span></div>
+        <div class="첫화면브랜드"><GeulsumMark :key="`문양-${테마}`" /><span class="도메인 공식주소">dailytyping.com</span></div>
         <span class="상단장식" aria-hidden="true">✳</span>
       </header>
 
@@ -17,7 +17,7 @@
         <a ref="시작버튼" href="#practice" class="시작버튼" aria-keyshortcuts="Enter">필사 시작하기 <span aria-hidden="true">→</span></a>
       </section>
 
-      <footer class="첫화면하단"><span>천천히, 나의 속도로</span><span>글숨 · dailytyping.com</span></footer>
+      <footer class="첫화면하단"><span>천천히, 나의 속도로</span><span>글숨 · <span class="공식주소">dailytyping.com</span></span></footer>
     </div>
   </main>
 </template>
@@ -280,7 +280,7 @@ onUnmounted(() => {
 }
 .첫화면상단, .첫화면하단 { display: flex; justify-content: space-between; align-items: center; }
 .첫화면브랜드 { display: flex; align-items: center; gap: 11px; }
-.도메인 { color: var(--보조글); font-size: 11px; font-weight: 700; letter-spacing: .23em; }
+.도메인 { color: var(--보조글); font-size: 14px; }
 .상단장식 { color: var(--강조); font-size: 20px; }
 .소개 {
   display: flex;

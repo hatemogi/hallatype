@@ -1,0 +1,4 @@
+The dailytyping.com PNG is rendered on macOS from the built-in American Typewriter Regular font.
+No font file or vector outlines are distributed with this project.
+Font use is governed by the macOS Software License Agreement:
+https://www.apple.com/legal/sla/
