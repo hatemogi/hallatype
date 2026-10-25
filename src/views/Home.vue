@@ -297,7 +297,7 @@ import { 날짜키, 테마별지문들,
 import { 고정주제바꾸기, 고정주제읽기, 고정주제저장, 고정주제저장키, 고정주제한도,
   기본고정주제들, 전체주제들, 항상표시주제들, 주제묶음들, type 선택주제 } from '@/practice-pinned-topics';
 import { 다음미완료지문, 첫진입지문선택, 주제지문선택, 주제완료현황,
-  지문모음선택, 지문모음완료현황 } from '@/practice-selection';
+  지문모음선택, 지문모음완료현황, 마지막지문읽기, 마지막지문저장 } from '@/practice-selection';
 import { 본문버전, 브라우저저장소, 시도목록, 시도시작, 시도완료, 시도중단, 입력묶음,
   지문입력상태, 지문재개시도, 지문최고정타율, 지문도장등급, 정타도장,
   정타율, 정타율표시, 이번이최고정타율인가, type 칭찬도장종류,
@@ -503,7 +503,7 @@ export default defineComponent({
     },
     입력기록추가(키: 입력키) {
       this.미기록입력.push(키);
-      // 첫 입력은 곧바로 저장해 새로고침 직후에도 선택한 글을 다시 열 수 있게 한다.
+      // 첫 입력부터 곧바로 저장해 새로고침 후 입력 위치를 복원한다.
       if (this.다음기록순서 === 0 || this.미기록입력.length >= 20) { this.입력기록저장(); }
       else if (this.기록타이머 === null) {
         this.기록타이머 = setTimeout(() => this.입력기록저장(), 2000);
@@ -516,7 +516,8 @@ export default defineComponent({
       return 지문재개시도(this.시도들, this.오늘지문.id, 본문버전(this.오늘지문.본문));
     },
     지문상태(지문: 연습지문): string {
-      return 지문입력상태(this.시도들, 지문.id, 본문버전(지문.본문));
+      const 상태 = 지문입력상태(this.시도들, 지문.id, 본문버전(지문.본문));
+      return 상태 === '미완료' && 지문.id === this.오늘지문.id ? '진행 중' : 상태;
     },
     지문최고(지문: 연습지문): string | null {
       const 최고 = 지문최고정타율(this.시도들, 지문.id, 본문버전(지문.본문));
@@ -545,6 +546,7 @@ export default defineComponent({
       if (지문?.id === this.오늘지문.id &&
           (테마 === '즐겨찾기' || !this.결과화면보이기)) {
         this.글테마 = 테마;
+        마지막지문저장(지문.id);
         if (this.목록열림) { this.$nextTick(() => document.querySelector<HTMLElement>('.글목록 button.선택됨')?.focus()); }
         return;
       }
@@ -560,7 +562,10 @@ export default defineComponent({
       this.목록닫기();
       const 같은지문 = 지문.id === this.오늘지문.id;
       const 완료된지문 = this.지문상태(지문) === '완료';
-      if (같은지문 && !this.결과화면보이기 && !완료된지문) { return; }
+      if (같은지문 && !this.결과화면보이기 && !완료된지문) {
+        마지막지문저장(지문.id);
+        return;
+      }
       this.입력기록저장();
       this.오늘지문 = 지문;
       const 새로시작 = 완료된지문 || (같은지문 && this.결과화면보이기) || !this.복원할시도();
@@ -633,6 +638,12 @@ export default defineComponent({
     },
 
     reset(새로시작 = false) {
+      마지막지문저장(this.오늘지문.id);
+      // 최근 기록의 직접 링크에서 다른 글로 옮기면 이전 글 주소가 복원을 덮어쓰지 않게 한다.
+      if (this.requestedPassageId && this.requestedPassageId !== this.오늘지문.id &&
+          window.location.hash.startsWith('#practice?')) {
+        window.history.replaceState(window.history.state, '', '#practice');
+      }
       this.입력기록저장();
       this.밀린기록저장();
       this.그림판?.종료();
@@ -816,7 +827,7 @@ export default defineComponent({
     this.기록들 = 진행작업읽기();
     this.즐겨찾기IDs = 즐겨찾기읽기();
     const 요청지문 = this.requestedPassageId ? 지문찾기(this.requestedPassageId) : undefined;
-    const 선택 = 요청지문 ?? 첫진입지문선택(this.시도들);
+    const 선택 = 요청지문 ?? 첫진입지문선택(this.시도들, 마지막지문읽기());
     this.오늘날짜 = 날짜키(new Date());
     this.글테마 = 선택.테마;
     this.오늘지문 = 선택.지문;

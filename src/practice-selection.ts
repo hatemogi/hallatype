@@ -1,10 +1,31 @@
 import { 테마별지문들, type 연습지문, type 지문테마 } from './practice-passages';
-import { 본문버전, 지문입력상태, 지문재개시도, type 필사시도 } from './practice-progress';
+import { 본문버전, 브라우저저장소, 지문입력상태, 지문재개시도, type 필사시도 } from './practice-progress';
 
 export type 지문선택 = { 테마: 지문테마; 지문: 연습지문 };
 
 const 전체선택지: 지문선택[] = (Object.keys(테마별지문들) as 지문테마[])
   .flatMap((테마) => 테마별지문들[테마].map((지문) => ({ 테마, 지문 })));
+
+export const 마지막지문저장키 = 'dt:last-passage:v1';
+type 선택저장소 = Pick<Storage, 'getItem' | 'setItem'>;
+
+/** 입력 기록과 별개로, 마지막에 열어 둔 글을 기억한다. */
+export function 마지막지문읽기(저장소: 선택저장소 | undefined = 브라우저저장소()): string | undefined {
+  try {
+    const 지문ID = 저장소?.getItem(마지막지문저장키);
+    return 전체선택지.find((선택) => 선택.지문.id === 지문ID)?.지문.id;
+  } catch (_) { return undefined; }
+}
+
+export function 마지막지문저장(지문ID: string,
+  저장소: 선택저장소 | undefined = 브라우저저장소()): boolean {
+  if (!전체선택지.some((선택) => 선택.지문.id === 지문ID)) { return false; }
+  try {
+    if (!저장소) { return false; }
+    저장소.setItem(마지막지문저장키, 지문ID);
+    return true;
+  } catch (_) { return false; }
+}
 
 function 진행중선택(선택지: readonly 지문선택[], 시도들: readonly 필사시도[]): 지문선택 | undefined {
   const 진행중 = 선택지.flatMap((선택) => {
@@ -61,8 +82,10 @@ export function 다음미완료지문(현재ID: string, 시도들: readonly 필�
   return 전체선택지[0];
 }
 
-/** 첫 진입은 최근 진행 중인 글, 최근 완료한 글의 다음 미완료 글, 첫 미완료 글 순서다. */
-export function 첫진입지문선택(시도들: readonly 필사시도[]): 지문선택 {
+/** 마지막 선택을 우선 복원하고, 없으면 기존 입력·완료 기록으로 시작점을 고른다. */
+export function 첫진입지문선택(시도들: readonly 필사시도[], 마지막지문ID?: string): 지문선택 {
+  const 마지막선택 = 전체선택지.find((선택) => 선택.지문.id === 마지막지문ID);
+  if (마지막선택) { return 마지막선택; }
   const 진행중 = 진행중선택(전체선택지, 시도들);
   if (진행중) { return 진행중; }
 
