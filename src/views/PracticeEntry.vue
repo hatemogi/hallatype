@@ -4,13 +4,13 @@
   <main v-else class="첫화면" :data-theme="테마">
     <div class="첫화면안쪽">
       <header class="첫화면상단">
-        <div class="첫화면브랜드"><GeulsumMark /><span class="도메인">dailytyping.com</span></div>
+        <div class="첫화면브랜드"><GeulsumMark :key="`문양-${테마}`" /><span class="도메인">dailytyping.com</span></div>
         <span class="상단장식" aria-hidden="true">✳</span>
       </header>
 
       <section class="소개" aria-labelledby="서비스이름">
         <span class="소개장식" aria-hidden="true">✳</span>
-        <h1 id="서비스이름">글숨</h1>
+        <h1 id="서비스이름"><GeulsumTitle :key="`타이틀-${테마}`" class="중앙타이틀그림" :src="연필타이틀" :width="1736" :height="906" :gap-reduction="55" /></h1>
         <p class="슬로건">한 글자씩, 마음을 고르다.</p>
         <div class="구분선" aria-hidden="true"></div>
         <p class="설명">키보드를 두드릴 핑계.<br>좋은 문장을 따라 쓰는 시간.</p>
@@ -25,7 +25,9 @@
 <script setup lang="ts">
 import { nextTick, onMounted, onUnmounted, ref } from 'vue';
 import { 필사설정읽기, type 필사테마 } from '@/practice-settings';
+import 연필타이틀 from '@/assets/geulsum-title-pencil-spaced.png';
 import GeulsumMark from '@/components/GeulsumMark.vue';
+import GeulsumTitle from '@/components/GeulsumTitle.vue';
 import Home from './Home.vue';
 import Recent from './Recent.vue';
 import '@/practice-theme.css';
@@ -298,6 +300,7 @@ onUnmounted(() => {
   line-height: 1.2;
   letter-spacing: -.09em;
 }
+.중앙타이틀그림 { display: block; width: clamp(260px, 39vw, 450px); max-width: 100%; height: auto; color: var(--글); }
 .슬로건 {
   margin: 23px 0 0;
   font-family: 'AppleMyungjo', 'Nanum Myeongjo', 'Batang', serif;

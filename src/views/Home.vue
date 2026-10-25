@@ -3,8 +3,8 @@
     <div class="페이지">
       <header class="상단">
         <a class="브랜드" href="#" aria-label="글숨 첫 화면으로 이동">
-          <GeulsumMark class="브랜드문양" />
-          <span class="브랜드글자">글숨 <small>dailytyping.com</small></span>
+          <GeulsumMark :key="`문양-${설정.테마}`" class="브랜드문양" />
+          <span class="브랜드글자"><GeulsumTitle :key="`타이틀-${설정.테마}`" class="브랜드타이틀" :src="연필타이틀" :width="1736" :height="906" :gap-reduction="55" /><small>dailytyping.com</small></span>
         </a>
         <div class="상단동작">
           <span class="상단문구">한 글자씩, 마음을 고르다.</span>
@@ -314,6 +314,8 @@
 <script lang="ts">
 import { defineComponent, markRaw } from 'vue';
 import GeulsumMark from '@/components/GeulsumMark.vue';
+import GeulsumTitle from '@/components/GeulsumTitle.vue';
+import 연필타이틀 from '@/assets/geulsum-title-pencil-spaced.png';
 import PraiseStamp from '@/components/PraiseStamp.vue';
 import swimmingFreestyle from '@/assets/swimming-freestyle.webp';
 import { 끝글자 } from '@/글자';
@@ -347,12 +349,13 @@ const 지문삽화들: Record<string, string> = {
 };
 const 어두운삽화테마들 = new Set(['밤', '숲', '커피', '바다', '우주', '매트릭스', 'PC통신', '서가']);
 export default defineComponent({
-  components: { GeulsumMark, PraiseStamp },
+  components: { GeulsumMark, GeulsumTitle, PraiseStamp },
   props: {
     requestedPassageId: { type: String, default: undefined },
   },
   data() {
     return {
+      연필타이틀,
       오늘날짜: 날짜키(new Date()),
       오늘지문: 테마별지문들.시작하기[0],
       글테마: '시작하기' as 선택주제,
@@ -989,11 +992,12 @@ button { font: inherit; }
 .최근버튼 { color: var(--보조글); font-size: 12px; text-decoration: none; }
 .최근버튼:hover { color: var(--강조); text-decoration: underline; text-underline-offset: 4px; }
 .최근버튼:focus-visible { outline: 2px solid var(--강조); outline-offset: 4px; }
-.브랜드 { display: flex; align-items: center; gap: 11px; text-decoration: none; }
-.브랜드문양 { width: 38px; height: 38px; }
+.브랜드 { display: flex; align-items: center; gap: 8px; text-decoration: none; }
+.브랜드문양 { width: 27px; height: 27px; --글숨문양색: var(--글); --글숨문양획색: var(--화면); }
 .브랜드:focus-visible { outline: 2px solid var(--강조); outline-offset: 4px; }
-.브랜드글자 { color: var(--글); font-size: 13px; font-weight: 800; letter-spacing: .12em; }
-.브랜드글자 small { margin-left: 12px; color: var(--보조글); font-size: 12px; font-weight: 500; letter-spacing: 0; }
+.브랜드글자 { display: flex; align-items: center; gap: 9px; color: var(--글); }
+.브랜드타이틀 { display: block; width: 49px; height: auto; color: var(--글); }
+.브랜드글자 small { color: var(--글); font-size: 12px; font-weight: 500; letter-spacing: 0; }
 .상단문구 { color: var(--보조글); font-size: 12px; letter-spacing: .03em; }
 .단축키버튼 { width: 31px; height: 31px; padding: 0; border: 1px solid var(--테두리); border-radius: 3px; background: var(--선택안함); color: var(--보조글); font-size: 15px; cursor: pointer; }
 .단축키버튼:hover { border-color: var(--강조); color: var(--글); }
