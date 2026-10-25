@@ -611,7 +611,13 @@ export default defineComponent({
       this.그림판?.보기설정(팔레트, this.현재한줄칸수,
         this.설정.커서깜빡임);
       this.동적배경?.setContentBottom(this.그림판?.글줄하단비율 ?? 0.5);
+      this.불길위치갱신();
       this.$nextTick(() => this.화면크기변경());
+    },
+    불길위치갱신() {
+      if (!this.그림판 || !this.본문) { return; }
+      this.동적배경?.setFocus(this.그림판.화면가로비율(this.본문.위치),
+        this.그림판.화면세로비율(this.본문.위치));
     },
     동적배경연결() {
       if (!움직이는테마인가(this.설정.테마)) {
@@ -661,6 +667,7 @@ export default defineComponent({
       this.그림판?.보기설정(필사팔레트들[this.설정.테마], 칸수,
         this.설정.커서깜빡임);
       this.동적배경?.setContentBottom(this.그림판?.글줄하단비율 ?? 0.5);
+      this.불길위치갱신();
     },
 
     reset(새로시작 = false) {
@@ -726,6 +733,7 @@ export default defineComponent({
       this.동적배경연결();
       그림판.그리기();
       this.동적배경?.setContentBottom(그림판.글줄하단비율);
+      this.불길위치갱신();
       this.$nextTick(() => {
         this.화면크기변경();
         const 종이 = document.querySelector('.종이');
@@ -814,6 +822,7 @@ export default defineComponent({
           elapsedMs: Math.max(0, Math.round(performance.now() - self.시작시각!)) });
         self.입력상태 = 본문.방금오타 ? '오타' : 직전오타 ? '정정' : '진행';
         if (본문.방금오타) {
+          self.동적배경?.mistake();
           그림판.오타효과시작(본문.위치);
         } else {
           그림판.오타효과중지(false);
@@ -826,6 +835,7 @@ export default defineComponent({
             (이전위치.행 !== 본문.위치.행 || 이전위치.열 !== 본문.위치.열));
           self.동적배경?.typing(그림판.화면가로비율(이전위치),
             그림판.화면세로비율(이전위치), 문장끝);
+          if (!본문.끝) { self.불길위치갱신(); }
         }
         if (본문.끝) {
           const 걸린밀리초 = Math.max(1000, performance.now() - self.시작시각);

@@ -125,14 +125,24 @@ void main() {
 }`;
 
 const 불 = `${공통}
+uniform vec2 u_focus;
+uniform vec2 u_mistake;
 void main() {
   vec2 p = vec2(v_uv.x, 1.0 - v_uv.y);
   float t = u_time * u_motion;
   vec3 color = mix(vec3(0.052, 0.037, 0.036), vec3(0.092, 0.043, 0.028), p.y);
   float up = 1.0 - p.y;
   float turbulence = noise(vec2(p.x * 9.0, p.y * 6.0 + t * 0.56));
-  float center = 0.52 + 0.045 * sin(t * 0.77 + p.y * 7.0) +
-    0.028 * (turbulence - 0.5);
+  // 불기둥의 몸통은 제자리에 두고, 가늘어지는 끝만 입력 위치 쪽으로 기울인다.
+  float tip = smoothstep(0.38, 0.76, up);
+  float lean = clamp((u_focus.x - 0.52) * 0.22, -0.10, 0.10) * tip;
+  float flinch = 0.0;
+  if (u_mistake.x >= 0.0 && u_mistake.x < 0.9) {
+    flinch = u_mistake.y * sin(u_mistake.x * 15.0) *
+      exp(-u_mistake.x * 5.0) * u_motion;
+  }
+  float center = 0.52 + lean + 0.045 * sin(t * 0.77 + p.y * 7.0) +
+    0.028 * (turbulence - 0.5) + flinch * (0.003 + 0.013 * tip);
   float width = max(0.035, 0.26 * (1.0 - up * 1.15));
   float flame = (1.0 - smoothstep(width * 0.45, width, abs(p.x - center))) *
     (1.0 - smoothstep(0.45, 0.85, up + 0.06 * turbulence));
@@ -151,36 +161,6 @@ void main() {
     pow((f.y - hash21(cell + 9.0)) * 26.0, 2.0)) *
     step(0.94, hash21(cell + 13.0)) * smoothstep(0.35, 1.0, p.y);
   color += vec3(0.25, 0.110, 0.034) * ember * behind;
-  float tapGlow = 0.0;
-  float tapFlame = 0.0;
-  float sparks = 0.0;
-  float aspect = u_size.x / max(u_size.y, 1.0);
-  for (int i = 0; i < 12; i++) {
-    vec4 r = u_ripples[i];
-    float age = r.z;
-    if (age < 0.0 || age > 2.4 / u_tuning.y) { continue; }
-    float alive = step(0.0, age) * (1.0 - smoothstep(0.18, 2.4 / u_tuning.y, age));
-    vec2 d = vec2((p.x - r.x) * aspect, p.y - r.y);
-    float seed = hash21(vec2(r.x * 71.0 + float(i), r.y * 89.0));
-    float sway = sin(age * 16.0 + seed * 6.28) * 0.007 * u_motion;
-    tapGlow += exp(-pow(d.x * 24.0, 2.0) - pow(d.y * 23.0, 2.0)) * alive * r.w;
-    float tongue = exp(-pow((d.x - sway) * 64.0, 2.0)) *
-      exp(-pow((d.y + 0.017 + age * 0.024 * u_motion) * 54.0, 2.0));
-    float flicker = exp(-pow((d.x + 0.012 + sway) * 88.0, 2.0)) *
-      exp(-pow((d.y + 0.032 + age * 0.018 * u_motion) * 82.0, 2.0));
-    tapFlame += (tongue + flicker * 0.62) * alive * r.w;
-    for (int j = 0; j < 3; j++) {
-      float piece = float(j);
-      float scatter = (hash21(vec2(seed * 37.0, piece + 2.0)) - 0.5) * 0.034;
-      float lift = (0.018 + piece * 0.009) + age * (0.035 + piece * 0.015) * u_motion;
-      float spark = exp(-pow((d.x - scatter - sway) * 105.0, 2.0) -
-        pow((d.y + lift) * 105.0, 2.0));
-      sparks += spark * alive * r.w;
-    }
-  }
-  color += vec3(0.185, 0.065, 0.019) * min(tapGlow, 1.0) * u_tuning.z * behind;
-  color += vec3(0.630, 0.225, 0.060) * min(tapFlame, 1.0) * u_tuning.z * behind;
-  color += vec3(0.750, 0.430, 0.135) * min(sparks, 1.0) * u_tuning.z * behind;
   gl_FragColor = vec4(color, 1.0);
 }`;
 

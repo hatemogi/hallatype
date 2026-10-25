@@ -117,6 +117,10 @@ export class 동적종이효과 {
   private lastFrame = 0;
   private elapsed = 0;
   private sourceBottom = 0.5;
+  private focusText: { x: number; y: number } | null = null;
+  private flameFocus: { x: number; y: number } | null = null;
+  private mistakeAt: number | null = null;
+  private mistakeDirection = 1;
   private ripples: 파문[] = [];
   private disposed = false;
   private valid = false;
@@ -174,7 +178,7 @@ export class 동적종이효과 {
     this.buffer = buffer;
     this.galaxyTexture = null;
     for (const name of ['u_size', 'u_time', 'u_horizon', 'u_textBottom',
-      'u_motion', 'u_tuning', 'u_ripples[0]', 'u_galaxy', 'u_hasGalaxy']) {
+      'u_motion', 'u_tuning', 'u_ripples[0]', 'u_focus', 'u_mistake', 'u_galaxy', 'u_hasGalaxy']) {
       this.uniforms[name] = gl.getUniformLocation(program, name);
     }
     if (this.galaxyImage?.complete && this.galaxyImage.naturalWidth) { this.uploadGalaxy(); }
@@ -210,8 +214,15 @@ export class 동적종이효과 {
     this.sourceBottom = Math.max(0, Math.min(1, fraction));
   }
 
+  setFocus(x: number, y: number) {
+    if (this.theme === '불멍') {
+      this.focusText = { x: Math.max(0, Math.min(1, x)), y: Math.max(0, Math.min(1, y)) };
+    }
+  }
+
   typing(x: number, textY: number, wide = false) {
     if (!this.valid || document.hidden) { return; }
+    if (this.theme === '불멍') { return; }
     const meteor = this.theme === '별똥별';
     if (meteor && Math.random() >= 공통조절.유성발생확률) { return; }
     let position: { x: number; y: number };
@@ -231,6 +242,12 @@ export class 동적종이효과 {
       세기: wide ? strength * (meteor ? 1.2 : 2) : strength });
     const limit = meteor ? 공통조절.최대유성 : 공통조절.최대파문;
     if (this.ripples.length > limit) { this.ripples.shift(); }
+  }
+
+  mistake() {
+    if (this.theme !== '불멍' || !this.valid || document.hidden) { return; }
+    this.mistakeAt = this.elapsed;
+    this.mistakeDirection *= -1;
   }
 
   private resize = () => {
@@ -254,7 +271,8 @@ export class 동적종이효과 {
       return;
     }
     const gl = this.gl;
-    this.elapsed += Math.min(0.05, this.lastFrame ? (now - this.lastFrame) / 1000 : 0);
+    const dt = Math.min(0.05, this.lastFrame ? (now - this.lastFrame) / 1000 : 0);
+    this.elapsed += dt;
     this.lastFrame = now;
     this.resize();
     gl.useProgram(this.program);
@@ -275,6 +293,20 @@ export class 동적종이효과 {
     const tuning = 동적효과조절[this.theme];
     gl.uniform4f(uniform('u_tuning'), tuning.기본세기,
       tuning.감쇠속도, tuning.빛강도, tuning.글뒤세기);
+    if (this.theme === '불멍') {
+      const target = this.focusText
+        ? { x: (text.left + this.focusText.x * text.width - paper.left) / Math.max(paper.width, 1),
+          y: (text.top + this.focusText.y * text.height - paper.top) / Math.max(paper.height, 1) }
+        : { x: 0.5, y: 0.6 };
+      if (!this.flameFocus) { this.flameFocus = target; }
+      const follow = this.media.matches ? 1 : 1 - Math.exp(-dt * 2.7);
+      this.flameFocus.x += (target.x - this.flameFocus.x) * follow;
+      this.flameFocus.y += (target.y - this.flameFocus.y) * follow;
+      gl.uniform2f(uniform('u_focus'), this.flameFocus.x, this.flameFocus.y);
+      gl.uniform2f(uniform('u_mistake'),
+        this.mistakeAt === null ? -1 : this.elapsed - this.mistakeAt,
+        this.mistakeDirection);
+    }
     const values = new Float32Array(48);
     for (let i = 0; i < 12; i++) {
       const ripple = this.ripples[i];
@@ -303,7 +335,7 @@ export class 동적종이효과 {
   private visibilityChanged = () => {
     this.lastFrame = 0;
     if (document.hidden) { cancelAnimationFrame(this.frame); this.frame = 0; }
-    else { this.ripples = []; this.schedule(); }
+    else { this.ripples = []; this.mistakeAt = null; this.schedule(); }
   };
   private motionChanged = () => { this.lastFrame = 0; };
   private contextLost = (event: Event) => {
@@ -345,5 +377,8 @@ export class 동적종이효과 {
     this.galaxyTexture = null;
     this.uniforms = {};
     this.ripples = [];
+    this.focusText = null;
+    this.flameFocus = null;
+    this.mistakeAt = null;
   }
 }
