@@ -3,8 +3,8 @@
     <div class="최근안쪽">
       <header class="최근상단">
         <a class="브랜드" href="#practice" aria-label="필사 화면으로 돌아가기">
-          <GeulsumMark class="브랜드문양" />
-          <span>글숨 <small class="공식주소">dailytyping.com</small></span>
+          <GeulsumMark :key="`문양-${테마}`" class="브랜드문양" />
+          <span class="브랜드글자"><GeulsumTitle :key="`타이틀-${테마}`" class="브랜드타이틀" :src="연필타이틀" :width="1736" :height="906" :gap-reduction="55" /><small class="공식주소">dailytyping.com</small></span>
         </a>
         <a class="돌아가기" href="#practice">필사로 돌아가기 <span aria-hidden="true">↗</span></a>
       </header>
@@ -46,7 +46,9 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
+import 연필타이틀 from '@/assets/geulsum-title-pencil-spaced.png';
 import GeulsumMark from '@/components/GeulsumMark.vue';
+import GeulsumTitle from '@/components/GeulsumTitle.vue';
 import PraiseStamp from '@/components/PraiseStamp.vue';
 import { 필사설정읽기, type 필사테마 } from '@/practice-settings';
 import { 진행작업읽기, 시도목록 } from '@/practice-progress';
@@ -66,11 +68,13 @@ onMounted(() => {
 :global(body:has(.최근기록)) { margin: 0; }
 .최근기록 { min-height: 100dvh; text-align: left; }
 .최근기록[data-theme='서가'] { --강조: #e4af5d; }
-.최근안쪽 { box-sizing: border-box; width: min(100%, 1100px); margin: 0 auto; padding: 0 34px 34px; }
-.최근상단 { display: flex; align-items: center; justify-content: space-between; min-height: 62px; border-bottom: 1px solid var(--테두리); }
-.브랜드 { display: flex; align-items: center; gap: 11px; color: var(--글); font-size: 13px; font-weight: 800; letter-spacing: .12em; text-decoration: none; }
-.브랜드문양 { width: 38px; height: 38px; }
-.브랜드 small { margin-left: 12px; color: var(--보조글); font-size: 14px; }
+.최근안쪽 { max-width: 1100px; margin: 0 auto; padding: 0 34px 34px; }
+.최근상단 { display: flex; align-items: center; justify-content: space-between; height: 62px; border-bottom: 1px solid var(--테두리); }
+.브랜드 { display: flex; align-items: center; gap: 8px; text-decoration: none; }
+.브랜드문양 { width: 27px; height: 27px; --글숨문양색: var(--글); --글숨문양획색: var(--화면); }
+.브랜드글자 { display: flex; align-items: center; gap: 9px; color: var(--글); }
+.브랜드타이틀 { display: block; width: 49px; height: auto; color: var(--글); }
+.브랜드글자 small { color: var(--글); font-size: 14px; }
 .돌아가기 { color: var(--보조글); font-size: 12px; text-decoration: none; }
 .돌아가기:hover, .기록카드 h2 a:hover { color: var(--강조); text-decoration: underline; text-underline-offset: 4px; }
 a:focus-visible { outline: 2px solid var(--강조); outline-offset: 4px; }
@@ -94,8 +98,7 @@ a:focus-visible { outline: 2px solid var(--강조); outline-offset: 4px; }
 .리듬막대 { position: absolute; right: 0; bottom: 0; left: 0; display: block; background: var(--진행활성); }
 .리듬막대.오타 { background: var(--오류색); }
 .최근기록[data-theme='한지'] .리듬막대:not(.오타),
-.최근기록[data-theme='새벽'] .리듬막대:not(.오타),
-.최근기록[data-theme='항구'] .리듬막대:not(.오타) { background: var(--강조); }
+.최근기록[data-theme='새벽'] .리듬막대:not(.오타) { background: var(--강조); }
 .마침통계 { display: flex; flex-wrap: wrap; gap: 12px 26px; margin: 17px 0 0; padding: 14px 0 0; border-top: 1px solid var(--진행선); }
 .마침통계 div { display: flex; flex-direction: column; gap: 5px; }
 .마침통계 dt { color: var(--옅은글); font-size: 11px; }
@@ -103,9 +106,13 @@ a:focus-visible { outline: 2px solid var(--강조); outline-offset: 4px; }
 .빈기록 { padding: 35px 26px; border: 1px solid var(--진행테두리); border-radius: 3px; background: var(--진행바탕); color: var(--보조글); font-size: 13px; text-align: center; }
 .빈기록 p { margin: 0 0 18px; }
 .빈기록 a { color: var(--강조); font-weight: 700; }
+@media (max-width: 850px) {
+  .최근안쪽 { padding-right: 14px; padding-left: 14px; }
+  .최근상단 { height: 56px; }
+}
 @media (max-width: 700px) {
-  .최근안쪽 { padding: 0 16px 24px; }
-  .브랜드 small { display: none; }
+  .최근안쪽 { padding-bottom: 24px; }
+  .브랜드글자 small { display: none; }
   .최근머리 { margin-bottom: 18px; }
   .기록격자 { grid-template-columns: 1fr; gap: 10px; }
   .기록카드 { padding: 15px; }

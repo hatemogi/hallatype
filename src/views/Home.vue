@@ -7,34 +7,12 @@
           <span class="브랜드글자"><GeulsumTitle :key="`타이틀-${설정.테마}`" class="브랜드타이틀" :src="연필타이틀" :width="1736" :height="906" :gap-reduction="55" /><small class="공식주소">dailytyping.com</small></span>
         </a>
         <div class="상단동작">
-          <span class="상단문구">한 글자씩, 마음을 고르다.</span>
           <a class="최근버튼" href="#recent">최근 기록</a>
-          <button type="button" class="단축키버튼" aria-controls="키보드안내"
-            :aria-expanded="도움말열림" aria-keyshortcuts="Alt+H"
-            aria-label="키보드 단축키 보기" @click="도움말토글">?</button>
+          <a class="도움말버튼" href="#help" aria-keyshortcuts="Alt+H">도움말</a>
           <button type="button" class="설정버튼" aria-controls="필사설정"
             :aria-expanded="설정열림" aria-keyshortcuts="Alt+S"
             @click="설정토글">환경설정 <span aria-hidden="true">⚙</span></button>
         </div>
-        <section v-show="도움말열림" id="키보드안내" class="단축키패널" aria-label="키보드 단축키 안내">
-          <div class="설정머리">
-            <strong>키보드 단축키</strong>
-            <button type="button" class="단축키닫기" aria-label="단축키 안내 닫기" @click="도움말닫기">×</button>
-          </div>
-          <p>언제나</p>
-          <dl>
-            <div><dt>Alt + G</dt><dd>주제 고르기</dd></div>
-            <div><dt>Alt + S</dt><dd>환경설정</dd></div>
-            <div><dt>Alt + R</dt><dd>이 글 다시 쓰기</dd></div>
-            <div><dt>Alt + F</dt><dd>이 글 즐겨찾기</dd></div>
-            <div><dt>Alt + H</dt><dd>단축키 도움말</dd></div>
-          </dl>
-          <p>한 편을 마친 뒤</p>
-          <dl>
-            <div><dt>Enter</dt><dd>다음 지문</dd></div>
-          </dl>
-          <p class="단축키기본">Tab으로 이동 · Enter 또는 Space로 선택 · Esc로 닫기<br>Mac에서는 Option(⌥) 키가 Alt입니다.</p>
-        </section>
         <section v-show="설정열림" id="필사설정" class="설정패널" aria-label="필사 환경설정">
           <div class="설정머리">
             <strong>환경설정</strong>
@@ -347,7 +325,7 @@ const 가장자리단계이름 = ['선명하게', '조금 선명하게', '보통
 const 지문삽화들: Record<string, string> = {
   UlRmQaTpLnVe: swimmingFreestyle,
 };
-const 어두운삽화테마들 = new Set(['밤', '숲', '커피', '바다', '우주', '매트릭스', 'PC통신', '서가']);
+const 어두운삽화테마들 = new Set(['밤', '숲', '커피', '매트릭스', 'PC통신', '서가']);
 export default defineComponent({
   components: { GeulsumMark, GeulsumTitle, PraiseStamp },
   props: {
@@ -372,7 +350,6 @@ export default defineComponent({
       가장자리단계이름,
       설정: { ...기본필사설정 } as 필사설정,
       설정열림: false,
-      도움말열림: false,
       모바일보기: typeof window !== 'undefined' && window.innerWidth <= 850,
       목록열림: false,
       날짜확인타이머: null as ReturnType<typeof setInterval> | null,
@@ -403,7 +380,6 @@ export default defineComponent({
   methods: {
     목록열기() {
       this.설정열림 = false;
-      this.도움말열림 = false;
       this.목록열림 = true;
       this.$nextTick(() => (document.querySelector<HTMLElement>('.글테마선택 button.선택됨')
         ?? document.querySelector<HTMLElement>('.글테마선택 button')
@@ -418,7 +394,6 @@ export default defineComponent({
       this.주제관리이전목록 = this.모바일보기 && this.목록열림;
       if (this.주제관리이전목록) { this.목록닫기(); }
       this.설정열림 = false;
-      this.도움말열림 = false;
       this.주제선택안내 = '';
       this.주제관리열림 = true;
       this.$nextTick(() => (document.querySelector<HTMLElement>('.주제관리선택 button[aria-pressed="true"]')
@@ -443,7 +418,6 @@ export default defineComponent({
     },
     환경설정열기() {
       this.목록닫기();
-      this.도움말열림 = false;
       this.설정열림 = true;
       this.$nextTick(() => document.querySelector<HTMLElement>('.테마선택 button.선택됨')?.focus());
     },
@@ -457,37 +431,22 @@ export default defineComponent({
       if (this.설정열림) { this.환경설정닫기(); }
       else { this.환경설정열기(); }
     },
-    도움말토글() {
-      if (this.도움말열림) { this.도움말닫기(); return; }
-      this.목록닫기();
-      this.설정열림 = false;
-      this.도움말열림 = true;
-      this.$nextTick(() => document.querySelector<HTMLElement>('.단축키닫기')?.focus());
-    },
-    도움말닫기() {
-      this.도움말열림 = false;
-      if ((document.activeElement as HTMLElement | null)?.closest('.단축키패널')) {
-        (document.activeElement as HTMLElement).blur();
-      }
-    },
     단축키실행(동작: Exclude<필사단축동작, null>) {
       switch (동작) {
         case '다음':
           this.목록닫기();
           this.환경설정닫기();
-          this.도움말닫기();
           this.다음글시작();
           break;
         case '다시쓰기':
           this.목록닫기();
           this.환경설정닫기();
-          this.도움말닫기();
           this.다시쓰기();
           break;
         case '즐겨찾기': this.즐겨찾기토글(this.오늘지문.id); break;
         case '주제고르기': this.목록열기(); break;
         case '환경설정': this.환경설정열기(); break;
-        case '도움말': this.도움말토글(); break;
+        case '도움말': window.location.hash = '#help'; break;
       }
     },
     선택버튼화살표(event: KeyboardEvent) {
@@ -644,7 +603,6 @@ export default defineComponent({
     설정밖클릭(event: PointerEvent) {
       if (event.target instanceof Element && !event.target.closest('.상단')) {
         this.설정열림 = false;
-        this.도움말열림 = false;
       }
     },
 
@@ -748,7 +706,6 @@ export default defineComponent({
           if (self.주제관리열림) { e.preventDefault(); self.주제관리닫기(); return; }
           if (self.목록열림) { e.preventDefault(); self.목록닫기(); return; }
           if (self.설정열림) { e.preventDefault(); self.환경설정닫기(); return; }
-          if (self.도움말열림) { e.preventDefault(); self.도움말닫기(); return; }
           if ((document.activeElement as HTMLElement | null)?.closest('button, a')) {
             (document.activeElement as HTMLElement).blur();
           }
@@ -791,7 +748,7 @@ export default defineComponent({
           return;
         }
         if (대상?.closest('input, select, textarea, [contenteditable="true"]')) { return; }
-        if (self.목록열림 || self.설정열림 || self.도움말열림) { return; }
+        if (self.목록열림 || self.설정열림) { return; }
         const 조작요소 = 대상?.closest('button, summary, a');
         if (동작 && !조작요소) {
           e.preventDefault();
@@ -989,29 +946,18 @@ button { font: inherit; }
   border-bottom: 1px solid var(--테두리);
 }
 .상단동작 { display: flex; align-items: center; gap: 20px; }
-.최근버튼 { color: var(--보조글); font-size: 12px; text-decoration: none; }
-.최근버튼:hover { color: var(--강조); text-decoration: underline; text-underline-offset: 4px; }
-.최근버튼:focus-visible { outline: 2px solid var(--강조); outline-offset: 4px; }
+.최근버튼, .도움말버튼 { color: var(--보조글); font-size: 13px; text-decoration: none; }
+.최근버튼:hover, .도움말버튼:hover { color: var(--글); text-decoration: underline; text-underline-offset: 4px; }
+.최근버튼:focus-visible, .도움말버튼:focus-visible { outline: 2px solid var(--강조); outline-offset: 4px; }
 .브랜드 { display: flex; align-items: center; gap: 8px; text-decoration: none; }
 .브랜드문양 { width: 27px; height: 27px; --글숨문양색: var(--글); --글숨문양획색: var(--화면); }
 .브랜드:focus-visible { outline: 2px solid var(--강조); outline-offset: 4px; }
 .브랜드글자 { display: flex; align-items: center; gap: 9px; color: var(--글); }
 .브랜드타이틀 { display: block; width: 49px; height: auto; color: var(--글); }
 .브랜드글자 small { color: var(--글); font-size: 14px; }
-.상단문구 { color: var(--보조글); font-size: 12px; letter-spacing: .03em; }
-.단축키버튼 { width: 31px; height: 31px; padding: 0; border: 1px solid var(--테두리); border-radius: 3px; background: var(--선택안함); color: var(--보조글); font-size: 15px; cursor: pointer; }
-.단축키버튼:hover { border-color: var(--강조); color: var(--글); }
 .설정버튼 { padding: 8px 11px; border: 1px solid var(--테두리); border-radius: 3px; background: var(--선택안함); color: var(--보조글); font-size: 12px; cursor: pointer; }
 .설정버튼:hover { border-color: var(--강조); color: var(--글); }
 .설정버튼 span { margin-left: 5px; font-size: 15px; }
-.단축키패널 { position: absolute; z-index: 11; top: 72px; right: 0; box-sizing: border-box; width: min(310px, calc(100vw - 36px)); max-height: calc(100dvh - 90px); padding: 22px; overflow-y: auto; border: 1px solid var(--테두리); border-radius: 4px; background: var(--종이); color: var(--글); box-shadow: 0 15px 36px rgba(0, 0, 0, .18); }
-.단축키패널 > p { margin: 16px 0 7px; color: var(--보조글); font-size: 12px; font-weight: 700; }
-.단축키패널 dl { margin: 0; }
-.단축키패널 dl div { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; font-size: 12px; }
-.단축키패널 dt { color: var(--강조); font-weight: 700; white-space: nowrap; }
-.단축키패널 dd { margin: 0; color: var(--글); text-align: right; }
-.단축키패널 .단축키기본 { margin-top: 18px; font-size: 11px; font-weight: 400; line-height: 1.7; }
-.단축키닫기 { border: 0; background: none; color: var(--보조글); font-size: 24px; line-height: 1; cursor: pointer; }
 .설정패널 { position: absolute; z-index: 10; top: 72px; right: 0; box-sizing: border-box; width: min(360px, calc(100vw - 36px)); max-height: calc(100dvh - 90px); padding: 22px; overflow-y: auto; overscroll-behavior: contain; border: 1px solid var(--테두리); border-radius: 4px; background: var(--종이); box-shadow: 0 15px 36px rgba(0, 0, 0, .18); }
 .설정머리 { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
 .설정머리 strong { font-size: 17px; }
@@ -1025,17 +971,11 @@ button { font: inherit; }
 .테마견본 { display: grid; place-items: center; width: 100%; height: 38px; background: #fff; color: #454037; font-family: 'AppleMyungjo', 'Batang', serif; font-size: 19px; }
 .테마견본[data-theme='새벽'] { background: #fafcfc; color: #30444f; }
 .테마견본[data-theme='밤'] { background: #222c31; color: #e2e7df; }
-.테마견본[data-theme='벚꽃'] { background: #fff9fa; color: #8b3d5a; }
 .테마견본[data-theme='숲'] { background: #19392f; color: #b6d99e; }
 .테마견본[data-theme='라벤더'] { background: #fcfaff; color: #675184; }
 .테마견본[data-theme='커피'] { background: #352922; color: #d8b58e; }
-.테마견본[data-theme='바다'] { background: #0b4856; color: #80dfd8; }
-.테마견본[data-theme='빙하'] { background: #f8fdff; color: #28647d; }
-.테마견본[data-theme='우주'] { background: #211d37; color: #d8b6ff; }
 .테마견본[data-theme='매트릭스'] { background: #08190e; color: #9affaa; text-shadow: 0 0 7px rgba(99, 245, 131, .65); }
 .테마견본[data-theme='PC통신'] { background: #102287; color: #fff; }
-.테마견본[data-theme='항구'] { background: linear-gradient(135deg, #fff9f0 67%, #feae6f 67%); color: #01204e; }
-.테마견본[data-theme='낙관'] { background: linear-gradient(135deg, #f0f6f0 67%, #c93038 67%); color: #222323; }
 .테마견본[data-theme='서가'] { background: linear-gradient(135deg, #16404d 67%, #dda853 67%); color: #fbf5dd; }
 .설정선택 { display: flex; gap: 7px; }
 .글꼴선택 { flex-wrap: wrap; }
@@ -1204,8 +1144,7 @@ button { font: inherit; }
 .리듬막대 { position: absolute; right: 0; bottom: 0; left: 0; display: block; background: var(--진행활성); }
 .리듬막대.오타 { background: var(--오류색); }
 .필사실[data-theme='한지'] .리듬막대:not(.오타),
-.필사실[data-theme='새벽'] .리듬막대:not(.오타),
-.필사실[data-theme='항구'] .리듬막대:not(.오타) { background: var(--강조); }
+.필사실[data-theme='새벽'] .리듬막대:not(.오타) { background: var(--강조); }
 .기록안내 { margin: 10px 0 0; color: var(--보조글); font-size: 11px; }
 .기록안내[role="alert"] { color: var(--오류색); }
 .진행아래 { display: flex; justify-content: space-between; align-items: center; gap: 20px; max-width: 800px; margin: 19px auto 0; color: var(--보조글); font-size: 11px; }
@@ -1364,7 +1303,6 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
 @media (max-width: 850px) {
   .페이지 { padding: 0 14px; min-height: 660px; }
   .상단 { height: 56px; }
-  .상단문구 { display: none; }
   .상단동작 { gap: 8px; }
   .작업공간 { display: flex; flex-direction: column; gap: 9px; padding: 9px 0 11px; }
   .모바일선택줄 {
@@ -1424,7 +1362,7 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
 @media (max-width: 600px) {
   .브랜드글자 small { display: none; }
   .상단동작 { gap: 6px; }
-  .최근버튼, .설정버튼 { white-space: nowrap; }
+  .최근버튼, .도움말버튼, .설정버튼 { white-space: nowrap; }
   .지문머리.도장찍힘 { grid-template-columns: minmax(0, 1fr); }
   .도장묶음 { justify-self: end; }
 }

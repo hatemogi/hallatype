@@ -1,6 +1,7 @@
 <template>
   <Home v-if="화면 === 'practice'" :key="요청지문ID ?? '일반'" :requested-passage-id="요청지문ID ?? undefined" />
   <Recent v-else-if="화면 === 'recent'" />
+  <Help v-else-if="화면 === 'help'" />
   <main v-else class="첫화면" :data-theme="테마">
     <div class="첫화면안쪽">
       <header class="첫화면상단">
@@ -30,17 +31,18 @@ import GeulsumMark from '@/components/GeulsumMark.vue';
 import GeulsumTitle from '@/components/GeulsumTitle.vue';
 import Home from './Home.vue';
 import Recent from './Recent.vue';
+import Help from './Help.vue';
 import '@/practice-theme.css';
 
-function 주소해석(): { 화면: 'intro' | 'practice' | 'recent'; 지문ID: string | null } {
+function 주소해석(): { 화면: 'intro' | 'practice' | 'recent' | 'help'; 지문ID: string | null } {
   const [이름, 쿼리] = window.location.hash.slice(1).split('?');
   if (이름 === 'practice') {
     return { 화면: 'practice', 지문ID: new URLSearchParams(쿼리).get('passage') };
   }
-  return { 화면: 이름 === 'recent' ? 'recent' : 'intro', 지문ID: null };
+  return { 화면: 이름 === 'recent' || 이름 === 'help' ? 이름 : 'intro', 지문ID: null };
 }
 
-const 화면 = ref<'intro' | 'practice' | 'recent'>(주소해석().화면);
+const 화면 = ref<'intro' | 'practice' | 'recent' | 'help'>(주소해석().화면);
 const 요청지문ID = ref<string | null>(주소해석().지문ID);
 const 테마 = ref<필사테마>(필사설정읽기().테마);
 const 시작버튼 = ref<HTMLAnchorElement | null>(null);
@@ -70,7 +72,8 @@ function 주소반영() {
 onMounted(() => {
   저장된테마반영();
   document.title = 화면.value === 'practice' ? '글숨 · 한글 타이핑 필사'
-    : 화면.value === 'recent' ? '글숨 · 최근 완성한 글' : '글숨 · 한 글자씩, 마음을 고르다.';
+    : 화면.value === 'recent' ? '글숨 · 최근 완성한 글'
+      : 화면.value === 'help' ? '글숨 · 도움말' : '글숨 · 한 글자씩, 마음을 고르다.';
   window.addEventListener('hashchange', 주소반영);
   window.addEventListener('storage', 저장된테마반영);
   window.addEventListener('keydown', 첫화면엔터);
@@ -129,17 +132,6 @@ onUnmounted(() => {
   --역글: #1e292e;
   --진행선: #4b5d5f;
 }
-.첫화면[data-theme='벚꽃'] {
-  --첫화면중심: #fff9fa;
-  --첫화면중간: #f7e9ec;
-  --첫화면끝: #edd8df;
-  --글: #4b303b;
-  --보조글: #654651;
-  --옅은글: #70515d;
-  --강조: #8b3d5a;
-  --강조호버: #723047;
-  --진행선: #dbbcc6;
-}
 .첫화면[data-theme='숲'] {
   --첫화면중심: #19392f;
   --첫화면중간: #143229;
@@ -175,41 +167,6 @@ onUnmounted(() => {
   --역글: #34251c;
   --진행선: #8d715b;
 }
-.첫화면[data-theme='바다'] {
-  --첫화면중심: #0b4856;
-  --첫화면중간: #084350;
-  --첫화면끝: #063b4b;
-  --글: #e0f6f4;
-  --보조글: #b3dfe0;
-  --옅은글: #a2d0d1;
-  --강조: #80dfd8;
-  --강조호버: #a3f0e7;
-  --역글: #073e49;
-  --진행선: #5b96a0;
-}
-.첫화면[data-theme='빙하'] {
-  --첫화면중심: #f8fdff;
-  --첫화면중간: #e2f4fb;
-  --첫화면끝: #cde7f4;
-  --글: #213f52;
-  --보조글: #375d73;
-  --옅은글: #47687c;
-  --강조: #28647d;
-  --강조호버: #1e5167;
-  --진행선: #a8cbdc;
-}
-.첫화면[data-theme='우주'] {
-  --첫화면중심: #211d37;
-  --첫화면중간: #1b1830;
-  --첫화면끝: #171429;
-  --글: #ece7ff;
-  --보조글: #c5bdda;
-  --옅은글: #aea5cb;
-  --강조: #d8b6ff;
-  --강조호버: #e8d2ff;
-  --역글: #251b3f;
-  --진행선: #786b9c;
-}
 .첫화면[data-theme='매트릭스'] {
   --첫화면중심: #08190e;
   --첫화면중간: #07140c;
@@ -233,28 +190,6 @@ onUnmounted(() => {
   --강조호버: #dbe5ff;
   --역글: #102287;
   --진행선: #6885dc;
-}
-.첫화면[data-theme='항구'] {
-  --첫화면중심: #fff9f0;
-  --첫화면중간: #f1e3cf;
-  --첫화면끝: #e8d1b1;
-  --글: #01204e;
-  --보조글: #405273;
-  --옅은글: #485772;
-  --강조: #98512c;
-  --강조호버: #7e3e1e;
-  --진행선: #d6b895;
-}
-.첫화면[data-theme='낙관'] {
-  --첫화면중심: #f0f6f0;
-  --첫화면중간: #e4ece6;
-  --첫화면끝: #d8e3db;
-  --글: #222323;
-  --보조글: #4b5550;
-  --옅은글: #59645e;
-  --강조: #a72830;
-  --강조호버: #892029;
-  --진행선: #bac7bb;
 }
 .첫화면[data-theme='서가'] {
   --첫화면중심: #16404d;
