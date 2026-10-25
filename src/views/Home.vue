@@ -972,25 +972,19 @@ button { font: inherit; }
 .테마버튼.선택됨, .설정선택 button.선택됨 { border-color: var(--강조); background: var(--선택바탕); }
 .테마견본 { display: grid; place-items: center; width: 100%; height: 38px; background: #fff; color: #454037; font-family: 'AppleMyungjo', 'Batang', serif; font-size: 19px; }
 .테마견본[data-theme='새벽'] { background: #fafcfc; color: #30444f; }
-.테마견본[data-theme='오후'] { background: #fff7e9; color: #874631; }
 .테마견본[data-theme='밤'] { background: #222c31; color: #e2e7df; }
 .테마견본[data-theme='벚꽃'] { background: #fff9fa; color: #8b3d5a; }
-.테마견본[data-theme='산호'] { background: #fff8f4; color: #8f3d31; }
 .테마견본[data-theme='숲'] { background: #19392f; color: #b6d99e; }
 .테마견본[data-theme='라벤더'] { background: #fcfaff; color: #675184; }
 .테마견본[data-theme='커피'] { background: #352922; color: #d8b58e; }
 .테마견본[data-theme='바다'] { background: #0b4856; color: #80dfd8; }
-.테마견본[data-theme='호수'] { background: #f7fcfa; color: #28675d; }
 .테마견본[data-theme='빙하'] { background: #f8fdff; color: #28647d; }
 .테마견본[data-theme='우주'] { background: #211d37; color: #d8b6ff; }
 .테마견본[data-theme='매트릭스'] { background: #08190e; color: #9affaa; text-shadow: 0 0 7px rgba(99, 245, 131, .65); }
 .테마견본[data-theme='PC통신'] { background: #102287; color: #fff; }
 .테마견본[data-theme='항구'] { background: linear-gradient(135deg, #fff9f0 67%, #feae6f 67%); color: #01204e; }
 .테마견본[data-theme='낙관'] { background: linear-gradient(135deg, #f0f6f0 67%, #c93038 67%); color: #222323; }
-.테마견본[data-theme='정원'] { background: linear-gradient(135deg, #f9e8d9 67%, #ee7214 67%); color: #2e4834; }
-.테마견본[data-theme='자두'] { background: linear-gradient(135deg, #351f39 67%, #a0c1b8 67%); color: #f4e8c1; }
 .테마견본[data-theme='서가'] { background: linear-gradient(135deg, #16404d 67%, #dda853 67%); color: #fbf5dd; }
-.테마견본[data-theme='모과'] { background: linear-gradient(135deg, #f5efe3 67%, #b8892d 67%); color: #2f391c; }
 .설정선택 { display: flex; gap: 7px; }
 .글꼴선택 { flex-wrap: wrap; }
 .설정선택 button { min-width: 72px; padding: 8px 13px; border: 1px solid var(--테두리); border-radius: 3px; background: var(--선택안함); color: var(--글); font-size: 12px; cursor: pointer; }
@@ -1159,8 +1153,7 @@ button { font: inherit; }
 .리듬막대.오타 { background: var(--오류색); }
 .필사실[data-theme='한지'] .리듬막대:not(.오타),
 .필사실[data-theme='새벽'] .리듬막대:not(.오타),
-.필사실[data-theme='항구'] .리듬막대:not(.오타),
-.필사실[data-theme='모과'] .리듬막대:not(.오타) { background: var(--강조); }
+.필사실[data-theme='항구'] .리듬막대:not(.오타) { background: var(--강조); }
 .기록안내 { margin: 10px 0 0; color: var(--보조글); font-size: 11px; }
 .기록안내[role="alert"] { color: var(--오류색); }
 .진행아래 { display: flex; justify-content: space-between; align-items: center; gap: 20px; max-width: 800px; margin: 19px auto 0; color: var(--보조글); font-size: 11px; }

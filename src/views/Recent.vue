@@ -65,7 +65,6 @@ onMounted(() => {
 <style scoped>
 :global(body:has(.최근기록)) { margin: 0; }
 .최근기록 { min-height: 100dvh; text-align: left; }
-.최근기록[data-theme='정원'] { --강조: #a13f0d; }
 .최근기록[data-theme='서가'] { --강조: #e4af5d; }
 .최근안쪽 { box-sizing: border-box; width: min(100%, 1100px); margin: 0 auto; padding: 0 34px 34px; }
 .최근상단 { display: flex; align-items: center; justify-content: space-between; min-height: 62px; border-bottom: 1px solid var(--테두리); }
@@ -96,8 +95,7 @@ a:focus-visible { outline: 2px solid var(--강조); outline-offset: 4px; }
 .리듬막대.오타 { background: var(--오류색); }
 .최근기록[data-theme='한지'] .리듬막대:not(.오타),
 .최근기록[data-theme='새벽'] .리듬막대:not(.오타),
-.최근기록[data-theme='항구'] .리듬막대:not(.오타),
-.최근기록[data-theme='모과'] .리듬막대:not(.오타) { background: var(--강조); }
+.최근기록[data-theme='항구'] .리듬막대:not(.오타) { background: var(--강조); }
 .마침통계 { display: flex; flex-wrap: wrap; gap: 12px 26px; margin: 17px 0 0; padding: 14px 0 0; border-top: 1px solid var(--진행선); }
 .마침통계 div { display: flex; flex-direction: column; gap: 5px; }
 .마침통계 dt { color: var(--옅은글); font-size: 11px; }
