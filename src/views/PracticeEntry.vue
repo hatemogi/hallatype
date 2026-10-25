@@ -4,7 +4,7 @@
   <main v-else class="첫화면" :data-theme="테마">
     <div class="첫화면안쪽">
       <header class="첫화면상단">
-        <div class="첫화면브랜드"><GeulsumMark /><span class="도메인">TYPE.HATEMOGI.COM</span></div>
+        <div class="첫화면브랜드"><GeulsumMark /><span class="도메인">dailytyping.com</span></div>
         <span class="상단장식" aria-hidden="true">✳</span>
       </header>
 
@@ -17,7 +17,7 @@
         <a ref="시작버튼" href="#practice" class="시작버튼" aria-keyshortcuts="Enter">필사 시작하기 <span aria-hidden="true">→</span></a>
       </section>
 
-      <footer class="첫화면하단"><span>천천히, 나의 속도로</span><span>글숨 · TYPE.HATEMOGI.COM</span></footer>
+      <footer class="첫화면하단"><span>천천히, 나의 속도로</span><span>글숨 · dailytyping.com</span></footer>
     </div>
   </main>
 </template>

@@ -4,7 +4,7 @@
       <header class="최근상단">
         <a class="브랜드" href="#practice" aria-label="필사 화면으로 돌아가기">
           <GeulsumMark class="브랜드문양" />
-          <span>글숨 <small>한글 타이핑 필사</small></span>
+          <span>글숨 <small>dailytyping.com</small></span>
         </a>
         <a class="돌아가기" href="#practice">필사로 돌아가기 <span aria-hidden="true">↗</span></a>
       </header>
@@ -70,6 +70,7 @@ onMounted(() => {
 .최근안쪽 { box-sizing: border-box; width: min(100%, 1100px); margin: 0 auto; padding: 0 34px 34px; }
 .최근상단 { display: flex; align-items: center; justify-content: space-between; min-height: 62px; border-bottom: 1px solid var(--테두리); }
 .브랜드 { display: flex; align-items: center; gap: 11px; color: var(--글); font-size: 13px; font-weight: 800; letter-spacing: .12em; text-decoration: none; }
+.브랜드문양 { width: 38px; height: 38px; }
 .브랜드 small { margin-left: 12px; color: var(--보조글); font-size: 12px; font-weight: 500; letter-spacing: 0; }
 .돌아가기 { color: var(--보조글); font-size: 12px; text-decoration: none; }
 .돌아가기:hover, .기록카드 h2 a:hover { color: var(--강조); text-decoration: underline; text-underline-offset: 4px; }

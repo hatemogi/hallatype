@@ -4,7 +4,7 @@
       <header class="상단">
         <a class="브랜드" href="#" aria-label="글숨 첫 화면으로 이동">
           <GeulsumMark class="브랜드문양" />
-          <span class="브랜드글자">글숨 <small>한글 타이핑 필사</small></span>
+          <span class="브랜드글자">글숨 <small>dailytyping.com</small></span>
         </a>
         <div class="상단동작">
           <span class="상단문구">한 글자씩, 마음을 고르다.</span>
@@ -942,6 +942,7 @@ button { font: inherit; }
 .최근버튼:hover { color: var(--강조); text-decoration: underline; text-underline-offset: 4px; }
 .최근버튼:focus-visible { outline: 2px solid var(--강조); outline-offset: 4px; }
 .브랜드 { display: flex; align-items: center; gap: 11px; text-decoration: none; }
+.브랜드문양 { width: 38px; height: 38px; }
 .브랜드:focus-visible { outline: 2px solid var(--강조); outline-offset: 4px; }
 .브랜드글자 { color: var(--글); font-size: 13px; font-weight: 800; letter-spacing: .12em; }
 .브랜드글자 small { margin-left: 12px; color: var(--보조글); font-size: 12px; font-weight: 500; letter-spacing: 0; }
