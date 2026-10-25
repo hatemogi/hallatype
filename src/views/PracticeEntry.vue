@@ -267,7 +267,7 @@ onUnmounted(() => {
 .시작버튼:hover { background: var(--강조호버); transform: translateY(-2px); }
 .시작버튼:focus-visible { outline: 2px solid var(--강조); outline-offset: 4px; }
 .시작버튼 span { font-size: 18px; font-weight: 400; }
-.첫화면하단 { gap: 20px; color: var(--옅은글); font-size: 11px; letter-spacing: .04em; }
+.첫화면하단 { gap: 20px; color: var(--옅은글); font-size: 12px; letter-spacing: .04em; }
 .첫화면:is([data-theme='매트릭스'], [data-theme='PC통신']) .소개 h1,
 .첫화면:is([data-theme='매트릭스'], [data-theme='PC통신']) .슬로건 {
   font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
@@ -283,7 +283,7 @@ onUnmounted(() => {
   .구분선 { margin: 28px 0; }
   .설명 { font-size: 15px; }
   .시작버튼 { margin-top: 34px; }
-  .첫화면하단 { font-size: 10px; }
+  .첫화면하단 { font-size: 12px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .시작버튼 { transition: none; }

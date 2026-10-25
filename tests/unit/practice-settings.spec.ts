@@ -25,13 +25,15 @@ it('필사 설정을 저장하고 잘못된 저장값은 기본값으로 복구�
   expect(필사설정읽기(storage).글꼴확대방식).toBe('윤곽48');
   필사설정저장({ ...설정, 글꼴확대방식: '윤곽64' }, storage);
   expect(필사설정읽기(storage).글꼴확대방식).toBe('윤곽64');
+  필사설정저장({ ...설정, 글꼴확대방식: '기존' }, storage);
+  expect(필사설정읽기(storage).글꼴확대방식).toBe('기존');
   for (const 테마 of 필사테마순서) {
     필사설정저장({ ...설정, 테마 }, storage);
     expect(필사설정읽기(storage).테마).toBe(테마);
   }
   값들.set([...값들.keys()][0], JSON.stringify({ 테마: '밤', 글자크기: '크게', 커서깜빡임: false }));
-  expect(필사설정읽기(storage).안티앨리어싱단계).toBe(2);
-  expect(필사설정읽기(storage).글꼴확대방식).toBe('기존');
+  expect(필사설정읽기(storage).안티앨리어싱단계).toBe(3);
+  expect(필사설정읽기(storage).글꼴확대방식).toBe('윤곽48');
 
   const 키 = [...값들.keys()][0];
   값들.set(키, JSON.stringify({ ...설정, 테마: '호박색 모니터', 설정버전: 2 }));
@@ -44,13 +46,13 @@ it('필사 설정을 저장하고 잘못된 저장값은 기본값으로 복구�
   값들.set(키, '{');
   expect(필사설정읽기(storage)).toEqual(기본필사설정);
   값들.set(키, JSON.stringify({ 안티앨리어싱단계: 6 }));
-  expect(필사설정읽기(storage).안티앨리어싱단계).toBe(2);
+  expect(필사설정읽기(storage).안티앨리어싱단계).toBe(3);
   값들.set(키, JSON.stringify({ 안티앨리어싱: 300 }));
   expect(필사설정읽기(storage).안티앨리어싱단계).toBe(4);
   값들.set(키, JSON.stringify({ 안티앨리어싱단계: 5 }));
   expect(필사설정읽기(storage).안티앨리어싱단계).toBe(4);
   값들.set(키, JSON.stringify({ 글꼴확대방식: '알 수 없음' }));
-  expect(필사설정읽기(storage).글꼴확대방식).toBe('기존');
+  expect(필사설정읽기(storage).글꼴확대방식).toBe('윤곽48');
   값들.set(키, JSON.stringify({ 테마: '알 수 없음', 글자크기: '매우 크게', 커서깜빡임: 1 }));
   expect(필사설정읽기(storage)).toEqual(기본필사설정);
 });
@@ -71,7 +73,7 @@ it('모든 필사 테마의 첫 화면 색상이 정의되어 있다', () => {
 
 it('슬라이더 다섯 눈금은 이전 강도의 절반이고 최댓값은 150이다', () => {
   expect(단계별안티앨리어싱강도).toEqual([0, 25, 50, 100, 150]);
-  expect(단계별안티앨리어싱강도[기본필사설정.안티앨리어싱단계]).toBe(50);
+  expect(단계별안티앨리어싱강도[기본필사설정.안티앨리어싱단계]).toBe(100);
 });
 
 it('모든 필사 테마의 캔버스 글자색은 종이와 충분히 구분된다', () => {

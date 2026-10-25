@@ -955,7 +955,7 @@ button { font: inherit; }
 .브랜드글자 { display: flex; align-items: center; gap: 9px; color: var(--글); }
 .브랜드타이틀 { display: block; width: 49px; height: auto; color: var(--글); }
 .브랜드글자 small { color: var(--글); font-size: 14px; }
-.설정버튼 { padding: 8px 11px; border: 1px solid var(--테두리); border-radius: 3px; background: var(--선택안함); color: var(--보조글); font-size: 12px; cursor: pointer; }
+.설정버튼 { padding: 8px 11px; border: 1px solid var(--테두리); border-radius: 3px; background: var(--선택안함); color: var(--보조글); font-size: 13px; cursor: pointer; }
 .설정버튼:hover { border-color: var(--강조); color: var(--글); }
 .설정버튼 span { margin-left: 5px; font-size: 15px; }
 .설정패널 { position: absolute; z-index: 10; top: 72px; right: 0; box-sizing: border-box; width: min(360px, calc(100vw - 36px)); max-height: calc(100dvh - 90px); padding: 22px; overflow-y: auto; overscroll-behavior: contain; border: 1px solid var(--테두리); border-radius: 4px; background: var(--종이); box-shadow: 0 15px 36px rgba(0, 0, 0, .18); }
@@ -963,9 +963,9 @@ button { font: inherit; }
 .설정머리 strong { font-size: 17px; }
 .설정닫기 { border: 0; background: none; color: var(--보조글); font-size: 24px; line-height: 1; cursor: pointer; }
 .설정패널 fieldset { min-width: 0; margin: 0 0 18px; padding: 0; border: 0; }
-.설정패널 legend { margin-bottom: 9px; color: var(--보조글); font-size: 12px; font-weight: 700; }
+.설정패널 legend { margin-bottom: 9px; color: var(--보조글); font-size: 13px; font-weight: 700; }
 .테마선택 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
-.테마버튼 { display: flex; align-items: center; flex-direction: column; gap: 7px; padding: 7px; border: 1px solid var(--테두리); border-radius: 3px; background: var(--선택안함); color: var(--글); font-size: 12px; cursor: pointer; }
+.테마버튼 { display: flex; align-items: center; flex-direction: column; gap: 7px; padding: 7px; border: 1px solid var(--테두리); border-radius: 3px; background: var(--선택안함); color: var(--글); font-size: 13px; cursor: pointer; }
 .테마버튼:last-child:nth-child(3n + 1) { grid-column: 2; }
 .테마버튼.선택됨, .설정선택 button.선택됨 { border-color: var(--강조); background: var(--선택바탕); }
 .테마견본 { display: grid; place-items: center; width: 100%; height: 38px; background: #fff; color: #454037; font-family: 'AppleMyungjo', 'Batang', serif; font-size: 19px; }
@@ -979,22 +979,22 @@ button { font: inherit; }
 .테마견본[data-theme='서가'] { background: linear-gradient(135deg, #16404d 67%, #dda853 67%); color: #fbf5dd; }
 .설정선택 { display: flex; gap: 7px; }
 .글꼴선택 { flex-wrap: wrap; }
-.설정선택 button { min-width: 72px; padding: 8px 13px; border: 1px solid var(--테두리); border-radius: 3px; background: var(--선택안함); color: var(--글); font-size: 12px; cursor: pointer; }
+.설정선택 button { min-width: 72px; padding: 8px 13px; border: 1px solid var(--테두리); border-radius: 3px; background: var(--선택안함); color: var(--글); font-size: 13px; cursor: pointer; }
 .가장자리선택 input { display: block; width: 100%; margin: 0; accent-color: var(--강조); cursor: pointer; }
 .가장자리눈금 { display: flex; justify-content: space-between; margin: 2px 7px 0; }
 .가장자리눈금 span { width: 2px; height: 4px; background: var(--테두리); }
-.가장자리끝표시 { display: flex; justify-content: space-between; margin-top: 4px; color: var(--옅은글); font-size: 11px; }
-.설정안내 { margin: 3px 0 0; color: var(--옅은글); font-size: 11px; }
+.가장자리끝표시 { display: flex; justify-content: space-between; margin-top: 4px; color: var(--옅은글); font-size: 12px; }
+.설정안내 { margin: 3px 0 0; color: var(--옅은글); font-size: 12px; }
 
 .분류, .마침꼬리 {
   color: var(--강조);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: .08em;
 }
 .작업공간 { padding-bottom: 84px; }
 .선택머리 { display: flex; justify-content: space-between; align-items: end; gap: 20px; text-align: left; }
-.구역번호 { color: var(--강조); font-size: 12px; font-weight: 700; letter-spacing: .08em; }
+.구역번호 { color: var(--강조); font-size: 13px; font-weight: 700; letter-spacing: .08em; }
 .구역번호 span { padding: 0 5px; color: var(--옅은글); }
 .선택머리 h2 { margin: 9px 0 0; font-size: 18px; font-weight: 650; letter-spacing: -.045em; }
 .선택제목줄 { display: flex; align-items: center; gap: 8px; }
@@ -1029,23 +1029,23 @@ button { font: inherit; }
 .주제관리창 { display: flex; flex-direction: column; box-sizing: border-box; width: min(650px, 100%); max-height: min(88dvh, 760px); padding: 25px; border: 1px solid var(--테두리); border-radius: 8px; background: var(--종이); color: var(--글); box-shadow: 0 20px 60px rgba(0, 0, 0, .25); }
 .주제관리머리 { display: flex; justify-content: space-between; align-items: start; gap: 12px; }
 .주제관리머리 h2 { margin: 7px 0 0; font-size: 21px; letter-spacing: -.04em; }
-.주제관리머리 p { margin: 8px 0 0; color: var(--보조글); font-size: 12px; }
+.주제관리머리 p { margin: 8px 0 0; color: var(--보조글); font-size: 13px; }
 .주제관리닫기 { flex: none; border: 0; background: none; color: var(--글); font-size: 26px; line-height: 1; cursor: pointer; }
-.주제관리개수 { margin: 17px 0 0; color: var(--강조); font-size: 12px; font-weight: 700; }
+.주제관리개수 { margin: 17px 0 0; color: var(--강조); font-size: 13px; font-weight: 700; }
 .주제관리목록 { min-height: 0; margin-top: 9px; overflow-y: auto; overscroll-behavior: contain; }
 .주제관리묶음 { padding: 13px 0 15px; border-top: 1px solid var(--연테두리); }
-.주제관리묶음 h3 { margin: 0 0 9px; color: var(--보조글); font-size: 12px; font-weight: 700; }
+.주제관리묶음 h3 { margin: 0 0 9px; color: var(--보조글); font-size: 13px; font-weight: 700; }
 .주제관리선택 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
-.주제관리선택 button { display: flex; align-items: center; min-width: 0; min-height: 38px; gap: 7px; padding: 7px 9px; border: 1px solid var(--테두리); border-radius: 3px; background: var(--선택안함); color: var(--글); font-size: 12px; text-align: left; cursor: pointer; }
+.주제관리선택 button { display: flex; align-items: center; min-width: 0; min-height: 38px; gap: 7px; padding: 7px 9px; border: 1px solid var(--테두리); border-radius: 3px; background: var(--선택안함); color: var(--글); font-size: 13px; text-align: left; cursor: pointer; }
 .주제관리선택 button:hover, .주제관리선택 button.선택됨 { border-color: var(--강조); background: var(--선택바탕); }
 .주제관리선택 button.한도도달 { cursor: not-allowed; }
-.주제관리표시 { display: grid; place-items: center; flex: none; width: 15px; height: 15px; border: 1px solid var(--강조); border-radius: 2px; color: var(--글); font-size: 12px; font-weight: 700; }
-.주제관리안내 { margin: 10px 0 0; color: var(--보조글); font-size: 12px; }
+.주제관리표시 { display: grid; place-items: center; flex: none; width: 15px; height: 15px; border: 1px solid var(--강조); border-radius: 2px; color: var(--글); font-size: 13px; font-weight: 700; }
+.주제관리안내 { margin: 10px 0 0; color: var(--보조글); font-size: 13px; }
 .주제관리발 { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 13px; padding-top: 14px; border-top: 1px solid var(--연테두리); }
-.주제관리발 span { color: var(--보조글); font-size: 11px; }
-.주제관리발 button { min-width: 68px; padding: 8px 13px; border: 1px solid var(--강조); border-radius: 3px; background: var(--선택바탕); color: var(--글); font-size: 12px; font-weight: 700; cursor: pointer; }
+.주제관리발 span { color: var(--보조글); font-size: 12px; }
+.주제관리발 button { min-width: 68px; padding: 8px 13px; border: 1px solid var(--강조); border-radius: 3px; background: var(--선택바탕); color: var(--글); font-size: 13px; font-weight: 700; cursor: pointer; }
 .지문서랍 { margin-top: 21px; }
-.지문서랍 h3 { margin: 0; color: var(--강조); font-size: 12px; font-weight: 600; }
+.지문서랍 h3 { margin: 0; color: var(--강조); font-size: 13px; font-weight: 600; }
 .지문서랍 h3 span { margin-left: 8px; color: var(--옅은글); font-weight: 400; }
 .글목록 { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; margin-top: 13px; }
 .글목록 .지문선택버튼 {
@@ -1069,13 +1069,13 @@ button { font: inherit; }
 .글목록 .지문선택버튼.도장있음 { padding-right: 55px; }
 .글목록 .지문목록도장 { position: absolute; top: 50%; right: 8px; transform: translateY(-50%) rotate(-9deg); }
 .지문목록머리 { display: block; width: 100%; min-width: 0; }
-.글목록 strong { font-size: 12px; }
+.글목록 strong { font-size: 13px; }
 .지문목록머리 strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.글목록 .지문설명 { max-width: 100%; overflow: hidden; color: var(--보조글); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.글목록 .지문설명 { max-width: 100%; overflow: hidden; color: var(--보조글); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
 .글목록 em { font-style: normal; }
 .글목록 em.완료 { color: var(--완료색); font-weight: 700; }
 .글목록 .최고정타율 { color: var(--보조글); font-size: inherit; font-variant-numeric: tabular-nums; }
-.빈즐겨찾기 { grid-column: 1 / -1; margin: 0; padding: 14px 2px; color: var(--보조글); font-size: 12px; line-height: 1.6; }
+.빈즐겨찾기 { grid-column: 1 / -1; margin: 0; padding: 14px 2px; color: var(--보조글); font-size: 13px; line-height: 1.6; }
 .종이 {
   margin-top: 22px;
   padding: 30px clamp(24px, 5.4vw, 73px) 27px;
@@ -1084,7 +1084,7 @@ button { font: inherit; }
   background: var(--종이);
   box-shadow: 0 22px 60px rgba(81, 71, 54, .075), 0 2px 7px rgba(81, 71, 54, .035);
 }
-.종이상단 { display: flex; justify-content: space-between; align-items: center; color: var(--옅은글); font-size: 11px; letter-spacing: .08em; }
+.종이상단 { display: flex; justify-content: space-between; align-items: center; color: var(--옅은글); font-size: 12px; letter-spacing: .08em; }
 .가운데점 { margin: 0 5px; }
 .지문머리 { padding-top: 43px; text-align: center; }
 .분류 { margin: 0 0 13px; }
@@ -1098,8 +1098,8 @@ button { font: inherit; }
 .본문즐겨찾기 { display: grid; place-items: center; flex: none; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 3px; background: transparent; color: var(--보조글); font-size: 22px; line-height: 1; cursor: pointer; }
 .본문즐겨찾기.선택됨 { color: var(--강조); }
 .본문즐겨찾기:hover { background: var(--선택바탕); }
-.출처 { margin: 14px 0 0; color: var(--옅은글); font-size: 12px; }
-.즐겨찾기안내 { margin: 7px 0 0; color: var(--오류색); font-size: 11px; }
+.출처 { margin: 14px 0 0; color: var(--옅은글); font-size: 13px; }
+.즐겨찾기안내 { margin: 7px 0 0; color: var(--오류색); font-size: 12px; }
 .출처 a,
 .출처 a:visited {
   color: var(--출처링크);
@@ -1123,12 +1123,12 @@ button { font: inherit; }
   background: var(--진행바탕);
 }
 .진행영역 { max-width: 800px; margin: 0 auto; }
-.진행문구 { display: flex; align-items: center; gap: 9px; color: var(--보조글); font-size: 12px; }
+.진행문구 { display: flex; align-items: center; gap: 9px; color: var(--보조글); font-size: 13px; }
 .상태표시 { width: 6px; height: 6px; flex: none; border-radius: 50%; background: var(--옅은글); }
 .상태표시.오류 { background: var(--오류색); }
 .상태표시.완료 { background: var(--완료색); }
-.그래프설명 { margin-left: auto; color: var(--보조글); font-size: 11px; white-space: nowrap; }
-.진행숫자 { min-width: 36px; margin-left: auto; text-align: right; font-size: 11px; font-variant-numeric: tabular-nums; }
+.그래프설명 { margin-left: auto; color: var(--보조글); font-size: 12px; white-space: nowrap; }
+.진행숫자 { min-width: 36px; margin-left: auto; text-align: right; font-size: 12px; font-variant-numeric: tabular-nums; }
 .진행막대 { height: 2px; margin-top: 13px; overflow: hidden; background: var(--진행선); }
 .진행막대 span { display: block; height: 100%; background: var(--진행활성); transition: width .2s ease; }
 .리듬그래프 {
@@ -1145,10 +1145,10 @@ button { font: inherit; }
 .리듬막대.오타 { background: var(--오류색); }
 .필사실[data-theme='한지'] .리듬막대:not(.오타),
 .필사실[data-theme='새벽'] .리듬막대:not(.오타) { background: var(--강조); }
-.기록안내 { margin: 10px 0 0; color: var(--보조글); font-size: 11px; }
+.기록안내 { margin: 10px 0 0; color: var(--보조글); font-size: 12px; }
 .기록안내[role="alert"] { color: var(--오류색); }
-.진행아래 { display: flex; justify-content: space-between; align-items: center; gap: 20px; max-width: 800px; margin: 19px auto 0; color: var(--보조글); font-size: 11px; }
-.글자버튼 { padding: 4px 0; border: 0; background: none; color: var(--강조); font-size: 12px; cursor: pointer; }
+.진행아래 { display: flex; justify-content: space-between; align-items: center; gap: 20px; max-width: 800px; margin: 19px auto 0; color: var(--보조글); font-size: 12px; }
+.글자버튼 { padding: 4px 0; border: 0; background: none; color: var(--강조); font-size: 13px; cursor: pointer; }
 .글자버튼:hover { color: var(--글); text-decoration: underline; text-underline-offset: 4px; }
 .글자버튼 span { margin-left: 4px; font-size: 16px; }
 .마침 {
@@ -1166,14 +1166,14 @@ button { font: inherit; }
 .마침내용 { min-width: 0; }
 .마침통계 { display: flex; flex-wrap: wrap; gap: 12px 26px; margin: 24px 0 0; padding: 15px 0 0; border-top: 1px solid var(--진행선); }
 .마침통계 div { display: flex; flex-direction: column; gap: 5px; }
-.마침통계 dt { color: var(--옅은글); font-size: 11px; }
-.마침통계 dd { margin: 0; color: var(--보조글); font-size: 12px; font-variant-numeric: tabular-nums; }
+.마침통계 dt { color: var(--옅은글); font-size: 12px; }
+.마침통계 dd { margin: 0; color: var(--보조글); font-size: 13px; font-variant-numeric: tabular-nums; }
 .기록비교묶음 { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: 6px 18px; width: 100%; margin-top: 10px; text-align: left; }
-.개인최고안내 { display: flex; align-items: center; gap: 7px; margin: 0; color: var(--글); font-size: 11px; }
-.정타율비교 { margin: 0; color: var(--보조글); font-size: 11px; font-variant-numeric: tabular-nums; }
+.개인최고안내 { display: flex; align-items: center; gap: 7px; margin: 0; color: var(--글); font-size: 12px; }
+.정타율비교 { margin: 0; color: var(--보조글); font-size: 12px; font-variant-numeric: tabular-nums; }
 .정타율비교 strong { color: var(--글); }
 .마침동작 { display: flex; flex-direction: column; align-items: center; gap: 9px; margin-left: auto; }
-.주버튼 { min-width: 132px; padding: 11px 14px; border: 1px solid var(--강조); border-radius: 2px; background: var(--강조); color: var(--역글); font-size: 12px; cursor: pointer; }
+.주버튼 { min-width: 132px; padding: 11px 14px; border: 1px solid var(--강조); border-radius: 2px; background: var(--강조); color: var(--역글); font-size: 13px; cursor: pointer; }
 .주버튼:hover { background: var(--강조호버); }
 .주버튼 span { margin-left: 12px; }
 button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
@@ -1202,7 +1202,7 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
 .선택머리 h2 { margin-top: 6px; font-size: 17px; }
 .주제설정버튼 { margin-top: 6px; }
 .글테마선택 { grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; max-height: min(40dvh, 310px); gap: 6px; margin-top: 18px; overflow-y: auto; overscroll-behavior: contain; }
-.글테마선택 button { padding: 8px 5px 11px; font-size: 12px; }
+.글테마선택 button { padding: 8px 5px 11px; font-size: 13px; }
 .지문서랍 { display: flex; flex-direction: column; flex: 1; min-height: 0; margin-top: 20px; }
 .글목록 { display: flex; flex-direction: column; flex: 1; min-height: 0; gap: 6px; overflow-y: auto; overscroll-behavior: contain; padding-right: 3px; }
 .글목록 .지문선택버튼 { flex: none; min-height: 51px; padding: 9px 11px; }
@@ -1313,9 +1313,9 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
     min-height: 44px;
   }
   .모바일선택줄 div { display: flex; flex-direction: column; min-width: 0; gap: 3px; }
-  .모바일선택줄 div span { color: var(--옅은글); font-size: 10px; }
+  .모바일선택줄 div span { color: var(--옅은글); font-size: 12px; }
   .모바일선택줄 strong { overflow: hidden; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
-  .모바일선택줄 button { flex: none; padding: 8px 10px; border: 1px solid var(--테두리); border-radius: 3px; background: var(--선택안함); color: var(--글); font-size: 12px; cursor: pointer; }
+  .모바일선택줄 button { flex: none; padding: 8px 10px; border: 1px solid var(--테두리); border-radius: 3px; background: var(--선택안함); color: var(--글); font-size: 13px; cursor: pointer; }
   .모바일선택줄 button span { margin-left: 7px; }
   .목록가림막 { display: block; position: fixed; z-index: 19; inset: 0; background: rgba(0, 0, 0, .4); }
   .선택패널 {
@@ -1353,7 +1353,7 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
   .마침 { align-items: start; flex-wrap: wrap; gap: 8px; }
   .마침내용 { flex-basis: 100%; }
   .마침통계 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
-  .마침통계 dd { font-size: 11px; }
+  .마침통계 dd { font-size: 12px; }
   .마침동작 { width: auto; margin: 0; }
   .주버튼 { padding: 8px 11px; }
 }

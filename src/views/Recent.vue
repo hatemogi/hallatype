@@ -75,24 +75,24 @@ onMounted(() => {
 .브랜드글자 { display: flex; align-items: center; gap: 9px; color: var(--글); }
 .브랜드타이틀 { display: block; width: 49px; height: auto; color: var(--글); }
 .브랜드글자 small { color: var(--글); font-size: 14px; }
-.돌아가기 { color: var(--보조글); font-size: 12px; text-decoration: none; }
+.돌아가기 { color: var(--보조글); font-size: 13px; text-decoration: none; }
 .돌아가기:hover, .기록카드 h2 a:hover { color: var(--강조); text-decoration: underline; text-underline-offset: 4px; }
 a:focus-visible { outline: 2px solid var(--강조); outline-offset: 4px; }
 .최근본문 { padding-top: clamp(23px, 4dvh, 42px); }
 .최근머리 { position: relative; margin-bottom: 24px; }
-.최근머리 p { margin: 0 0 8px; color: var(--강조); font-size: 12px; font-weight: 700; letter-spacing: .08em; }
+.최근머리 p { margin: 0 0 8px; color: var(--강조); font-size: 13px; font-weight: 700; letter-spacing: .08em; }
 .최근머리 h1 { margin: 0; color: var(--글); font-family: 'AppleMyungjo', 'Nanum Myeongjo', 'Batang', serif; font-size: clamp(27px, 3.2vw, 36px); font-weight: 500; letter-spacing: -.04em; }
-.최근머리 > span { position: absolute; right: 0; bottom: 4px; color: var(--보조글); font-size: 12px; }
+.최근머리 > span { position: absolute; right: 0; bottom: 4px; color: var(--보조글); font-size: 13px; }
 .기록격자 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .기록카드 { min-width: 0; padding: clamp(16px, 2vw, 23px); border: 1px solid var(--진행테두리); border-radius: 3px; background: var(--진행바탕); }
-.기록메타 { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 3px 12px; margin: 0 0 6px; font-size: 11px; }
+.기록메타 { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 3px 12px; margin: 0 0 6px; font-size: 12px; }
 .기록주제 { color: var(--강조); font-weight: 700; }
 .기록메타 time { color: var(--보조글); font-variant-numeric: tabular-nums; }
 .기록제목줄 { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 32px; margin-bottom: 19px; }
 .기록카드 h2 { min-width: 0; margin: 0; font-size: 18px; font-weight: 600; }
 .기록카드 h2 a { color: var(--글); text-decoration: none; }
 .기록카드 h2 span { margin-left: 4px; color: var(--강조); font-size: 14px; }
-.기록그래프머리 { display: flex; justify-content: space-between; gap: 12px; color: var(--보조글); font-size: 11px; }
+.기록그래프머리 { display: flex; justify-content: space-between; gap: 12px; color: var(--보조글); font-size: 12px; }
 .리듬그래프 { display: grid; grid-template-columns: repeat(100, minmax(0, 1fr)); align-items: end; gap: 1px; height: 38px; margin-top: 12px; border-bottom: 1px solid var(--진행선); }
 .리듬칸 { position: relative; height: 100%; min-width: 0; }
 .리듬막대 { position: absolute; right: 0; bottom: 0; left: 0; display: block; background: var(--진행활성); }
@@ -101,8 +101,8 @@ a:focus-visible { outline: 2px solid var(--강조); outline-offset: 4px; }
 .최근기록[data-theme='새벽'] .리듬막대:not(.오타) { background: var(--강조); }
 .마침통계 { display: flex; flex-wrap: wrap; gap: 12px 26px; margin: 17px 0 0; padding: 14px 0 0; border-top: 1px solid var(--진행선); }
 .마침통계 div { display: flex; flex-direction: column; gap: 5px; }
-.마침통계 dt { color: var(--옅은글); font-size: 11px; }
-.마침통계 dd { margin: 0; color: var(--보조글); font-size: 12px; font-variant-numeric: tabular-nums; }
+.마침통계 dt { color: var(--옅은글); font-size: 12px; }
+.마침통계 dd { margin: 0; color: var(--보조글); font-size: 13px; font-variant-numeric: tabular-nums; }
 .빈기록 { padding: 35px 26px; border: 1px solid var(--진행테두리); border-radius: 3px; background: var(--진행바탕); color: var(--보조글); font-size: 13px; text-align: center; }
 .빈기록 p { margin: 0 0 18px; }
 .빈기록 a { color: var(--강조); font-weight: 700; }
