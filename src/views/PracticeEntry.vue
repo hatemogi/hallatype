@@ -279,6 +279,22 @@ onUnmounted(() => {
     radial-gradient(ellipse at 73% 59%, rgba(137, 58, 156, .24), transparent 47%),
     radial-gradient(circle at 50% 42%, var(--첫화면중심) 0, var(--첫화면중간) 58%, var(--첫화면끝) 100%);
 }
+.첫화면[data-theme='별똥별'] {
+  --첫화면중심: #202a4d;
+  --첫화면중간: #121b36;
+  --첫화면끝: #060b19;
+  --글: #faf7eb;
+  --보조글: #d0d9e8;
+  --옅은글: #aebdd1;
+  --강조: #c9c6f5;
+  --강조호버: #e0defb;
+  --역글: #172040;
+  --진행선: #65739b;
+  background:
+    linear-gradient(rgba(6, 11, 25, .64), rgba(6, 11, 25, .84)),
+    url('@/assets/milky-way.webp') center / cover,
+    var(--첫화면끝);
+}
 .첫화면안쪽 {
   box-sizing: border-box;
   display: flex;

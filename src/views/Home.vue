@@ -315,7 +315,7 @@ const 지문삽화들: Record<string, string> = {
   UlRmQaTpLnVe: swimmingFreestyle,
 };
 const 어두운삽화테마들 = new Set(['밤', '숲', '커피', '매트릭스', 'PC통신', '서가',
-  '수면과 파문', '빗방울', '바람결', '흐르는 구름', '불멍', '오로라']);
+  '수면과 파문', '빗방울', '바람결', '흐르는 구름', '불멍', '오로라', '별똥별']);
 export default defineComponent({
   components: { GeulsumMark, GeulsumTitle, PraiseStamp },
   props: {
@@ -1048,6 +1048,10 @@ button { font: inherit; }
 .테마견본[data-theme='오로라'] {
   background: linear-gradient(135deg, #071421 12%, #177c96 29%, #319c53 45%, #6746a2 63%, #a83479 78%, #130f2c 100%);
   color: #f2fbf5;
+}
+.테마견본[data-theme='별똥별'] {
+  background: #080e1e url('@/assets/milky-way.webp') center / cover;
+  color: #faf7eb;
 }
 .설정선택 { display: flex; gap: 7px; }
 .설정선택 button { min-width: 72px; padding: 8px 13px; border: 1px solid var(--테두리); border-radius: 3px; background: var(--선택안함); color: var(--글); font-size: 13px; cursor: pointer; }

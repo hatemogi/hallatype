@@ -1,5 +1,5 @@
 /** 수면 이외의 종이 애니메이션. 모든 효과는 글자를 다시 그리지 않고 배경만 그린다. */
-export const 움직이는테마들 = ['수면과 파문', '빗방울', '바람결', '흐르는 구름', '불멍', '오로라'] as const;
+export const 움직이는테마들 = ['수면과 파문', '빗방울', '바람결', '흐르는 구름', '불멍', '오로라', '별똥별'] as const;
 export type 움직이는테마 = typeof 움직이는테마들[number];
 
 export function 움직이는테마인가(테마: string): 테마 is 움직이는테마 {
@@ -234,10 +234,58 @@ void main() {
   gl_FragColor = vec4(color, 1.0);
 }`;
 
+const 별똥별 = `${공통}
+uniform sampler2D u_galaxy;
+uniform float u_hasGalaxy;
+void main() {
+  vec2 p = vec2(v_uv.x, 1.0 - v_uv.y);
+  float t = u_time * u_motion;
+  vec3 color = mix(vec3(0.016, 0.023, 0.047), vec3(0.010, 0.018, 0.039), p.y);
+  float behind = mix(u_tuning.w, 1.0, smoothstep(u_textBottom - 0.05,
+    u_textBottom + 0.10, p.y));
+  if (u_hasGalaxy > 0.5) {
+    vec3 galaxy = texture2D(u_galaxy, p).rgb;
+    color += pow(galaxy, vec3(1.18)) * u_tuning.x * behind;
+  }
+  vec2 grid = p * vec2(37.0, 23.0);
+  vec2 cell = floor(grid);
+  vec2 point = fract(grid) - vec2(hash21(cell + 5.0), hash21(cell + 9.0));
+  float star = exp(-dot(point, point) * 380.0) * step(0.965, hash21(cell + 15.0));
+  float twinkle = 0.50 + 0.50 * sin(t * 1.4 + hash21(cell + 19.0) * 6.28);
+  color += vec3(0.095, 0.120, 0.165) * star * twinkle * behind;
+
+  float streak = 0.0;
+  float headGlow = 0.0;
+  float aspect = u_size.x / max(u_size.y, 1.0);
+  for (int i = 0; i < 12; i++) {
+    vec4 r = u_ripples[i];
+    float age = r.z;
+    if (age < 0.0 || age > 1.45) { continue; }
+    float seed = hash21(vec2(r.x * 83.0 + float(i), r.y * 61.0));
+    float side = r.x < 0.25 ? 1.0 : (r.x > 0.75 ? -1.0 : (seed > 0.5 ? 1.0 : -1.0));
+    vec2 direction = normalize(vec2(side * 0.91, 0.42));
+    vec2 head = r.xy + vec2(side * (-0.065 + age * 0.23 * u_motion),
+      -0.045 + age * 0.12 * u_motion);
+    vec2 d = vec2((p.x - head.x) * aspect, p.y - head.y);
+    float along = dot(d, direction);
+    float across = abs(d.x * direction.y - d.y * direction.x);
+    float tail = exp(-pow(across * 90.0, 2.0)) *
+      smoothstep(-0.20, -0.045, along) * (1.0 - smoothstep(-0.015, 0.025, along));
+    float core = exp(-dot(d, d) * 4600.0);
+    float fade = 1.0 - smoothstep(0.42, 1.45, age);
+    streak += tail * fade * r.w;
+    headGlow += core * fade * r.w;
+  }
+  color += vec3(0.24, 0.43, 0.72) * min(streak, 1.0) * u_tuning.z * behind;
+  color += vec3(0.62, 0.76, 0.93) * min(headGlow, 1.0) * u_tuning.z * behind;
+  gl_FragColor = vec4(color, 1.0);
+}`;
+
 export const 추가효과조각: Record<Exclude<움직이는테마, '수면과 파문'>, string> = {
   빗방울: 비,
   바람결: 바람,
   '흐르는 구름': 구름,
   불멍: 불,
   오로라,
+  별똥별,
 };

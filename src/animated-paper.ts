@@ -1,4 +1,5 @@
 import { 추가효과조각, type 움직이는테마 } from './animated-shaders';
+import galaxyUrl from './assets/milky-way.webp';
 
 /** 종이 전체 뒤에서 동작하는 WebGL 효과. 테마별 강도는 여기에서 조절한다. */
 export const 동적효과조절: Record<움직이는테마,
@@ -9,6 +10,7 @@ export const 동적효과조절: Record<움직이는테마,
   '흐르는 구름': { 기본세기: 1.10, 타건세기: 0.78, 감쇠속도: 1.25, 빛강도: 0.82, 글뒤세기: 0.78 },
   불멍: { 기본세기: 0.95, 타건세기: 0.86, 감쇠속도: 1.65, 빛강도: 0.82, 글뒤세기: 0.72 },
   오로라: { 기본세기: 1.34, 타건세기: 0.86, 감쇠속도: 1.0, 빛강도: 1.05, 글뒤세기: 0.80 },
+  별똥별: { 기본세기: 0.55, 타건세기: 0.92, 감쇠속도: 1.4, 빛강도: 0.90, 글뒤세기: 0.70 },
 };
 const 공통조절 = {
   최대파문: 12,
@@ -104,6 +106,8 @@ export class 동적종이효과 {
   private gl: WebGLRenderingContext | null = null;
   private program: WebGLProgram | null = null;
   private buffer: WebGLBuffer | null = null;
+  private galaxyTexture: WebGLTexture | null = null;
+  private galaxyImage: HTMLImageElement | null = null;
   private uniforms: Record<string, WebGLUniformLocation | null> = {};
   private observer: ResizeObserver | null = null;
   private media = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -132,6 +136,7 @@ export class 동적종이효과 {
     try { this.initialize(); }
     catch (error) { console.warn(`${this.theme} 테마를 시작할 수 없습니다.`, error); this.destroy(); return false; }
     this.valid = true;
+    if (this.theme === '별똥별') { this.loadGalaxy(); }
     this.resize();
     this.schedule();
     return true;
@@ -165,10 +170,38 @@ export class 동적종이효과 {
     this.gl = gl;
     this.program = program;
     this.buffer = buffer;
+    this.galaxyTexture = null;
     for (const name of ['u_size', 'u_time', 'u_horizon', 'u_textBottom',
-      'u_motion', 'u_tuning', 'u_ripples[0]']) {
+      'u_motion', 'u_tuning', 'u_ripples[0]', 'u_galaxy', 'u_hasGalaxy']) {
       this.uniforms[name] = gl.getUniformLocation(program, name);
     }
+    if (this.galaxyImage?.complete && this.galaxyImage.naturalWidth) { this.uploadGalaxy(); }
+  }
+
+  private loadGalaxy() {
+    const image = new Image();
+    this.galaxyImage = image;
+    image.onload = () => { if (!this.disposed && this.valid) { this.uploadGalaxy(); } };
+    image.onerror = () => { console.warn('별똥별 은하 이미지를 불러올 수 없습니다.'); };
+    image.src = galaxyUrl;
+  }
+
+  private uploadGalaxy() {
+    const gl = this.gl;
+    const image = this.galaxyImage;
+    if (!gl || !image || !image.naturalWidth || gl.isContextLost()) { return; }
+    const texture = gl.createTexture();
+    if (!texture) { return; }
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 0);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
+    if (this.galaxyTexture) { gl.deleteTexture(this.galaxyTexture); }
+    this.galaxyTexture = texture;
   }
 
   setContentBottom(fraction: number) {
@@ -241,6 +274,12 @@ export class 동적종이효과 {
       }
     }
     gl.uniform4fv(uniform('u_ripples[0]'), values);
+    if (this.theme === '별똥별') {
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, this.galaxyTexture);
+      gl.uniform1i(uniform('u_galaxy'), 0);
+      gl.uniform1f(uniform('u_hasGalaxy'), this.galaxyTexture ? 1 : 0);
+    }
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     this.ripples = this.ripples.filter(r => this.elapsed - r.시작 < 3.5);
     this.schedule();
@@ -278,13 +317,20 @@ export class 동적종이효과 {
     this.media.removeEventListener('change', this.motionChanged);
     this.canvas.removeEventListener('webglcontextlost', this.contextLost);
     this.canvas.removeEventListener('webglcontextrestored', this.contextRestored);
+    if (this.galaxyImage) {
+      this.galaxyImage.onload = null;
+      this.galaxyImage.onerror = null;
+    }
     if (this.gl) {
+      if (this.galaxyTexture) { this.gl.deleteTexture(this.galaxyTexture); }
       if (this.buffer) { this.gl.deleteBuffer(this.buffer); }
       if (this.program) { this.gl.deleteProgram(this.program); }
     }
     this.gl = null;
     this.buffer = null;
     this.program = null;
+    this.galaxyImage = null;
+    this.galaxyTexture = null;
     this.uniforms = {};
     this.ripples = [];
   }
