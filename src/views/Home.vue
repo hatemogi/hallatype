@@ -1216,7 +1216,6 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-  padding-top: 8px;
   padding-bottom: 9px;
 }
 .필사실[data-theme='매트릭스'] .종이 { box-shadow: inset 0 0 38px rgba(43, 202, 82, .06); }
@@ -1225,7 +1224,7 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
   position: relative;
   flex: 1;
   min-height: 220px;
-  margin: 0 22px 0;
+  margin: 0 12px;
   padding: 18px clamp(18px, 3vw, 38px) 28px;
   border-radius: 2px 2px 0 0;
   box-shadow: 0 2px 10px var(--타자기그림자);
@@ -1339,7 +1338,7 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
   .글목록 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; }
   .글목록 .지문선택버튼 { min-height: 56px; }
   .필사패널 { flex: 1; padding-top: 3px; }
-  .종이 { margin-right: 10px; margin-left: 10px; padding: 13px 16px 22px; }
+  .종이 { margin: 0 6px; padding: 13px 16px 22px; }
   .지문머리 { padding-top: 8px; }
   .지문머리.도장찍힘 { gap: 12px; }
   .도장묶음 { gap: 5px; }
