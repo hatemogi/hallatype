@@ -163,14 +163,20 @@
               <span aria-hidden="true">{{즐겨찾기인가(오늘지문.id) ? '★' : '☆'}}</span>
             </button>
           </div>
-          <div class="지문머리">
-            <p class="분류">선택한 글 · {{오늘지문.주제}}</p>
-            <h2 id="지문제목">{{오늘지문.제목}}</h2>
-            <p class="출처" v-if="오늘지문.원문URL">
-              <a :href="오늘지문.원문URL" target="_blank" rel="noopener noreferrer">{{오늘지문.저자}} · 위키문헌 원문 ↗</a>
-            </p>
-            <p class="출처" v-else>{{원래글테마}} · 창작 지문</p>
-            <p v-if="즐겨찾기오류" class="즐겨찾기안내" role="alert">즐겨찾기를 저장하지 못했어요. 브라우저 저장 공간을 확인해 주세요.</p>
+          <div class="지문머리" :class="{ 도장찍힘: !!이번도장 }">
+            <div class="지문머리내용">
+              <p class="분류">선택한 글 · {{오늘지문.주제}}</p>
+              <h2 id="지문제목">{{오늘지문.제목}}</h2>
+              <p class="출처" v-if="오늘지문.원문URL">
+                <a :href="오늘지문.원문URL" target="_blank" rel="noopener noreferrer">{{오늘지문.저자}} · 위키문헌 원문 ↗</a>
+              </p>
+              <p class="출처" v-else>{{원래글테마}} · 창작 지문</p>
+              <p v-if="즐겨찾기오류" class="즐겨찾기안내" role="alert">즐겨찾기를 저장하지 못했어요. 브라우저 저장 공간을 확인해 주세요.</p>
+            </div>
+            <div v-if="이번도장" class="도장묶음">
+              <PraiseStamp v-if="이번최고기록" grade="PB" large class="개인최고도장" />
+              <PraiseStamp :grade="이번도장" large class="완료도장" />
+            </div>
           </div>
           <div class="가는선" aria-hidden="true"></div>
 
@@ -210,14 +216,14 @@
 
           <div v-if="결과화면보이기" class="마침">
             <div class="마침내용">
-              <div class="마침머리"><p class="마침꼬리">한 편을 마쳤어요</p><PraiseStamp v-if="이번도장" :grade="이번도장" compact /></div>
+              <div class="마침머리"><p class="마침꼬리">한 편을 마쳤어요</p></div>
               <dl class="마침통계" aria-label="이번 필사 기록">
                 <div><dt>이번 정타율</dt><dd>{{정타율}}% ({{정타수}}/{{총입력타수}})</dd></div>
                 <div><dt>걸린 시간</dt><dd>{{걸린시간}}</dd></div>
               </dl>
               <div v-if="이번최고기록 || 종전최고정타율 !== null" class="기록비교묶음">
                 <p v-if="이번최고기록" class="개인최고안내">
-                  <strong class="개인최고표시">PB</strong> 이번 정타율이 최고 기록이에요.
+                  이번 정타율이 최고 기록이에요.
                 </p>
                 <p v-if="종전최고정타율 !== null" class="정타율비교">
                   최고 {{종전최고표시}}% 대비 <strong>{{정타율차이표시}}%p</strong>
@@ -668,7 +674,7 @@ export default defineComponent({
           this.총입력타수 = 본문.입력타수;
           this.정타수 = 본문.유효타수;
           this.종전최고정타율 = 지문최고정타율(this.시도들, this.오늘지문.id,
-            본문버전(this.오늘지문.본문));
+            본문버전(this.오늘지문.본문), 복원.시작.attemptId);
           this.시도ID = 복원.시작.attemptId;
           this.결과화면보이기 = true;
           this.저장대기(시도완료(복원.시작.attemptId, 걸린밀리초, this.총입력타수, this.정타수));
@@ -784,10 +790,14 @@ export default defineComponent({
           self.총입력타수 = 본문.입력타수;
           self.정타수 = 본문.유효타수;
           self.종전최고정타율 = 지문최고정타율(self.시도들, self.오늘지문.id,
-            본문버전(self.오늘지문.본문));
+            본문버전(self.오늘지문.본문), self.시도ID);
           self.입력기록저장();
           self.저장대기(시도완료(self.시도ID, 걸린밀리초, self.총입력타수, self.정타수));
           self.결과화면보이기 = true;
+          self.$nextTick(() => {
+            const 종이 = 캔버스.closest('.종이');
+            if (종이) { 종이.scrollTop = 0; }
+          });
         } else {
           const 커서세로 = 그림판.커서세로위치;
           if (커서세로 !== null) {
@@ -883,8 +893,8 @@ export default defineComponent({
       return this.종전최고정타율 === null ? '' : 정타율표시(this.종전최고정타율);
     },
     정타율차이(): number {
-      return this.종전최고정타율 === null ? 0
-        : Math.round((Number(this.정타율) - this.종전최고정타율) * 100) / 100;
+      return this.종전최고정타율 === null || this.총입력타수 <= 0 ? 0
+        : Math.round((this.정타수 / this.총입력타수 * 100 - this.종전최고정타율) * 100) / 100;
     },
     정타율차이표시(): string {
       const 차이 = this.정타율차이;
@@ -1175,7 +1185,6 @@ button { font: inherit; }
 .마침통계 dd { margin: 0; color: var(--보조글); font-size: 12px; font-variant-numeric: tabular-nums; }
 .기록비교묶음 { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: 6px 18px; width: 100%; margin-top: 10px; text-align: left; }
 .개인최고안내 { display: flex; align-items: center; gap: 7px; margin: 0; color: var(--글); font-size: 11px; }
-.개인최고표시 { padding: 2px 5px; border: 1px solid var(--강조); border-radius: 2px; background: var(--선택바탕); color: var(--글); font-size: 10px; letter-spacing: .04em; }
 .정타율비교 { margin: 0; color: var(--보조글); font-size: 11px; font-variant-numeric: tabular-nums; }
 .정타율비교 strong { color: var(--글); }
 .마침동작 { display: flex; flex-direction: column; align-items: center; gap: 9px; margin-left: auto; }
@@ -1265,6 +1274,15 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
   opacity: .45;
 }
 .지문머리 { padding-top: 12px; }
+.지문머리내용 { min-width: 0; }
+.지문머리.도장찍힘 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: clamp(16px, 2vw, 30px);
+}
+.도장묶음 { display: flex; align-items: center; flex: none; gap: 8px; }
+.도장묶음 .개인최고도장 { animation-delay: .18s; }
 .분류 { margin-bottom: 8px; }
 .지문머리 h2 { font-size: clamp(24px, 2.5vw, 30px); }
 .출처 { margin-top: 7px; }
@@ -1350,6 +1368,8 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
   .필사패널 { flex: 1; padding-top: 3px; }
   .종이 { margin-right: 10px; margin-left: 10px; padding: 13px 16px 22px; }
   .지문머리 { padding-top: 8px; }
+  .지문머리.도장찍힘 { gap: 12px; }
+  .도장묶음 { gap: 5px; }
   .지문머리 h2 { font-size: 25px; }
   .가는선 { margin-top: 15px; }
   .캔버스영역 { margin-top: 14px; }
@@ -1372,6 +1392,8 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
   .브랜드글자 small { display: none; }
   .상단동작 { gap: 6px; }
   .최근버튼, .설정버튼 { white-space: nowrap; }
+  .지문머리.도장찍힘 { grid-template-columns: minmax(0, 1fr); }
+  .도장묶음 { justify-self: end; }
 }
 
 @media (max-width: 380px) {

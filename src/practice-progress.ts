@@ -202,13 +202,13 @@ export function 완전정타인가(완료: 필사시도['완료']): boolean {
   return !!완료 && 완료.totalInputs > 0 && 완료.correctInputs === 완료.totalInputs;
 }
 
-export type 칭찬도장종류 = '참잘했어요' | '잘했어요';
+export type 칭찬도장종류 = '참잘했어요' | '잘했어요' | '완료';
 
 /** 기록의 원래 타수로 등급을 정한다. 표시 정타율의 반올림은 사용하지 않는다. */
 export function 정타도장(정타수: number, 전체타수: number): 칭찬도장종류 | null {
   if (전체타수 <= 0) { return null; }
   if (정타수 === 전체타수) { return '참잘했어요'; }
-  return 정타수 * 100 >= 전체타수 * 98 ? '잘했어요' : null;
+  return 정타수 * 100 >= 전체타수 * 98 ? '잘했어요' : '완료';
 }
 
 export function 지문도장등급(시도들: readonly 필사시도[], passageId: string,
@@ -220,14 +220,15 @@ export function 지문도장등급(시도들: readonly 필사시도[], passageId
     const 이번 = 정타도장(시도.완료.correctInputs, 시도.완료.totalInputs);
     if (이번 === '참잘했어요') { return 이번; }
     if (이번 === '잘했어요') { 등급 = 이번; }
+    if (이번 === '완료' && !등급) { 등급 = 이번; }
   }
   return 등급;
 }
 
-/** 화면에 표시하는 정타율을 기준으로 첫 기록, 갱신, 동률을 최고 기록으로 본다. */
+/** 이전 완료 기록의 실제 정타율을 넘어설 때만 개인 최고 기록으로 본다. */
 export function 이번이최고정타율인가(정타수: number, 전체타수: number,
   종전최고: number | null): boolean {
-  return 전체타수 > 0 && (종전최고 === null || Number(정타율(정타수, 전체타수)) >= 종전최고);
+  return 전체타수 > 0 && 종전최고 !== null && 정타수 / 전체타수 * 100 > 종전최고;
 }
 
 /** 같은 본문의 완료 기록 중 가장 높은 정타율을 반환한다. */
@@ -237,7 +238,8 @@ export function 지문최고정타율(시도들: readonly 필사시도[], passag
   for (const 시도 of 시도들) {
     if (시도.시작.passageId !== passageId || 시도.시작.contentVersion !== contentVersion ||
         시도.시작.attemptId === 제외시도ID || !시도.완료) { continue; }
-    const 비율 = Number(정타율(시도.완료.correctInputs, 시도.완료.totalInputs));
+    const 비율 = 시도.완료.totalInputs > 0
+      ? 시도.완료.correctInputs / 시도.완료.totalInputs * 100 : 0;
     최고 = 최고 === null ? 비율 : Math.max(최고, 비율);
   }
   return 최고;
