@@ -4,7 +4,7 @@ import { 지문틀 } from '@/본문';
 import { 따라그리기틀 } from '@/따라그리기';
 import 그림판틀 from '@/그림판';
 import { 기본필사설정, 단계별안티앨리어싱강도, 필사설정읽기, 필사설정저장,
-  필사테마순서, 필사팔레트들 } from '@/practice-settings';
+  필사테마순서, 글자크기별글꼴, 필사팔레트들 } from '@/practice-settings';
 
 it('필사 설정을 저장하고 잘못된 저장값은 기본값으로 복구한다', () => {
   const 값들 = new Map<string, string>();
@@ -15,25 +15,17 @@ it('필사 설정을 저장하고 잘못된 저장값은 기본값으로 복구�
   expect(필사설정읽기(storage)).toEqual(기본필사설정);
 
   const 설정 = { 테마: '밤' as const, 글자크기: '크게' as const,
-    커서깜빡임: false, 안티앨리어싱단계: 4 as const, 글꼴확대방식: '윤곽' as const };
+    커서깜빡임: false, 안티앨리어싱단계: 4 as const };
   필사설정저장(설정, storage);
   expect(필사설정읽기(storage)).toEqual(설정);
   필사설정저장({ ...설정, 글자크기: '작게' }, storage);
   expect(필사설정읽기(storage).글자크기).toBe('작게');
-  expect(필사설정읽기(storage).글꼴확대방식).toBe('윤곽');
-  필사설정저장({ ...설정, 글꼴확대방식: '윤곽48' }, storage);
-  expect(필사설정읽기(storage).글꼴확대방식).toBe('윤곽48');
-  필사설정저장({ ...설정, 글꼴확대방식: '윤곽64' }, storage);
-  expect(필사설정읽기(storage).글꼴확대방식).toBe('윤곽64');
-  필사설정저장({ ...설정, 글꼴확대방식: '기존' }, storage);
-  expect(필사설정읽기(storage).글꼴확대방식).toBe('기존');
   for (const 테마 of 필사테마순서) {
     필사설정저장({ ...설정, 테마 }, storage);
     expect(필사설정읽기(storage).테마).toBe(테마);
   }
   값들.set([...값들.keys()][0], JSON.stringify({ 테마: '밤', 글자크기: '크게', 커서깜빡임: false }));
   expect(필사설정읽기(storage).안티앨리어싱단계).toBe(3);
-  expect(필사설정읽기(storage).글꼴확대방식).toBe('윤곽48');
 
   const 키 = [...값들.keys()][0];
   값들.set(키, JSON.stringify({ ...설정, 테마: '호박색 모니터', 설정버전: 2 }));
@@ -51,10 +43,20 @@ it('필사 설정을 저장하고 잘못된 저장값은 기본값으로 복구�
   expect(필사설정읽기(storage).안티앨리어싱단계).toBe(4);
   값들.set(키, JSON.stringify({ 안티앨리어싱단계: 5 }));
   expect(필사설정읽기(storage).안티앨리어싱단계).toBe(4);
-  값들.set(키, JSON.stringify({ 글꼴확대방식: '알 수 없음' }));
-  expect(필사설정읽기(storage).글꼴확대방식).toBe('윤곽48');
+  값들.set(키, JSON.stringify({ ...설정, 글꼴확대방식: '기존', 설정버전: 2 }));
+  expect(필사설정읽기(storage)).toEqual(설정);
+  필사설정저장(필사설정읽기(storage), storage);
+  expect(JSON.parse(값들.get(키)!)).not.toHaveProperty('글꼴확대방식');
   값들.set(키, JSON.stringify({ 테마: '알 수 없음', 글자크기: '매우 크게', 커서깜빡임: 1 }));
   expect(필사설정읽기(storage)).toEqual(기본필사설정);
+});
+
+it('지문 글자 크기에 맞춰 글꼴 해상도를 자동 선택한다', () => {
+  expect(글자크기별글꼴).toEqual({
+    작게: { 확대방식: '윤곽', 해상도배율: 1 },
+    보통: { 확대방식: '윤곽48', 해상도배율: 1.5 },
+    크게: { 확대방식: '윤곽64', 해상도배율: 2 },
+  });
 });
 
 it('아홉 테마가 선택 순서와 팔레트에 빠짐없이 반영된다', () => {

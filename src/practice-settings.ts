@@ -9,13 +9,17 @@ export type 지문크기 = '작게' | '보통' | '크게';
 export type 안티앨리어싱단계 = 0 | 1 | 2 | 3 | 4;
 export type 글꼴확대방식 = '기존' | '윤곽' | '윤곽48' | '윤곽64';
 export const 단계별안티앨리어싱강도 = [0, 25, 50, 100, 150] as const;
+export const 글자크기별글꼴: Record<지문크기, { 확대방식: 글꼴확대방식; 해상도배율: number }> = {
+  작게: { 확대방식: '윤곽', 해상도배율: 1 },
+  보통: { 확대방식: '윤곽48', 해상도배율: 1.5 },
+  크게: { 확대방식: '윤곽64', 해상도배율: 2 },
+};
 
 export interface 필사설정 {
   테마: 필사테마;
   글자크기: 지문크기;
   커서깜빡임: boolean;
   안티앨리어싱단계: 안티앨리어싱단계;
-  글꼴확대방식: 글꼴확대방식;
 }
 
 export interface 필사팔레트 {
@@ -31,7 +35,6 @@ export const 기본필사설정: 필사설정 = {
   글자크기: '보통',
   커서깜빡임: true,
   안티앨리어싱단계: 3,
-  글꼴확대방식: '윤곽48',
 };
 
 export const 필사팔레트들: Record<필사테마, 필사팔레트> = {
@@ -125,10 +128,6 @@ export function 필사설정읽기(storage?: Pick<Storage, 'getItem'>): 필사�
         : Number.isInteger(단계) && 단계 !== undefined && 단계 >= 0 && 단계 <= 5
           ? 이전슬라이더단계[단계]
           : 이전강도단계[설정.안티앨리어싱 ?? -1] ?? 기본필사설정.안티앨리어싱단계,
-      글꼴확대방식: 설정.글꼴확대방식 === '윤곽64' ? '윤곽64'
-        : 설정.글꼴확대방식 === '윤곽48' ? '윤곽48'
-        : 설정.글꼴확대방식 === '윤곽' ? '윤곽'
-        : 설정.글꼴확대방식 === '기존' ? '기존' : 기본필사설정.글꼴확대방식,
     };
   } catch (_) {
     return { ...기본필사설정 };
@@ -138,6 +137,12 @@ export function 필사설정읽기(storage?: Pick<Storage, 'getItem'>): 필사�
 export function 필사설정저장(설정: 필사설정, storage?: Pick<Storage, 'setItem'>) {
   try {
     (storage ?? (typeof window === 'undefined' ? undefined : window.localStorage))
-      ?.setItem(저장키, JSON.stringify({ ...설정, 설정버전: 2 }));
+      ?.setItem(저장키, JSON.stringify({
+        테마: 설정.테마,
+        글자크기: 설정.글자크기,
+        커서깜빡임: 설정.커서깜빡임,
+        안티앨리어싱단계: 설정.안티앨리어싱단계,
+        설정버전: 2,
+      }));
   } catch (_) { /* 저장소 없이 사용 */ }
 }
