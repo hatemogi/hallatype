@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=1200">
+    <title>글숨 공유 카드 이미지 원본</title>
+    <style>
+      * { box-sizing: border-box; }
+      html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; }
+      .카드 {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 1200px;
+        height: 630px;
+        background: radial-gradient(circle at 50% 42%, #303a3d 0, #1c252b 58%, #11151b 100%);
+        color: #f4efe1;
+        font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+        text-align: center;
+        -webkit-font-smoothing: antialiased;
+      }
+      .소개 { display: flex; flex-direction: column; align-items: center; transform: translateY(-5px); }
+      .제목 { display: block; width: 420px; height: 219px; }
+      .슬로건 {
+        margin: 18px 0 0;
+        font-family: 'AppleMyungjo', 'Nanum Myeongjo', 'Batang', serif;
+        font-size: 28px;
+        line-height: 1.55;
+        letter-spacing: -.045em;
+      }
+      .구분선 { width: 42px; height: 1px; margin: 25px 0; background: #65716f; }
+      .설명 { margin: 0; color: #c5ccca; font-size: 16px; line-height: 1.9; }
+      .시작버튼 {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+        min-height: 56px;
+        margin-top: 28px;
+        padding: 0 25px;
+        border: 1px solid #cab289;
+        border-radius: 3px;
+        background: #cab289;
+        color: #20262a;
+        font-size: 15px;
+        font-weight: 600;
+      }
+      .시작버튼 span { font-size: 18px; font-weight: 400; }
+    </style>
+  </head>
+  <body>
+    <main class="카드">
+      <section class="소개" aria-label="글숨 첫 화면 가운데 영역">
+        <svg class="제목" viewBox="0 0 1736 906" role="img" aria-label="글숨">
+          <defs>
+            <filter id="연필색" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+              <feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -0.2126 -0.7152 -0.0722 0 1" result="연필명암" />
+              <feComposite in="연필명암" in2="SourceAlpha" operator="in" result="연필질감" />
+              <feFlood flood-color="#f4efe1" result="테마글자색" />
+              <feComposite in="테마글자색" in2="연필질감" operator="in" />
+            </filter>
+            <clipPath id="왼쪽"><rect x="0" y="0" width="868" height="906" /></clipPath>
+            <clipPath id="오른쪽"><rect x="868" y="0" width="868" height="906" /></clipPath>
+          </defs>
+          <g transform="translate(27.5 0)" clip-path="url(#왼쪽)">
+            <image href="/src/assets/geulsum-title-pencil-spaced.png" width="1736" height="906" filter="url(#연필색)" />
+          </g>
+          <g transform="translate(-27.5 0)" clip-path="url(#오른쪽)">
+            <image href="/src/assets/geulsum-title-pencil-spaced.png" width="1736" height="906" filter="url(#연필색)" />
+          </g>
+        </svg>
+        <p class="슬로건">한 글자씩, 마음을 고르다.</p>
+        <div class="구분선" aria-hidden="true"></div>
+        <p class="설명">키보드를 두드릴 핑계.<br>좋은 문장을 따라 쓰는 시간.</p>
+        <span class="시작버튼">필사 시작하기 <span aria-hidden="true">→</span></span>
+      </section>
+    </main>
+  </body>
+</html>
