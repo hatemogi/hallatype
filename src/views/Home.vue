@@ -127,11 +127,8 @@
           </div>
           <div class="지문머리">
             <div class="지문머리내용">
-              <p class="분류">{{오늘지문.주제}}</p>
+              <p class="분류">{{주제표시이름(원래글테마)}} · {{글순서표시}}</p>
               <h2 id="지문제목">{{오늘지문.제목}}</h2>
-              <p class="출처" v-if="오늘지문.원문URL">
-                <a :href="오늘지문.원문URL" target="_blank" rel="noopener noreferrer">{{오늘지문.저자}} · 위키문헌 원문 ↗</a>
-              </p>
               <p v-if="즐겨찾기오류" class="즐겨찾기안내" role="alert">즐겨찾기를 저장하지 못했어요. 브라우저 저장 공간을 확인해 주세요.</p>
             </div>
             <div v-if="이번도장" class="도장묶음">
@@ -875,6 +872,11 @@ export default defineComponent({
     원래글테마(): 지문테마 {
       return 지문원래테마(this.오늘지문.id) ?? '시작하기';
     },
+    글순서표시(): string {
+      const 지문들 = 테마별지문들[this.원래글테마];
+      const 순서 = 지문들.findIndex((지문) => 지문.id === this.오늘지문.id);
+      return `${순서 + 1}/${지문들.length}`;
+    },
     완료리듬막대들(): Array<리듬막대 | null> {
       const 시도 = this.시도들.find((후보) => 후보.시작.attemptId === this.시도ID);
       return 시도 ? 완료리듬그래프(this.오늘지문.본문, 시도.입력들,
@@ -1107,18 +1109,7 @@ button { font: inherit; }
 .본문즐겨찾기 { display: grid; place-items: center; flex: none; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 3px; background: transparent; color: var(--보조글); font-size: 22px; line-height: 1; cursor: pointer; }
 .본문즐겨찾기.선택됨 { color: var(--강조); }
 .본문즐겨찾기:hover { background: var(--선택바탕); }
-.출처 { margin: 14px 0 0; color: var(--옅은글); font-size: 13px; }
 .즐겨찾기안내 { margin: 7px 0 0; color: var(--오류색); font-size: 12px; }
-.출처 a,
-.출처 a:visited {
-  color: var(--출처링크);
-  text-decoration: underline;
-  text-decoration-color: var(--옅은글);
-  text-underline-offset: 3px;
-}
-.출처 a:hover,
-.출처 a:focus-visible { color: var(--출처링크호버); text-decoration-color: currentColor; }
-.출처 a:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
 .가는선 { width: 42px; height: 1px; margin: 34px auto 0; background: var(--진행선); }
 .캔버스영역 { position: relative; display: flex; justify-content: center; max-width: 930px; margin: 26px auto 0; overflow: hidden; }
 #캔버스 { display: block; width: 100%; height: auto; image-rendering: auto; }
@@ -1279,7 +1270,6 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
 .도장묶음 .개인최고도장 { animation-delay: .18s; }
 .분류 { margin-bottom: 8px; }
 .지문머리 h2 { font-size: clamp(24px, 2.5vw, 30px); }
-.출처 { margin-top: 7px; }
 .가는선 { margin-top: 18px; }
 .캔버스영역 { margin-top: 16px; }
 .진행판 {
