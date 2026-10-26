@@ -90,6 +90,29 @@ export function 다음미완료지문(현재ID: string, 시도들: readonly 필�
   return 선택지[0];
 }
 
+/** 한 편을 마친 뒤에는 현재 주제의 미완료 글을 우선하고, 마지막 글 뒤에는 다음 주제로 이동한다. */
+export function 완료후다음지문(현재ID: string, 시도들: readonly 필사시도[], origin?: string): 지문선택 {
+  const 선택지 = 사용가능선택지(origin);
+  const 현재순서 = 선택지.findIndex((선택) => 선택.지문.id === 현재ID);
+  if (현재순서 < 0) { return 선택지.find((선택) => 미완료(선택, 시도들)) ?? 선택지[0]; }
+
+  const 현재테마 = 선택지[현재순서].테마;
+  const 같은주제 = 선택지.filter((선택) => 선택.테마 === 현재테마);
+  const 주제내순서 = 같은주제.findIndex((선택) => 선택.지문.id === 현재ID);
+  if (주제내순서 < 같은주제.length - 1) {
+    for (let 이동 = 1; 이동 < 같은주제.length; 이동++) {
+      const 선택 = 같은주제[(주제내순서 + 이동) % 같은주제.length];
+      if (미완료(선택, 시도들)) { return 선택; }
+    }
+    return 같은주제[주제내순서 + 1];
+  }
+
+  const 주제들 = [...new Set(선택지.map((선택) => 선택.테마))];
+  const 다음테마 = 주제들[(주제들.indexOf(현재테마) + 1) % 주제들.length];
+  const 다음주제 = 선택지.filter((선택) => 선택.테마 === 다음테마);
+  return 다음주제.find((선택) => 미완료(선택, 시도들)) ?? 다음주제[0];
+}
+
 /** 마지막 선택을 우선 복원하고, 없으면 기존 입력·완료 기록으로 시작점을 고른다. */
 export function 첫진입지문선택(시도들: readonly 필사시도[], 마지막지문ID?: string, origin?: string): 지문선택 {
   const 선택지 = 사용가능선택지(origin);

@@ -229,7 +229,7 @@ import { 날짜키, 테마별지문들,
 import { 표시주제들, 주제선택묶음들, 공개주제인가, 주제표시이름,
   type 선택주제 } from '@/practice-pinned-topics';
 import { 정식사이트인가 } from '@/practice-release';
-import { 다음미완료지문, 첫진입지문선택, 주제지문선택, 주제완료현황,
+import { 완료후다음지문, 첫진입지문선택, 주제지문선택, 주제완료현황,
   지문모음선택, 지문모음완료현황, 마지막지문읽기, 마지막지문저장 } from '@/practice-selection';
 import { 본문버전, 브라우저저장소, 시도목록, 시도시작, 시도완료, 시도중단, 입력묶음,
   지문입력상태, 지문재개시도, 지문최고정타율, 지문도장등급, 정타도장,
@@ -495,7 +495,7 @@ export default defineComponent({
       this.reset(새로시작);
     },
     다음글시작() {
-      const 선택 = 다음미완료지문(this.오늘지문.id, this.시도들);
+      const 선택 = 완료후다음지문(this.오늘지문.id, this.시도들);
       this.글테마 = 선택.테마;
       this.지문선택(선택.지문);
     },
