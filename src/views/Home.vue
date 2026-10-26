@@ -26,7 +26,7 @@
                 :aria-label="`${테마.이름}${움직이는테마인가(테마.이름) ? ', 움직이는 배경' : ''}`"
                 @click="설정변경({ 테마: 테마.이름 })">
                 <span class="테마견본" :data-theme="테마.이름" aria-hidden="true">가
-                  <span v-if="움직이는테마인가(테마.이름)" class="움직임꼬리표">움직임</span>
+                  <span v-if="움직이는테마인가(테마.이름)" class="움직임표시" title="움직이는 배경">▶</span>
                 </span>
                 <span>{{테마.이름}}</span>
               </button>
@@ -40,7 +40,7 @@
                 :aria-label="`${테마.이름}${움직이는테마인가(테마.이름) ? ', 움직이는 배경' : ''}`"
                 @click="설정변경({ 테마: 테마.이름 })">
                 <span class="테마견본" :data-theme="테마.이름" aria-hidden="true">가
-                  <span v-if="움직이는테마인가(테마.이름)" class="움직임꼬리표">움직임</span>
+                  <span v-if="움직이는테마인가(테마.이름)" class="움직임표시" title="움직이는 배경">▶</span>
                 </span>
                 <span>{{테마.이름}}</span>
               </button>
@@ -961,7 +961,7 @@ button { font: inherit; }
 .테마버튼:last-child:nth-child(3n + 1) { grid-column: 2; }
 .테마버튼.선택됨, .설정선택 button.선택됨 { border-color: var(--강조); background: var(--선택바탕); }
 .테마견본 { position: relative; display: grid; place-items: center; width: 100%; height: 38px; background: #fff; color: #454037; font-family: 'AppleMyungjo', 'Batang', serif; font-size: 19px; }
-.움직임꼬리표 { position: absolute; top: 0; right: 0; padding: 2px 4px; border: 1px solid #d1b98e; border-radius: 0 0 0 3px; background: #f9edcf; color: #392a1d; font-family: sans-serif; font-size: 10px; font-weight: 700; line-height: 1; }
+.움직임표시 { position: absolute; top: 3px; right: 3px; display: grid; place-items: center; width: 17px; height: 17px; border: 1px solid #d1b98e; border-radius: 50%; background: #f9edcf; color: #392a1d; font-family: sans-serif; font-size: 9px; line-height: 1; text-indent: 1px; }
 .테마견본[data-theme='한지'] { background: #f8f4ed url('@/assets/hanji-paper.webp') center / cover; color: #454037; }
 .테마견본[data-theme='새벽'] { background: #fafcfc; color: #30444f; }
 .테마견본[data-theme='밤'] { background: #222c31; color: #e2e7df; }
