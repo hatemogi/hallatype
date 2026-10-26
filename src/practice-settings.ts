@@ -185,13 +185,18 @@ export const 필사팔레트들: Record<필사테마, 필사팔레트> = {
 };
 
 const 저장키 = 'hallatype-practice-settings-v1';
+let 이번방문테마: 필사테마 | undefined;
+
+function 자동테마(): 필사테마 {
+  return 이번방문테마 ??= 공개필사테마들[Math.floor(Math.random() * 공개필사테마들.length)];
+}
 
 export function 필사설정읽기(storage?: Pick<Storage, 'getItem'>, origin?: string): 필사설정 {
   try {
     const 저장값 = (storage ?? (typeof window === 'undefined' ? undefined : window.localStorage))?.getItem(저장키);
-    if (!저장값) { return { ...기본필사설정 }; }
+    if (!저장값) { return { ...기본필사설정, 테마: 자동테마() }; }
     const 값: unknown = JSON.parse(저장값);
-    if (!값 || typeof 값 !== 'object') { return { ...기본필사설정 }; }
+    if (!값 || typeof 값 !== 'object') { return { ...기본필사설정, 테마: 자동테마() }; }
     const 설정 = 값 as Partial<필사설정> & { 안티앨리어싱?: number; 설정버전?: number };
     const 이전강도단계: Record<number, 안티앨리어싱단계> = { 0: 0, 50: 1, 100: 2, 200: 3, 300: 4 };
     const 이전슬라이더단계: 안티앨리어싱단계[] = [0, 1, 2, 3, 3, 4];
@@ -202,7 +207,8 @@ export function 필사설정읽기(storage?: Pick<Storage, 'getItem'>, origin?: 
       저장테마 === '수면과 반사' ? '수면과 파문' :
       저장테마 === '메밀밭' ? '숲' :
       저장테마 === '하늘' || 저장테마 === '흐르는 구름' ? '구름' :
-      필사테마순서.find(후보 => 후보 === 저장테마) ?? '한지';
+      필사테마순서.find(후보 => 후보 === 저장테마) ??
+      (저장테마 === undefined ? 자동테마() : 기본필사설정.테마);
     return {
       테마: 사용가능필사테마들(origin).includes(테마) ? 테마 : 기본필사설정.테마,
       글자크기: 설정.글자크기 === '작게' || 설정.글자크기 === '크게' ? 설정.글자크기 : '보통',
@@ -215,15 +221,20 @@ export function 필사설정읽기(storage?: Pick<Storage, 'getItem'>, origin?: 
           : 이전강도단계[설정.안티앨리어싱 ?? -1] ?? 기본필사설정.안티앨리어싱단계,
     };
   } catch (_) {
-    return { ...기본필사설정 };
+    return { ...기본필사설정, 테마: 자동테마() };
   }
 }
 
-export function 필사설정저장(설정: 필사설정, storage?: Pick<Storage, 'setItem'>) {
+export function 필사설정저장(
+  설정: 필사설정, storage?: Pick<Storage, 'getItem' | 'setItem'>, 테마직접선택 = true,
+) {
   try {
-    (storage ?? (typeof window === 'undefined' ? undefined : window.localStorage))
-      ?.setItem(저장키, JSON.stringify({
-        테마: 설정.테마,
+    const 저장소 = storage ?? (typeof window === 'undefined' ? undefined : window.localStorage);
+    if (!저장소) { return; }
+    const 이전값 = 저장소.getItem(저장키);
+    const 이전테마 = 이전값 ? (JSON.parse(이전값) as { 테마?: unknown }).테마 : undefined;
+    저장소.setItem(저장키, JSON.stringify({
+        ...(테마직접선택 ? { 테마: 설정.테마 } : typeof 이전테마 === 'string' ? { 테마: 이전테마 } : {}),
         글자크기: 설정.글자크기,
         커서깜빡임: 설정.커서깜빡임,
         안티앨리어싱단계: 설정.안티앨리어싱단계,

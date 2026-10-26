@@ -543,7 +543,7 @@ export default defineComponent({
         이벤트기록('theme_change', { theme: 변경.테마 });
       }
       this.설정 = { ...this.설정, ...변경 };
-      필사설정저장(this.설정);
+      필사설정저장(this.설정, undefined, 변경.테마 !== undefined);
       const 팔레트 = 필사팔레트들[this.설정.테마];
       this.본문?.팔레트설정(팔레트);
       this.그림판?.안티앨리어싱강도설정(단계별안티앨리어싱강도[this.설정.안티앨리어싱단계]);

@@ -12,7 +12,7 @@ it('필사 설정을 저장하고 잘못된 저장값은 기본값으로 복구�
     getItem: (key: string) => 값들.get(key) ?? null,
     setItem: (key: string, value: string) => { 값들.set(key, value); },
   };
-  expect(필사설정읽기(storage)).toEqual(기본필사설정);
+  expect(공개필사테마들).toContain(필사설정읽기(storage).테마);
 
   const 설정 = { 테마: '밤' as const, 글자크기: '크게' as const,
     커서깜빡임: false, 안티앨리어싱단계: 4 as const };
@@ -46,7 +46,7 @@ it('필사 설정을 저장하고 잘못된 저장값은 기본값으로 복구�
     expect(필사설정읽기(storage).글자크기).toBe('크게');
   }
   값들.set(키, '{');
-  expect(필사설정읽기(storage)).toEqual(기본필사설정);
+  expect(공개필사테마들).toContain(필사설정읽기(storage).테마);
   값들.set(키, JSON.stringify({ 안티앨리어싱단계: 6 }));
   expect(필사설정읽기(storage).안티앨리어싱단계).toBe(3);
   값들.set(키, JSON.stringify({ 안티앨리어싱: 300 }));
@@ -59,6 +59,38 @@ it('필사 설정을 저장하고 잘못된 저장값은 기본값으로 복구�
   expect(JSON.parse(값들.get(키)!)).not.toHaveProperty('글꼴확대방식');
   값들.set(키, JSON.stringify({ 테마: '알 수 없음', 글자크기: '매우 크게', 커서깜빡임: 1 }));
   expect(필사설정읽기(storage)).toEqual(기본필사설정);
+});
+
+it('테마를 고르기 전에는 공개 테마를 방문 동안만 사용하고 다른 설정만 저장해도 고정하지 않는다', async () => {
+  const 값들 = new Map<string, string>();
+  const storage = {
+    getItem: (key: string) => 값들.get(key) ?? null,
+    setItem: (key: string, value: string) => { 값들.set(key, value); },
+  };
+  const 처음 = 필사설정읽기(storage);
+  expect(공개필사테마들).toContain(처음.테마);
+  expect(필사설정읽기(storage).테마).toBe(처음.테마);
+
+  필사설정저장({ ...처음, 글자크기: '크게' }, storage, false);
+  const 저장값 = JSON.parse([...값들.values()][0]);
+  expect(저장값).not.toHaveProperty('테마');
+  expect(필사설정읽기(storage).테마).toBe(처음.테마);
+  expect(필사설정읽기(storage).글자크기).toBe('크게');
+
+  필사설정저장({ ...처음, 테마: '밤' }, storage);
+  필사설정저장({ ...처음, 테마: '밤', 글자크기: '작게' }, storage, false);
+  expect(필사설정읽기(storage).테마).toBe('밤');
+  expect(JSON.parse([...값들.values()][0]).테마).toBe('밤');
+
+  vi.resetModules();
+  const 다시방문 = await import('@/practice-settings');
+  const 새저장소 = { getItem: () => null };
+  const 난수 = vi.spyOn(Math, 'random').mockReturnValue(0.99);
+  try {
+    expect(다시방문.필사설정읽기(새저장소).테마).toBe(공개필사테마들.at(-1));
+  } finally {
+    난수.mockRestore();
+  }
 });
 
 it('지문 글자 크기에 맞춰 글꼴 해상도를 자동 선택한다', () => {
