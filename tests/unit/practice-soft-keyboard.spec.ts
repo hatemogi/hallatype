@@ -1,6 +1,6 @@
 import { 지문틀 } from '@/본문';
 import { 끝글자 } from '@/글자';
-import { 따라그리기틀, 새화면키, 화면문자키 } from '@/따라그리기';
+import { 따라그리기틀, 새화면키, 화면문자키, 화면입력흐름 } from '@/따라그리기';
 
 function 연습(글: string) {
     const 지문 = new 지문틀();
@@ -37,5 +37,41 @@ describe('화면 키보드 입력', () => {
         for (const 키 of 새화면키('', 'Hi!')) { 본문.입력(키.code, 키.shift); }
         expect(본문.끝).toBe(true);
         expect(본문.유효타수).toBe(3);
+    });
+
+    it('iOS 한글 입력기의 내부 삭제 뒤 받침이 초성으로 옮겨져도 중복 집계하지 않는다', () => {
+        const 본문 = 연습('가나');
+        const 흐름 = new 화면입력흐름();
+        for (const [값, 종류] of [
+            ['ㄱ', 'insertText'], ['가', 'insertText'], ['간', 'insertText'],
+            ['가', 'deleteContentBackward'], ['가나', 'insertText'],
+        ]) {
+            for (const 키 of 흐름.입력(값, 종류)) { 본문.입력(키.code, 키.shift); }
+        }
+        expect(본문.끝).toBe(true);
+        expect(본문.입력타수).toBe(4);
+        expect(본문.유효타수).toBe(4);
+    });
+
+    it('조합 중간값과 내부 삭제는 세지 않고 확정된 글자만 전달한다', () => {
+        const 본문 = 연습('가');
+        const 흐름 = new 화면입력흐름();
+        흐름.조합시작();
+        expect(흐름.입력('ㄱ', 'insertCompositionText', true)).toEqual([]);
+        expect(흐름.입력('가', 'insertCompositionText', true)).toEqual([]);
+        for (const 키 of 흐름.조합끝('가')) { 본문.입력(키.code, 키.shift); }
+        expect(흐름.입력('가', 'insertText')).toEqual([]);
+        expect(본문.끝).toBe(true);
+        expect(본문.입력타수).toBe(2);
+        expect(본문.유효타수).toBe(2);
+    });
+
+    it('iOS가 넣은 줄바꿈 없는 공백도 공백 키로 처리한다', () => {
+        const 본문 = 연습('가 나');
+        const 흐름 = new 화면입력흐름();
+        for (const 키 of 흐름.입력('가\u00a0나', 'insertText')) { 본문.입력(키.code, 키.shift); }
+        expect(본문.끝).toBe(true);
+        expect(본문.입력타수).toBe(5);
+        expect(본문.유효타수).toBe(5);
     });
 });

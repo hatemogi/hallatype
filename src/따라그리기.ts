@@ -62,6 +62,8 @@ const 홑자모키: Record<string, string> = {
 
 /** 화면 키보드가 전달한 글자를 기존 물리 키 입력 형식으로 펼친다. */
 export function 화면문자키(문자: string): 키[] {
+    // iOS WebKit은 화면 키보드의 공백을 줄바꿈 없는 공백으로 넣기도 한다.
+    if (문자 === '\u00a0') { return [키로(' ')]; }
     const 자모 = 홑자모키[문자];
     if (자모) { return [...자모].map(키로); }
     const 코드 = 문자.codePointAt(0);
@@ -81,6 +83,26 @@ export function 새화면키(이전: string, 다음: string): 키[] {
         이전키[공통].code === 다음키[공통].code &&
         이전키[공통].shift === 다음키[공통].shift) { 공통++; }
     return 다음키.slice(공통);
+}
+
+/** textarea의 조합 중간값과 iOS 한글 입력기의 내부 삭제를 타수에서 제외한다. */
+export class 화면입력흐름 {
+    private 이전 = '';
+    private 조합중 = false;
+
+    public get 조합하고있음(): boolean { return this.조합중; }
+    public 초기화(): void { this.이전 = ''; this.조합중 = false; }
+    public 조합시작(): void { this.조합중 = true; }
+    public 조합끝(다음: string): 키[] {
+        this.조합중 = false;
+        return this.입력(다음);
+    }
+    public 입력(다음: string, inputType = '', isComposing = false): 키[] {
+        if (this.조합중 || isComposing || inputType.startsWith('delete')) { return []; }
+        const 키들 = 새화면키(this.이전, 다음);
+        this.이전 = 다음;
+        return 키들;
+    }
 }
 
 function 상태색(값: 상태, 팔레트: 필사팔레트): 색상.RGBA {

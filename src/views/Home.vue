@@ -144,7 +144,8 @@
               @pointerdown="화면키보드초점"></canvas>
             <textarea ref="화면키보드" class="화면키보드입력" autofocus
               :aria-label="`${오늘지문.제목} 필사 입력`" autocomplete="off" autocapitalize="off" autocorrect="off"
-              spellcheck="false" @input="화면키보드입력" @keydown="화면키보드키누름"></textarea>
+              spellcheck="false" @input="화면키보드입력" @compositionstart="화면키보드조합시작"
+              @compositionend="화면키보드조합끝" @keydown="화면키보드키누름"></textarea>
           </div>
         </article>
         </div>
@@ -215,7 +216,7 @@ import 연필타이틀 from '@/assets/geulsum-title-pencil-spaced.png';
 import PraiseStamp from '@/components/PraiseStamp.vue';
 import { 끝글자 } from '@/글자';
 import { 지문틀 } from '@/본문';
-import { 따라그리기틀, 새화면키 } from '@/따라그리기';
+import { 따라그리기틀, 화면입력흐름, type 키 } from '@/따라그리기';
 import 그림판틀 from '@/그림판';
 import { 동적종이효과 } from '@/animated-paper';
 import { 움직이는테마인가 } from '@/animated-shaders';
@@ -294,7 +295,7 @@ export default defineComponent({
       폭관찰기: null as ResizeObserver | null,
       본문: null as 따라그리기틀 | null,
       필사키전달: null as ((code: string, shift: boolean) => void) | null,
-      화면키보드이전입력: '',
+      화면키보드입력흐름: markRaw(new 화면입력흐름()),
     };
   },
   methods: {
@@ -308,22 +309,30 @@ export default defineComponent({
         this.다음글시작();
       }
     },
+    화면키보드조합시작() {
+      this.화면키보드입력흐름.조합시작();
+    },
+    화면키보드조합끝(event: CompositionEvent) {
+      const 입력창 = event.target as HTMLTextAreaElement;
+      this.화면키보드키전달(this.화면키보드입력흐름.조합끝(입력창.value));
+    },
+    화면키보드키전달(키들: 키[]) {
+      for (const 키 of 키들) { this.필사키전달?.(키.code, 키.shift); }
+    },
     화면키보드입력(event: Event) {
       const 입력창 = event.target as HTMLTextAreaElement;
       const 다음 = 입력창.value;
-      const 이전 = this.화면키보드이전입력;
       if (this.결과화면보이기) {
         if (다음.endsWith('\n')) { this.다음글시작(); }
         return;
-      } else if (['deleteContentBackward', 'deleteContentForward'].includes((event as InputEvent).inputType)) {
-        this.필사키전달?.('Backspace', false);
-      } else {
-        for (const 키 of 새화면키(이전, 다음)) { this.필사키전달?.(키.code, 키.shift); }
       }
-      this.화면키보드이전입력 = 다음;
-      if (다음.length > 256 && !(event as InputEvent).isComposing) {
+      const 입력이벤트 = event as InputEvent;
+      this.화면키보드키전달(this.화면키보드입력흐름.입력(다음,
+        입력이벤트.inputType, 입력이벤트.isComposing));
+      if (다음.length > 256 && !입력이벤트.isComposing &&
+          !this.화면키보드입력흐름.조합하고있음) {
         입력창.value = '';
-        this.화면키보드이전입력 = '';
+        this.화면키보드입력흐름.초기화();
       }
     },
     목록열기() {
@@ -614,7 +623,7 @@ export default defineComponent({
     reset(새로시작 = false) {
       const 화면입력창 = this.$refs.화면키보드 as HTMLTextAreaElement | undefined;
       if (화면입력창) { 화면입력창.value = ''; }
-      this.화면키보드이전입력 = '';
+      this.화면키보드입력흐름.초기화();
       마지막지문저장(this.오늘지문.id);
       // 최근 기록의 직접 링크에서 다른 글로 옮기면 이전 글 주소가 복원을 덮어쓰지 않게 한다.
       if (this.requestedPassageId && this.requestedPassageId !== this.오늘지문.id &&
