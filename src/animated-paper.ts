@@ -489,8 +489,9 @@ export class 동적종이효과 {
     const x = (paper.width * 0.98 - width) / Math.max(paper.width, 1);
     const w = width / Math.max(paper.width, 1);
     const h = height / Math.max(paper.height, 1);
-    return { x, w, h, center: x + w * (this.theme === '커피' ? 0.42 : 0.5),
-      originY: this.theme === '커피' ? 1 - h * 0.67 : 1 - h * 0.90,
+    const bottom = this.theme === '커피' ? -h * 0.15 : 0;
+    return { x, w, h, bottom, center: x + w * (this.theme === '커피' ? 0.42 : 0.5),
+      originY: this.theme === '커피' ? 1 - h * 0.52 : 1 - h * 0.90,
       scale: this.theme === '커피' ? h / 0.31 : h };
   }
 
@@ -510,7 +511,7 @@ export class 동적종이효과 {
     gl.enableVertexAttribArray(propAttribute);
     gl.vertexAttribPointer(propAttribute, 2, gl.FLOAT, false, 0, 0);
     gl.uniform1i(this.propUniforms.u_propImage, 0);
-    gl.uniform4f(this.propUniforms.u_propRect, x, 0, w, h);
+    gl.uniform4f(this.propUniforms.u_propRect, x, rect.bottom, w, h);
     gl.uniform1f(this.propUniforms.u_textBottom, textBottom);
     gl.uniform1f(this.propUniforms.u_dimBehindText, this.theme === '촛불' ? 1 : 0);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
