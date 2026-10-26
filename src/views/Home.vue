@@ -23,8 +23,11 @@
             <div class="테마선택" @keydown="선택버튼화살표">
               <button v-for="테마 in 테마선택지" :key="테마.이름" type="button" class="테마버튼"
                 :class="{ 선택됨: 설정.테마 === 테마.이름 }" :aria-pressed="설정.테마 === 테마.이름"
+                :aria-label="`${테마.이름}${움직이는테마인가(테마.이름) ? ', 움직이는 배경' : ''}`"
                 @click="설정변경({ 테마: 테마.이름 })">
-                <span class="테마견본" :data-theme="테마.이름" aria-hidden="true">가</span>
+                <span class="테마견본" :data-theme="테마.이름" aria-hidden="true">가
+                  <span v-if="움직이는테마인가(테마.이름)" class="움직임꼬리표">움직임</span>
+                </span>
                 <span>{{테마.이름}}</span>
               </button>
             </div>
@@ -34,8 +37,11 @@
             <div class="테마선택" @keydown="선택버튼화살표">
               <button v-for="테마 in 준비중테마선택지" :key="테마.이름" type="button" class="테마버튼"
                 :class="{ 선택됨: 설정.테마 === 테마.이름 }" :aria-pressed="설정.테마 === 테마.이름"
+                :aria-label="`${테마.이름}${움직이는테마인가(테마.이름) ? ', 움직이는 배경' : ''}`"
                 @click="설정변경({ 테마: 테마.이름 })">
-                <span class="테마견본" :data-theme="테마.이름" aria-hidden="true">가</span>
+                <span class="테마견본" :data-theme="테마.이름" aria-hidden="true">가
+                  <span v-if="움직이는테마인가(테마.이름)" class="움직임꼬리표">움직임</span>
+                </span>
                 <span>{{테마.이름}}</span>
               </button>
             </div>
@@ -353,6 +359,7 @@ export default defineComponent({
       if (열려있음) { (document.activeElement as HTMLElement | null)?.blur(); }
     },
     주제표시이름,
+    움직이는테마인가,
     환경설정열기() {
       this.목록닫기();
       this.설정열림 = true;
@@ -953,7 +960,8 @@ button { font: inherit; }
 .테마버튼 { display: flex; align-items: center; flex-direction: column; gap: 7px; padding: 7px; border: 1px solid var(--테두리); border-radius: 3px; background: var(--선택안함); color: var(--글); font-size: 13px; cursor: pointer; }
 .테마버튼:last-child:nth-child(3n + 1) { grid-column: 2; }
 .테마버튼.선택됨, .설정선택 button.선택됨 { border-color: var(--강조); background: var(--선택바탕); }
-.테마견본 { display: grid; place-items: center; width: 100%; height: 38px; background: #fff; color: #454037; font-family: 'AppleMyungjo', 'Batang', serif; font-size: 19px; }
+.테마견본 { position: relative; display: grid; place-items: center; width: 100%; height: 38px; background: #fff; color: #454037; font-family: 'AppleMyungjo', 'Batang', serif; font-size: 19px; }
+.움직임꼬리표 { position: absolute; top: 0; right: 0; padding: 2px 4px; border: 1px solid #d1b98e; border-radius: 0 0 0 3px; background: #f9edcf; color: #392a1d; font-family: sans-serif; font-size: 10px; font-weight: 700; line-height: 1; }
 .테마견본[data-theme='한지'] { background: #f8f4ed url('@/assets/hanji-paper.webp') center / cover; color: #454037; }
 .테마견본[data-theme='새벽'] { background: #fafcfc; color: #30444f; }
 .테마견본[data-theme='밤'] { background: #222c31; color: #e2e7df; }
