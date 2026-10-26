@@ -53,17 +53,23 @@ describe('화면 키보드 입력', () => {
         expect(본문.유효타수).toBe(4);
     });
 
-    it('조합 중간값과 내부 삭제는 세지 않고 확정된 글자만 전달한다', () => {
-        const 본문 = 연습('가');
+    it('맥 한글 조합 중에는 늘어난 자소를 즉시 전달하고 확정 때 중복 집계하지 않는다', () => {
+        const 본문 = 연습('가나');
         const 흐름 = new 화면입력흐름();
         흐름.조합시작();
-        expect(흐름.입력('ㄱ', 'insertCompositionText', true)).toEqual([]);
-        expect(흐름.입력('가', 'insertCompositionText', true)).toEqual([]);
+        for (const 키 of 흐름.입력('ㄱ', 'insertCompositionText')) { 본문.입력(키.code, 키.shift); }
+        expect(본문.진행획수).toBe(1);
+        for (const 키 of 흐름.입력('가', 'insertCompositionText')) { 본문.입력(키.code, 키.shift); }
+        expect(본문.진행획수).toBe(2);
         for (const 키 of 흐름.조합끝('가')) { 본문.입력(키.code, 키.shift); }
         expect(흐름.입력('가', 'insertText')).toEqual([]);
+        for (const 키 of 흐름.입력('가ㄴ', 'insertCompositionText')) { 본문.입력(키.code, 키.shift); }
+        expect(본문.진행획수).toBe(3);
+        expect(흐름.입력('가', 'deleteContentBackward')).toEqual([]);
+        for (const 키 of 흐름.입력('가나', 'insertCompositionText')) { 본문.입력(키.code, 키.shift); }
         expect(본문.끝).toBe(true);
-        expect(본문.입력타수).toBe(2);
-        expect(본문.유효타수).toBe(2);
+        expect(본문.입력타수).toBe(4);
+        expect(본문.유효타수).toBe(4);
     });
 
     it('iOS가 넣은 줄바꿈 없는 공백도 공백 키로 처리한다', () => {

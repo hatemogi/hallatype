@@ -85,7 +85,7 @@ export function 새화면키(이전: string, 다음: string): 키[] {
     return 다음키.slice(공통);
 }
 
-/** textarea의 조합 중간값과 iOS 한글 입력기의 내부 삭제를 타수에서 제외한다. */
+/** 한글 조합 중 늘어난 자소는 즉시 보내고 입력기의 내부 삭제는 타수에서 제외한다. */
 export class 화면입력흐름 {
     private 이전 = '';
     private 조합중 = false;
@@ -97,8 +97,8 @@ export class 화면입력흐름 {
         this.조합중 = false;
         return this.입력(다음);
     }
-    public 입력(다음: string, inputType = '', isComposing = false): 키[] {
-        if (this.조합중 || isComposing || inputType.startsWith('delete')) { return []; }
+    public 입력(다음: string, inputType = ''): 키[] {
+        if (inputType.startsWith('delete')) { return []; }
         const 키들 = 새화면키(this.이전, 다음);
         this.이전 = 다음;
         return 키들;

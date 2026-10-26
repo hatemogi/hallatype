@@ -328,7 +328,7 @@ export default defineComponent({
       }
       const 입력이벤트 = event as InputEvent;
       this.화면키보드키전달(this.화면키보드입력흐름.입력(다음,
-        입력이벤트.inputType, 입력이벤트.isComposing));
+        입력이벤트.inputType));
       if (다음.length > 256 && !입력이벤트.isComposing &&
           !this.화면키보드입력흐름.조합하고있음) {
         입력창.value = '';
