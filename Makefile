@@ -11,7 +11,7 @@ help:
 	@echo "  make test       단위 테스트"
 	@echo "  make build      프로덕션 빌드"
 	@echo "  make build-pages  타자 연습만 docs/에 GitHub Pages용으로 빌드"
-	@echo "  make deploy     전체 앱을 빌드해 dailytyping.com S3 버킷에 업로드"
+	@echo "  make deploy     전체 앱을 빌드해 업로드하고 CloudFront 캐시 갱신"
 	@echo "  make invalidate  CloudFront 전체 캐시 무효화 요청"
 	@echo "  make preview    빌드 결과 미리보기"
 	@echo "  make check      테스트와 빌드 검증"
@@ -37,7 +37,9 @@ build-pages:
 	npm run build:pages
 
 deploy: build
-	aws s3 sync dist/ s3://dailytyping.com/ --profile dailytyping --region ap-northeast-2
+	aws s3 sync dist/ s3://dailytyping.com/ --exclude index.html --profile dailytyping --region ap-northeast-2
+	aws s3 cp dist/index.html s3://dailytyping.com/index.html --cache-control 'no-cache, no-store, must-revalidate' --content-type 'text/html; charset=utf-8' --profile dailytyping --region ap-northeast-2
+	$(MAKE) invalidate
 
 invalidate:
 	aws cloudfront create-invalidation --distribution-id ESGYQVMNB8DF9 --paths '/*' --profile dailytyping --no-cli-pager

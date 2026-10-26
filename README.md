@@ -55,9 +55,9 @@ npm run build
 make deploy
 ```
 
-전체 앱을 새로 빌드한 뒤 `dailytyping` AWS 프로필을 사용해 `dist/`의 새 파일과 변경된 파일을 서울 리전의 `s3://dailytyping.com/` 버킷에 업로드합니다. 버킷에만 있는 파일은 삭제하지 않습니다. AWS CLI와 해당 버킷에 업로드할 권한이 필요합니다.
+전체 앱을 새로 빌드한 뒤 `dailytyping` AWS 프로필을 사용해 `dist/`의 새 파일과 변경된 파일을 서울 리전의 `s3://dailytyping.com/` 버킷에 업로드합니다. `index.html`은 캐시하지 않도록 설정하고 CloudFront 캐시 무효화를 요청합니다. 버킷에만 있는 파일은 삭제하지 않습니다. AWS CLI와 해당 버킷에 업로드할 권한이 필요합니다.
 
-CloudFront에 새 파일을 바로 반영하려면 업로드 후 다음 명령으로 배포 `ESGYQVMNB8DF9`의 전체 경로 캐시 무효화를 요청합니다. 이 명령은 무효화 완료를 기다리지 않습니다.
+캐시만 별도로 무효화하려면 다음 명령을 사용합니다. 배포 `ESGYQVMNB8DF9`의 전체 경로를 무효화하며 완료를 기다리지는 않습니다.
 
 ```
 make invalidate
