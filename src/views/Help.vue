@@ -56,6 +56,12 @@
         </dl>
         <p class="키보드기본">Tab으로 이동 · Enter 또는 Space로 선택 · Esc로 열린 창 닫기</p>
       </section>
+
+      <section class="만든이안내" aria-labelledby="만든이제목">
+        <h2 id="만든이제목">만든이</h2>
+        <p>제주도 서귀포에서 한적한 바다를 바라보며, 소프트웨어 작업스튜디오 &quot;오후코드&quot;에서 만들었습니다.</p>
+        <p>자세한 설명과 지원은 <a href="https://github.com/ohucode/dailytyping" target="_blank" rel="noopener noreferrer">GitHub 지원 사이트</a>를 방문해 주세요.</p>
+      </section>
     </div>
   </main>
 </template>
@@ -107,6 +113,10 @@ a:focus-visible { outline: 2px solid var(--강조); outline-offset: 4px; }
 .키보드안내 dd { margin: 0; color: var(--보조글); font-size: 13px; text-align: right; }
 kbd { display: inline-block; min-width: 18px; padding: 4px 6px; border: 1px solid var(--테두리); border-radius: 3px; background: var(--종이); color: var(--글); font: inherit; text-align: center; }
 .키보드기본 { margin: 18px 0 0; color: var(--보조글); font-size: 12px; line-height: 1.7; }
+.만든이안내 { margin-top: 38px; padding-top: 24px; border-top: 1px solid var(--테두리); }
+.만든이안내 h2 { margin: 0; color: var(--글); font-size: 20px; }
+.만든이안내 p { margin: 14px 0 0; color: var(--보조글); font-size: 14px; line-height: 1.8; word-break: keep-all; }
+.만든이안내 a { color: var(--글); text-decoration: underline; text-underline-offset: 3px; }
 @media (max-width: 850px) {
   .도움말안쪽 { padding-right: 14px; padding-left: 14px; }
   .도움말상단 { height: 56px; }
