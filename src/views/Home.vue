@@ -240,6 +240,7 @@
 
 <script lang="ts">
 import { defineComponent, markRaw } from 'vue';
+import { 이벤트기록 } from '@/analytics';
 import GeulsumMark from '@/components/GeulsumMark.vue';
 import GeulsumTitle from '@/components/GeulsumTitle.vue';
 import 연필타이틀 from '@/assets/geulsum-title-pencil-spaced.png';
@@ -460,8 +461,11 @@ export default defineComponent({
       this.즐겨찾기IDs = 다음;
       if (현재글해제) { this.글테마 = 지문원래테마(지문ID) ?? '시작하기'; }
       this.즐겨찾기오류 = !즐겨찾기저장(다음);
+      이벤트기록(다음.includes(지문ID) ? 'favorite_add' : 'favorite_remove',
+        { passage_id: 지문ID });
     },
     글테마바꾸기(테마: 선택주제, event?: MouseEvent) {
+      if (테마 !== this.글테마) { 이벤트기록('topic_select', { topic: 테마 }); }
       if (!this.목록열림) { (event?.currentTarget as HTMLElement | undefined)?.blur(); }
       this.입력기록저장();
       const 지문 = 테마 === '즐겨찾기'
@@ -490,6 +494,8 @@ export default defineComponent({
         마지막지문저장(지문.id);
         return;
       }
+      이벤트기록('passage_select', { passage_id: 지문.id,
+        topic: 지문원래테마(지문.id) ?? '시작하기' });
       this.입력기록저장();
       this.오늘지문 = 지문;
       const 새로시작 = 완료된지문 || (같은지문 && this.결과화면보이기) || !this.복원할시도();
@@ -508,6 +514,7 @@ export default defineComponent({
       this.reset();
     },
     다시쓰기() {
+      이벤트기록('practice_restart', { passage_id: this.오늘지문.id });
       this.입력기록저장();
       if (!this.결과화면보이기) {
         const 기록지도 = new Map(this.시도들.map((시도) => [시도.시작.attemptId, 시도]));
@@ -532,6 +539,9 @@ export default defineComponent({
     },
 
     설정변경(변경: Partial<필사설정>) {
+      if (변경.테마 && 변경.테마 !== this.설정.테마) {
+        이벤트기록('theme_change', { theme: 변경.테마 });
+      }
       this.설정 = { ...this.설정, ...변경 };
       필사설정저장(this.설정);
       const 팔레트 = 필사팔레트들[this.설정.테마];
@@ -723,12 +733,15 @@ export default defineComponent({
           self.시작시각 = performance.now() - (self.이어쓰기원본?.elapsedMs ?? 0);
         }
         if (self.시도ID === null) {
+          const 이어쓰기 = self.이어쓰기원본 !== null;
           const 시작 = 시도시작(self.오늘지문.id,
             self.오늘날짜, 본문버전(self.오늘지문.본문),
             self.이어쓰기원본 ?? undefined);
           self.시도ID = 시작.attemptId;
           self.이어쓰기원본 = null;
           self.저장대기(시작);
+          이벤트기록('practice_start', { passage_id: self.오늘지문.id,
+            topic: 지문원래테마(self.오늘지문.id) ?? '시작하기', resumed: 이어쓰기 });
         }
         const 직전오타 = self.입력상태 === '오타';
         const 이전획 = 본문.진행획수;
@@ -763,6 +776,13 @@ export default defineComponent({
             본문버전(self.오늘지문.본문), self.시도ID);
           self.입력기록저장();
           self.저장대기(시도완료(self.시도ID, 걸린밀리초, self.총입력타수, self.정타수));
+          이벤트기록('practice_complete', { passage_id: self.오늘지문.id,
+            topic: 지문원래테마(self.오늘지문.id) ?? '시작하기',
+            duration_seconds: Math.round(걸린밀리초 / 1000),
+            accuracy_percent: Number(정타율(self.정타수, self.총입력타수)),
+            total_keystrokes: self.총입력타수,
+            personal_best: 이번이최고정타율인가(self.정타수, self.총입력타수,
+              self.종전최고정타율) });
           self.결과화면보이기 = true;
           self.$nextTick(() => {
             const 종이 = 캔버스.closest('.종이');

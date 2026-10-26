@@ -35,6 +35,12 @@ make run
 
 브라우저에서 `http://127.0.0.1:8081/`에 접속하세요. 서버를 종료하려면 터미널에서 `Ctrl+C`를 누릅니다. `make dev`도 같은 명령입니다.
 
+### Google Analytics
+
+`dailytyping.com`과 `type.hatemogi.com`에서 GA4 측정 ID `G-HTCN1QLMBR`로 화면 조회를 수집합니다. 로컬 개발 주소에서는 태그를 로드하지 않습니다. 첫 화면·필사·최근 기록·도움말 및 편집기 화면 전환마다 `page_view`를 직접 보내며, 필사 화면의 지문 직접 링크에 포함된 ID는 페이지 주소에서 제외합니다. 필사 시작(`practice_start`), 완료(`practice_complete`), 다시 쓰기(`practice_restart`), 주제·지문 선택(`topic_select`, `passage_select`), 즐겨찾기 추가·해제(`favorite_add`, `favorite_remove`), 색상 테마 변경(`theme_change`)도 기록합니다. 이벤트에는 입력한 글자나 지문 본문, 브라우저 저장 기록을 전송하지 않습니다.
+
+GA4 웹 스트림의 **향상된 측정 > 페이지 조회수 > 브라우저 기록 이벤트를 기반으로 한 페이지 변경사항**은 꺼 주세요. 앱이 화면 전환 조회를 직접 보내므로 이 설정을 켜면 중복 집계될 수 있습니다. 이벤트 매개변수를 GA 보고서에서 분석하려면 필요한 항목을 맞춤 측정기준 또는 측정항목으로 등록하세요.
+
 ### 프로덕션 빌드
 ```
 npm run build

@@ -24,6 +24,7 @@
 <script setup lang="ts">
 import { nextTick, onMounted, onUnmounted, ref } from 'vue';
 import { 필사설정읽기, type 필사테마 } from '@/practice-settings';
+import { 화면조회 } from '@/analytics';
 import 연필타이틀 from '@/assets/geulsum-title-pencil-spaced.png';
 import GeulsumMark from '@/components/GeulsumMark.vue';
 import GeulsumTitle from '@/components/GeulsumTitle.vue';
@@ -61,6 +62,7 @@ function 주소반영() {
   const 주소 = 주소해석();
   화면.value = 주소.화면;
   요청지문ID.value = 주소.지문ID;
+  화면조회(주소.화면);
   if (주소.화면 === 'intro') {
     저장된테마반영();
     nextTick(() => { document.title = '글숨 · 한 글자씩, 마음을 고르다.'; });
@@ -69,6 +71,7 @@ function 주소반영() {
 
 onMounted(() => {
   저장된테마반영();
+  화면조회(화면.value);
   document.title = 화면.value === 'practice' ? '글숨 · 한글 타이핑 필사'
     : 화면.value === 'recent' ? '글숨 · 최근 완성한 글'
       : 화면.value === 'help' ? '글숨 · 도움말' : '글숨 · 한 글자씩, 마음을 고르다.';
