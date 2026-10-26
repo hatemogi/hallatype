@@ -59,7 +59,7 @@
 
       <section class="만든이안내" aria-labelledby="만든이제목">
         <h2 id="만든이제목">만든이</h2>
-        <p>제주도 서귀포에서 한적한 바다를 바라보며, 소프트웨어 스튜디오 &quot;오후코드&quot;에서 만들었습니다.</p>
+        <p>제주 서귀포에서 한적한 바다를 바라보며, 소프트웨어 스튜디오 &quot;오후코드&quot;에서 만들었습니다.</p>
         <p>자세한 설명과 지원은 <a href="https://github.com/ohucode/dailytyping" target="_blank" rel="noopener noreferrer">GitHub 지원 사이트</a>를 방문해 주세요.</p>
       </section>
     </div>
