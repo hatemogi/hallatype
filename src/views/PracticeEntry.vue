@@ -283,7 +283,7 @@ onUnmounted(() => {
     radial-gradient(ellipse at 86% 73%, rgba(143, 204, 255, .12), transparent 27%),
     radial-gradient(circle at 50% 42%, var(--첫화면중심), var(--첫화면중간) 58%, var(--첫화면끝));
 }
-.첫화면[data-theme='불멍'] {
+.첫화면[data-theme='모닥불'] {
   --첫화면중심: #40251e;
   --첫화면중간: #281a18;
   --첫화면끝: #140f10;

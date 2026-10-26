@@ -290,7 +290,7 @@ const 지문삽화들: Record<string, string> = {
   UlRmQaTpLnVe: swimmingFreestyle,
 };
 const 어두운삽화테마들 = new Set(['밤', '숲', '청보리', '폭포', '커피', '촛불', '매트릭스', 'PC통신', '서가',
-  '수면과 파문', '빗방울', '구름', '불멍', '인센스', '오로라', '별똥별']);
+  '수면과 파문', '빗방울', '구름', '모닥불', '인센스', '오로라', '별똥별']);
 export default defineComponent({
   components: { GeulsumMark, GeulsumTitle, PraiseStamp },
   props: {
@@ -978,7 +978,7 @@ button { font: inherit; }
   background: url('@/assets/cumulus-cloud.webp') center 60% / cover no-repeat, #0755a9;
   color: #203e51;
 }
-.테마견본[data-theme='불멍'] {
+.테마견본[data-theme='모닥불'] {
   background: radial-gradient(circle at 54% 100%, #a85a2d, #38221b 48%, #1d1211 85%);
   color: #fff0dc;
 }

@@ -28,7 +28,7 @@ export const 동적효과조절: Record<움직이는테마,
   매트릭스: { 기본세기: 0.90, 타건세기: 0.55, 감쇠속도: 1.5, 빛강도: 0.74, 글뒤세기: 0.28 },
   빗방울: { 기본세기: 0.94, 타건세기: 0.76, 감쇠속도: 1.7, 빛강도: 0.74, 글뒤세기: 0.65 },
   구름: { 기본세기: 1.0, 타건세기: 0, 감쇠속도: 1.25, 빛강도: 0, 글뒤세기: 0.53 },
-  불멍: { 기본세기: 0.95, 타건세기: 0.86, 감쇠속도: 1.65, 빛강도: 0.82, 글뒤세기: 0.72 },
+  모닥불: { 기본세기: 0.95, 타건세기: 0.86, 감쇠속도: 1.65, 빛강도: 0.82, 글뒤세기: 0.72 },
   인센스: { 기본세기: 0.90, 타건세기: 0.55, 감쇠속도: 1.5, 빛강도: 0.72, 글뒤세기: 0.67 },
   오로라: { 기본세기: 1.34, 타건세기: 0.86, 감쇠속도: 1.0, 빛강도: 1.05, 글뒤세기: 0.80 },
   별똥별: { 기본세기: 0.55, 타건세기: 0.92, 감쇠속도: 1.4, 빛강도: 0.90, 글뒤세기: 0.70 },
@@ -411,14 +411,14 @@ export class 동적종이효과 {
   }
 
   setFocus(x: number, y: number) {
-    if (this.theme === '불멍') {
+    if (this.theme === '모닥불') {
       this.focusText = { x: Math.max(0, Math.min(1, x)), y: Math.max(0, Math.min(1, y)) };
     }
   }
 
   typing(x: number, textY: number, wide = false) {
     if (!this.valid || document.hidden) { return; }
-    if (this.theme === '불멍' || 소품이미지[this.theme] || 풍경이미지[this.theme]) { return; }
+    if (this.theme === '모닥불' || 소품이미지[this.theme] || 풍경이미지[this.theme]) { return; }
     const meteor = this.theme === '별똥별';
     if (meteor && Math.random() >= 공통조절.유성발생확률) { return; }
     let position: { x: number; y: number };
@@ -455,7 +455,7 @@ export class 동적종이효과 {
   }
 
   mistake() {
-    if ((this.theme !== '불멍' && this.theme !== '매트릭스' && this.theme !== '인센스') ||
+    if ((this.theme !== '모닥불' && this.theme !== '매트릭스' && this.theme !== '인센스') ||
       !this.valid || document.hidden) { return; }
     if (this.theme === '인센스') {
       this.incenseDentEnergy = Math.min(1,
@@ -587,7 +587,7 @@ export class 동적종이효과 {
       gl.uniform3f(uniform('u_candle'), rect?.center ?? 0.84,
         rect?.originY ?? 0.65, rect?.scale ?? 0.3);
     }
-    if (this.theme === '불멍') {
+    if (this.theme === '모닥불') {
       const target = this.focusText
         ? { x: (text.left + this.focusText.x * text.width - paper.left) / Math.max(paper.width, 1),
           y: (text.top + this.focusText.y * text.height - paper.top) / Math.max(paper.height, 1) }
@@ -600,7 +600,7 @@ export class 동적종이효과 {
     }
     if (this.theme === '인센스') {
       gl.uniform2f(uniform('u_mistake'), this.incenseDentVisible, 0);
-    } else if (this.theme === '불멍' || this.theme === '매트릭스') {
+    } else if (this.theme === '모닥불' || this.theme === '매트릭스') {
       gl.uniform2f(uniform('u_mistake'),
         this.mistakeAt === null ? -1 : this.elapsed - this.mistakeAt,
         this.mistakeDirection);

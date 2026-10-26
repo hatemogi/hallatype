@@ -30,6 +30,8 @@ it('필사 설정을 저장하고 잘못된 저장값은 기본값으로 복구�
   const 키 = [...값들.keys()][0];
   값들.set(키, JSON.stringify({ ...설정, 테마: '호박색 모니터', 설정버전: 2 }));
   expect(필사설정읽기(storage).테마).toBe('커피');
+  값들.set(키, JSON.stringify({ ...설정, 테마: '불멍', 설정버전: 2 }));
+  expect(필사설정읽기(storage).테마).toBe('모닥불');
   값들.set(키, JSON.stringify({ ...설정, 테마: '수면과 반사', 설정버전: 2 }));
   expect(필사설정읽기(storage).테마).toBe('수면과 파문');
   값들.set(키, JSON.stringify({ ...설정, 테마: '메밀밭', 설정버전: 2 }));
@@ -71,7 +73,7 @@ it('열아홉 테마가 선택 순서와 팔레트에 빠짐없이 반영된다'
   expect(필사테마순서).toHaveLength(19);
   expect(필사테마순서.slice(1, 6)).toEqual(['새벽', '밤', '숲', '청보리', '폭포']);
   expect(필사테마순서.slice(6, 9)).toEqual(['라벤더', '커피', '촛불']);
-  expect(필사테마순서.slice(-7)).toEqual(['수면과 파문', '빗방울', '구름', '불멍', '인센스', '오로라', '별똥별']);
+  expect(필사테마순서.slice(-7)).toEqual(['수면과 파문', '빗방울', '구름', '모닥불', '인센스', '오로라', '별똥별']);
   expect(Object.keys(필사팔레트들)).toEqual([...필사테마순서]);
 });
 
