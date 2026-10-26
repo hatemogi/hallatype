@@ -24,8 +24,7 @@
               <button v-for="테마 in 테마선택지" :key="테마.이름" type="button" class="테마버튼"
                 :class="{ 선택됨: 설정.테마 === 테마.이름 }" :aria-pressed="설정.테마 === 테마.이름"
                 @click="설정변경({ 테마: 테마.이름 })">
-                <span class="테마견본" :data-theme="테마.이름" aria-hidden="true">가</span>
-                <span>{{테마.이름}}</span>
+                <span class="테마견본" :data-theme="테마.이름"><span class="테마이름">{{테마.이름}}</span></span>
               </button>
             </div>
           </fieldset>
@@ -35,8 +34,7 @@
               <button v-for="테마 in 준비중테마선택지" :key="테마.이름" type="button" class="테마버튼"
                 :class="{ 선택됨: 설정.테마 === 테마.이름 }" :aria-pressed="설정.테마 === 테마.이름"
                 @click="설정변경({ 테마: 테마.이름 })">
-                <span class="테마견본" :data-theme="테마.이름" aria-hidden="true">가</span>
-                <span>{{테마.이름}}</span>
+                <span class="테마견본" :data-theme="테마.이름"><span class="테마이름">{{테마.이름}}</span></span>
               </button>
             </div>
           </fieldset>
@@ -961,10 +959,10 @@ button { font: inherit; }
 .설정패널 fieldset { min-width: 0; margin: 0 0 18px; padding: 0; border: 0; }
 .설정패널 legend { margin-bottom: 9px; color: var(--보조글); font-size: 13px; font-weight: 700; }
 .테마선택 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
-.테마버튼 { display: flex; align-items: center; flex-direction: column; gap: 7px; padding: 7px; border: 1px solid var(--테두리); border-radius: 3px; background: var(--선택안함); color: var(--글); font-size: 13px; cursor: pointer; }
+.테마버튼 { padding: 4px; border: 1px solid var(--테두리); border-radius: 3px; background: var(--선택안함); color: var(--글); cursor: pointer; }
 .테마버튼:last-child:nth-child(3n + 1) { grid-column: 2; }
 .테마버튼.선택됨, .설정선택 button.선택됨 { border-color: var(--강조); background: var(--선택바탕); }
-.테마견본 { display: grid; place-items: center; width: 100%; height: 38px; background: #fff; color: #454037; font-family: 'AppleMyungjo', 'Batang', serif; font-size: 19px; }
+.테마견본 { display: grid; place-items: center; box-sizing: border-box; width: 100%; height: 44px; padding: 0 3px; background: #fff; color: #454037; font-size: 15px; white-space: nowrap; }
 .테마견본[data-theme='한지'] { background: #f8f4ed url('@/assets/hanji-paper.webp') center / cover; color: #454037; }
 .테마견본[data-theme='새벽'] { background: #fafcfc; color: #30444f; }
 .테마견본[data-theme='밤'] { background: #222c31; color: #e2e7df; }
@@ -989,6 +987,7 @@ button { font: inherit; }
   background: url('@/assets/cumulus-cloud.webp') center 60% / cover no-repeat, #0755a9;
   color: #203e51;
 }
+.테마견본[data-theme='구름'] .테마이름 { padding: 1px 4px; background: rgba(255, 255, 255, .85); }
 .테마견본[data-theme='모닥불'] {
   background: radial-gradient(circle at 54% 100%, #a85a2d, #38221b 48%, #1d1211 85%);
   color: #fff0dc;
@@ -1001,6 +1000,7 @@ button { font: inherit; }
   background: linear-gradient(135deg, #071421 12%, #177c96 29%, #319c53 45%, #6746a2 63%, #a83479 78%, #130f2c 100%);
   color: #f2fbf5;
 }
+.테마견본[data-theme='오로라'] .테마이름 { padding: 1px 4px; background: rgba(0, 0, 0, .6); }
 .테마견본[data-theme='별똥별'] {
   background: #080e1e url('@/assets/milky-way.webp') center / cover;
   color: #faf7eb;
