@@ -15,6 +15,14 @@ export const 전체주제들: readonly 선택주제[] = [
   ...기본주제들,
   ...(Object.keys(테마별지문들) as 지문테마[]).filter((주제) => 주제 !== '시작하기'),
 ];
+export const 준비중주제들: readonly 선택주제[] = 전체주제들.filter((주제) => !공개주제들.includes(주제));
+
+export function 주제선택묶음들(origin?: string): { 이름: string; 주제들: readonly 선택주제[] }[] {
+  return [
+    { 이름: '', 주제들: 공개주제들 },
+    ...(정식사이트인가(origin) ? [] : [{ 이름: '준비 중 주제', 주제들: 준비중주제들 }]),
+  ];
+}
 
 export function 표시주제들(origin?: string): readonly 선택주제[] {
   return 정식사이트인가(origin) ? 공개주제들 : 전체주제들;

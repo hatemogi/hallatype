@@ -91,16 +91,22 @@
             </div>
             <button type="button" class="목록닫기" aria-label="주제 선택창 닫기" @click="목록닫기">×</button>
           </div>
-          <div class="글테마선택" role="group" aria-label="필사 주제 선택" @keydown="선택버튼화살표">
-            <button v-for="테마 in 글테마선택지" :key="테마" type="button"
-              :class="{ 선택됨: 글테마 === 테마 }" :aria-pressed="글테마 === 테마"
-              :aria-label="`${주제표시이름(테마)}, ${주제완료도[테마].전체}편 중 ${주제완료도[테마].완료}편 완료`"
-              @click="글테마바꾸기(테마, $event)">
-              <span class="주제이름">{{주제표시이름(테마)}}</span>
-              <span class="주제진행바탕" aria-hidden="true">
-                <span :style="{ width: `${주제완료도[테마].비율}%` }"></span>
-              </span>
-            </button>
+          <div class="주제목록">
+            <section v-for="묶음 in 주제선택묶음들" :key="묶음.이름" class="주제묶음"
+              :aria-label="묶음.이름 || '공개 주제'">
+              <h3 v-if="묶음.이름">{{묶음.이름}}</h3>
+              <div class="글테마선택" role="group" :aria-label="묶음.이름 || '공개 주제'" @keydown="선택버튼화살표">
+                <button v-for="테마 in 묶음.주제들" :key="테마" type="button"
+                  :class="{ 선택됨: 글테마 === 테마 }" :aria-pressed="글테마 === 테마"
+                  :aria-label="`${주제표시이름(테마)}, ${주제완료도[테마].전체}편 중 ${주제완료도[테마].완료}편 완료`"
+                  @click="글테마바꾸기(테마, $event)">
+                  <span class="주제이름">{{주제표시이름(테마)}}</span>
+                  <span class="주제진행바탕" aria-hidden="true">
+                    <span :style="{ width: `${주제완료도[테마].비율}%` }"></span>
+                  </span>
+                </button>
+              </div>
+            </section>
           </div>
           <section class="지문서랍" :aria-label="`${주제표시이름(글테마)} 지문 목록`">
             <h3>{{글테마 === '즐겨찾기' ? '모아 둔 글' : `${주제표시이름(글테마)} · 전체 글`}} <span>{{현재지문들.length}}편</span></h3>
@@ -261,7 +267,8 @@ import { 즐겨찾기바꾸기, 즐겨찾기읽기, 즐겨찾기저장, 즐겨�
 import { 필사단축키, type 필사단축동작 } from '@/practice-shortcuts';
 import { 날짜키, 테마별지문들,
   type 연습지문, type 지문테마 } from '@/practice-passages';
-import { 표시주제들, 공개주제인가, 주제표시이름, type 선택주제 } from '@/practice-pinned-topics';
+import { 표시주제들, 주제선택묶음들, 공개주제인가, 주제표시이름,
+  type 선택주제 } from '@/practice-pinned-topics';
 import { 정식사이트인가 } from '@/practice-release';
 import { 다음미완료지문, 첫진입지문선택, 주제지문선택, 주제완료현황,
   지문모음선택, 지문모음완료현황, 마지막지문읽기, 마지막지문저장 } from '@/practice-selection';
@@ -296,6 +303,7 @@ export default defineComponent({
       오늘지문: 테마별지문들.시작하기[0],
       글테마: '시작하기' as 선택주제,
       글테마선택지: 표시주제들(),
+      주제선택묶음들: 주제선택묶음들(),
       테마선택지,
       준비중테마선택지,
       글자크기선택지,
@@ -1005,7 +1013,10 @@ button { font: inherit; }
 .구역번호 span { padding: 0 5px; color: var(--옅은글); }
 .선택머리 h2 { margin: 9px 0 0; font-size: 18px; font-weight: 650; letter-spacing: -.045em; }
 .선택제목줄 { display: flex; align-items: center; gap: 8px; }
-.글테마선택 { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; width: min(100%, 542px); margin-top: 18px; }
+.주제목록 { width: min(100%, 542px); margin-top: 18px; }
+.주제묶음 + .주제묶음 { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--테두리); }
+.주제묶음 h3 { margin: 0 0 10px; color: var(--글); font-size: 13px; font-weight: 700; }
+.글테마선택 { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
 .글테마선택 button {
   position: relative;
   overflow: hidden;
@@ -1196,7 +1207,8 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
 }
 .선택머리 { align-items: start; }
 .선택머리 h2 { margin-top: 6px; font-size: 17px; }
-.글테마선택 { grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; max-height: min(40dvh, 310px); gap: 6px; margin-top: 18px; overflow-y: auto; overscroll-behavior: contain; }
+.주제목록 { width: 100%; max-height: min(40dvh, 310px); overflow-y: auto; overscroll-behavior: contain; }
+.글테마선택 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
 .글테마선택 button { padding: 8px 5px 11px; font-size: 13px; }
 .지문서랍 { display: flex; flex-direction: column; flex: 1; min-height: 0; margin-top: 20px; }
 .글목록 { display: flex; flex-direction: column; flex: 1; min-height: 0; gap: 6px; overflow-y: auto; overscroll-behavior: contain; padding-right: 3px; }

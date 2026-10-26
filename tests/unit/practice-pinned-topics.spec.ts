@@ -1,4 +1,5 @@
-import { 기본주제들, 이번공개주제들, 공개주제들, 전체주제들, 표시주제들, 주제표시이름 } from '@/practice-pinned-topics';
+import { 기본주제들, 이번공개주제들, 공개주제들, 준비중주제들, 주제선택묶음들,
+  전체주제들, 표시주제들, 주제표시이름 } from '@/practice-pinned-topics';
 import { 테마별지문들 } from '@/practice-passages';
 
 it('요청한 열 가지 주제만 순서대로 표시하고 지문 분류는 보존한다', () => {
@@ -16,5 +17,12 @@ it('요청한 열 가지 주제만 순서대로 표시하고 지문 분류는 �
   expect(공개주제들).not.toContain('명상');
   expect(표시주제들('https://dev.dailytyping.com')).toEqual(전체주제들);
   expect(표시주제들('http://127.0.0.1')).toEqual(전체주제들);
+  expect(준비중주제들).toEqual(전체주제들.filter((주제) => !공개주제들.includes(주제)));
+  expect(준비중주제들.every((주제) => !공개주제들.includes(주제))).toBe(true);
+  expect(주제선택묶음들('https://dailytyping.com')).toEqual([{ 이름: '', 주제들: 공개주제들 }]);
+  expect(주제선택묶음들('https://dev.dailytyping.com')).toEqual([
+    { 이름: '', 주제들: 공개주제들 },
+    { 이름: '준비 중 주제', 주제들: 준비중주제들 },
+  ]);
   expect(전체주제들).toContain('명상');
 });
