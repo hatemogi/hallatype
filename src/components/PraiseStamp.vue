@@ -3,7 +3,8 @@
     :aria-label="grade === 'PB' ? '개인 최고 기록 도장' : grade === '완료' ? '필사 완료 도장' : `${grade === '참잘했어요' ? '정타율 100%' : '정타율 98% 이상'}, ${grade} 도장`">
     <span v-if="grade === '참잘했어요'" aria-hidden="true">참<br>잘했어요</span>
     <span v-else-if="grade === '잘했어요'" aria-hidden="true">잘했<br>어요</span>
-    <span v-else aria-hidden="true">{{ grade === 'PB' ? 'PB' : '완료' }}</span>
+    <span v-else-if="grade === 'PB'" aria-hidden="true">최고<br>기록</span>
+    <span v-else aria-hidden="true">완료</span>
   </span>
 </template>
 
