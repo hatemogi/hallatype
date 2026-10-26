@@ -1,6 +1,6 @@
 <template>
   <main class="필사실" :data-theme="설정.테마">
-    <div class="페이지" :class="{ 결과표시: 결과화면보이기 }">
+    <div class="페이지">
       <header class="상단">
         <a class="브랜드" href="#" aria-label="글숨 첫 화면으로 이동">
           <GeulsumMark :key="`문양-${설정.테마}`" class="브랜드문양" />
@@ -113,8 +113,7 @@
         </aside>
 
         <div class="필사패널">
-        <div class="종이외피" :class="{ 동적배경작동: 동적배경사용가능, 완료높이고정: 종이높이 !== null }"
-          :style="종이높이 !== null ? { height: `${종이높이}px` } : undefined">
+        <div class="종이외피" :class="{ 동적배경작동: 동적배경사용가능 }">
         <canvas id="효과캔버스" v-show="동적배경사용가능" aria-hidden="true"></canvas>
         <article class="종이" aria-labelledby="지문제목">
           <div class="종이상단">
@@ -272,7 +271,6 @@ export default defineComponent({
       진행률: 0,
       입력상태: '대기' as '대기' | '진행' | '오타' | '정정',
       결과화면보이기: false,
-      종이높이: null as number | null,
       시작시각: null as number | null,
       완료초: 0,
       총입력타수: 0,
@@ -615,8 +613,6 @@ export default defineComponent({
     },
 
     완료화면열기() {
-      const 종이외피 = document.querySelector('.종이외피');
-      this.종이높이 = 종이외피?.getBoundingClientRect().height ?? null;
       this.결과화면보이기 = true;
     },
 
@@ -634,7 +630,6 @@ export default defineComponent({
       this.밀린기록저장();
       this.그림판?.종료();
       this.결과화면보이기 = false;
-      this.종이높이 = null;
       this.진행률 = 0;
       this.입력상태 = '대기';
       this.시작시각 = null;
@@ -1201,7 +1196,6 @@ button { font: inherit; }
 button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
 /* 글 선택, 입력, 결과가 같은 높이 안에서 이어지는 작업대 */
 .페이지 { display: flex; flex-direction: column; height: 100dvh; min-height: 680px; }
-.페이지.결과표시 { height: auto; }
 .상단 { flex: none; height: 62px; }
 .작업공간 {
   display: grid;
@@ -1243,7 +1237,6 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
 .필사실[data-theme='매트릭스'] .종이 { box-shadow: inset 0 0 38px rgba(43, 202, 82, .06); }
 .필사실[data-theme='PC통신'] .종이 { box-shadow: none; }
 .종이외피 { position: relative; flex: 1; min-height: 220px; margin: 0 12px; }
-.종이외피.완료높이고정 { flex: none; }
 .종이 {
   position: relative;
   z-index: 1;
