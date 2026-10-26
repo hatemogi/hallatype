@@ -4,7 +4,8 @@ import { 따라그리기틀 } from '@/따라그리기';
 import { 연습지문들 } from '@/practice-passages';
 import { 본문버전, 시도목록, 시도시작, 시도완료, 시도중단, 입력묶음,
   진행기록키인가, 진행작업읽기, 진행작업저장, 작업합치기,
-  지문입력상태, 지문최근시도, 지문재개시도, 지문최고정타율, 지문도장등급,
+  지문입력상태, 지문최근시도, 지문재개시도, 지문최고정타율,
+  지문최고기록읽기, 지문최고기록갱신, 지문도장등급,
   완전정타인가, 정타도장, 정타율, 정타율표시,
   이번이최고정타율인가,
   type 저장소 } from '@/practice-progress';
@@ -74,7 +75,7 @@ it('키 입력과 시각을 짧게 저장하고 모든 키 조합을 그대로 �
     { code: 'Slash', shift: true }, { code: 'Unmapped', shift: true },
   ];
   const 입력 = 입력묶음(시작.attemptId, 0, 키들, 1234);
-  const 완료 = 시도완료(시작.attemptId, 1234, 키들.length, 키들.length);
+  const 완료 = 시도완료(시작.attemptId, 1234, 키들.length, 키들.length, false);
   const 중단 = 시도중단(시작.attemptId);
   const 이어시작 = 시도시작(연습지문들[0].id, '2026-10-24', 'v1',
     { attemptId: 시작.attemptId, inputCount: 1, elapsedMs: 1234 });
@@ -89,6 +90,50 @@ it('키 입력과 시각을 짧게 저장하고 모든 키 조합을 그대로 �
   expect(입력저장값.keys).toBe("AB+C7␠↵⌫`-=[]\\;',./+/+~8:Unmapped");
   expect(진행작업읽기(저장소)).toEqual([시작, 입력, 완료, 중단, 이어시작]);
   expect(JSON.stringify(입력저장값).length).toBeLessThan(JSON.stringify(입력).length / 2);
+});
+
+it('기존 완료 기록의 최고 기록 판정을 저장해 이전 이력을 지운 뒤에도 보존한다', () => {
+  const 저장소 = 메모리저장소();
+  const 지문ID = 연습지문들[0].id;
+  const 버전 = 본문버전(연습지문들[0].본문);
+  const 첫시작 = 시도시작(지문ID, '2026-10-24', 버전);
+  const 뒤시작 = 시도시작(지문ID, '2026-10-24', 버전);
+  const 첫완료 = { ...시도완료(첫시작.attemptId, 1000, 100, 90),
+    at: '2026-10-24T09:00:00.000Z' };
+  const 뒤완료 = { ...시도완료(뒤시작.attemptId, 1000, 100, 95),
+    at: '2026-10-24T10:00:00.000Z' };
+  for (const 작업 of [뒤시작, 뒤완료, 첫시작, 첫완료]) {
+    expect(진행작업저장(작업, 저장소)).toBe(true);
+  }
+  const 완료들 = 진행작업읽기(저장소).filter((작업) => 작업.type === 'completed');
+  expect(완료들.map((작업) => 작업.personalBest)).toEqual([true, false]);
+  expect(JSON.parse(저장소.getItem(`dt:p:${뒤완료.id}`)!).b).toBe(1);
+  expect(지문최고기록읽기(지문ID, 버전, 저장소)).toBe(95);
+  저장소.removeItem(`dt:p:${첫시작.id}`);
+  저장소.removeItem(`dt:p:${첫완료.id}`);
+  expect(시도목록(진행작업읽기(저장소))[0].완료?.personalBest).toBe(true);
+});
+
+it('지문별 최고점은 이력을 지운 뒤에도 남고 낮은 점수나 다른 본문에 영향받지 않는다', () => {
+  const 저장소 = 메모리저장소();
+  const 지문ID = 연습지문들[0].id;
+  const 다른지문ID = 연습지문들[1].id;
+  const 버전 = 본문버전(연습지문들[0].본문);
+  const 시작 = 시도시작(지문ID, '2026-10-24', 버전);
+  const 완료 = 시도완료(시작.attemptId, 1000, 100, 95, false);
+  진행작업저장(시작, 저장소);
+  진행작업저장(완료, 저장소);
+  진행작업읽기(저장소);
+  저장소.removeItem(`dt:p:${시작.id}`);
+  저장소.removeItem(`dt:p:${완료.id}`);
+  expect(진행작업읽기(저장소)).toEqual([]);
+  expect(지문최고기록읽기(지문ID, 버전, 저장소)).toBe(95);
+  expect(이번이최고정타율인가(94, 100, 지문최고기록읽기(지문ID, 버전, 저장소))).toBe(false);
+  expect(이번이최고정타율인가(96, 100, 지문최고기록읽기(지문ID, 버전, 저장소))).toBe(true);
+  expect(지문최고기록갱신(지문ID, 버전, 90, 저장소)).toBe(true);
+  expect(지문최고기록읽기(지문ID, 버전, 저장소)).toBe(95);
+  expect(지문최고기록읽기(지문ID, '다른버전', 저장소)).toBeNull();
+  expect(지문최고기록읽기(다른지문ID, 버전, 저장소)).toBeNull();
 });
 
 it('이전 상세 기록을 읽으면서 같은 키의 압축 형식으로 갱신한다', () => {

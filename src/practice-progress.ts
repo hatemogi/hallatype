@@ -1,6 +1,7 @@
 import { customAlphabet } from 'nanoid';
 
 const STORAGE_PREFIX = 'dt:p:';
+const BEST_STORAGE_PREFIX = 'dt:pb:';
 const LEGACY_STORAGE_PREFIXES = ['tf:p:', 'hallatype:progress:v2:op:'] as const;
 const STORAGE_PREFIXES = [STORAGE_PREFIX, ...LEGACY_STORAGE_PREFIXES];
 const 새ID = customAlphabet('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', 12);
@@ -19,14 +20,15 @@ export type 진행작업 =
   | (작업기본 & { type: 'started'; passageId: string; day: string; contentVersion: string;
       continuedFrom?: 이어쓰기원본 })
   | (작업기본 & { type: 'inputs'; seq: number; keys: 입력키[]; elapsedMs: number })
-  | (작업기본 & { type: 'completed'; elapsedMs: number; totalInputs: number; correctInputs: number })
+  | (작업기본 & { type: 'completed'; elapsedMs: number; totalInputs: number; correctInputs: number;
+      personalBest?: boolean })
   | (작업기본 & { type: 'abandoned' });
 
 type 저장작업기본 = { v: 4; i: string; a: string; d: number };
 type 저장작업 =
   | (저장작업기본 & { t: 's'; p: string; y: string; c: string; f?: [string, number, number] })
   | (저장작업기본 & { t: 'i'; n: number; keys: string; e: number; m?: number[] })
-  | (저장작업기본 & { t: 'c'; e: number; n: number; o: number })
+  | (저장작업기본 & { t: 'c'; e: number; n: number; o: number; b?: 0 | 1 })
   | (저장작업기본 & { t: 'x' });
 
 const 짧은키코드 = new Map(Object.entries({
@@ -91,7 +93,8 @@ function 작업압축(작업: 진행작업): 저장작업 | undefined {
       ...(작업.keys.every((키) => 키.elapsedMs !== undefined) &&
         { m: 작업.keys.map((키) => 키.elapsedMs!) }) };
     case 'completed': return { ...기본, t: 'c', e: 작업.elapsedMs,
-      n: 작업.totalInputs, o: 작업.correctInputs };
+      n: 작업.totalInputs, o: 작업.correctInputs,
+      ...(작업.personalBest !== undefined && { b: 작업.personalBest ? 1 as const : 0 as const }) };
     case 'abandoned': return { ...기본, t: 'x' };
   }
 }
@@ -137,8 +140,12 @@ function 작업복원(값: unknown): 진행작업 | undefined {
         keys: 키들, elapsedMs: 압축.e as number };
       break;
     }
-    case 'c': 작업 = { ...기본, type: 'completed', elapsedMs: 압축.e as number,
-      totalInputs: 압축.n as number, correctInputs: 압축.o as number }; break;
+    case 'c':
+      if (압축.b !== undefined && 압축.b !== 0 && 압축.b !== 1) { return undefined; }
+      작업 = { ...기본, type: 'completed', elapsedMs: 압축.e as number,
+        totalInputs: 압축.n as number, correctInputs: 압축.o as number,
+        ...(압축.b !== undefined && { personalBest: 압축.b === 1 }) };
+      break;
     case 'x': 작업 = { ...기본, type: 'abandoned' }; break;
     default: return undefined;
   }
@@ -149,6 +156,33 @@ export type 저장소 = Pick<Storage, 'length' | 'key' | 'getItem' | 'setItem' |
 
 export function 진행기록키인가(키: string | null): boolean {
   return 키 !== null && STORAGE_PREFIXES.some((접두사) => 키.startsWith(접두사));
+}
+
+function 최고기록키(passageId: string, contentVersion: string): string {
+  return `${BEST_STORAGE_PREFIX}${passageId}:${contentVersion}`;
+}
+
+export function 지문최고기록읽기(passageId: string, contentVersion: string,
+  저장소: 저장소 | undefined = 브라우저저장소()): number | null {
+  if (!저장소) { return null; }
+  try {
+    const 원문 = 저장소.getItem(최고기록키(passageId, contentVersion));
+    if (원문 === null) { return null; }
+    const 값: unknown = JSON.parse(원문);
+    return typeof 값 === 'number' && Number.isFinite(값) && 값 >= 0 ? 값 : null;
+  } catch (_) { return null; }
+}
+
+/** 이미 저장된 최고점은 낮추지 않는다. 이력 정리 후에도 이 키를 유지한다. */
+export function 지문최고기록갱신(passageId: string, contentVersion: string, 정타율: number,
+  저장소: 저장소 | undefined = 브라우저저장소()): boolean {
+  if (!저장소 || !Number.isFinite(정타율) || 정타율 < 0) { return false; }
+  try {
+    const 종전최고 = 지문최고기록읽기(passageId, contentVersion, 저장소);
+    if (종전최고 !== null && 종전최고 >= 정타율) { return true; }
+    저장소.setItem(최고기록키(passageId, contentVersion), JSON.stringify(정타율));
+    return true;
+  } catch (_) { return false; }
 }
 
 export interface 필사시도 {
@@ -245,6 +279,27 @@ export function 지문최고정타율(시도들: readonly 필사시도[], passag
   return 최고;
 }
 
+/** 저장된 판정을 우선하고, 이전 형식의 완료 기록은 전체 이력에서 당시 판정을 복원한다. */
+export function 시도별최고기록(시도들: readonly 필사시도[]): Map<string, boolean> {
+  const 판정들 = new Map<string, boolean>();
+  const 지문별최고 = new Map<string, number>();
+  const 완료시도들 = 시도들.filter((시도) => 시도.완료)
+    .sort((a, b) => a.완료!.at.localeCompare(b.완료!.at) ||
+      a.시작.attemptId.localeCompare(b.시작.attemptId));
+  for (const 시도 of 완료시도들) {
+    const 완료 = 시도.완료!;
+    const 지문키 = `${시도.시작.passageId}:${시도.시작.contentVersion}`;
+    const 종전최고 = 지문별최고.get(지문키) ?? null;
+    판정들.set(시도.시작.attemptId, 완료.personalBest ??
+      이번이최고정타율인가(완료.correctInputs, 완료.totalInputs, 종전최고));
+    if (완료.totalInputs > 0) {
+      const 이번정타율 = 완료.correctInputs / 완료.totalInputs * 100;
+      지문별최고.set(지문키, Math.max(종전최고 ?? 0, 이번정타율));
+    }
+  }
+  return 판정들;
+}
+
 export function 브라우저저장소(): 저장소 | undefined {
   try { return typeof window === 'undefined' ? undefined : window.localStorage; }
   catch (_) { return undefined; }
@@ -292,7 +347,8 @@ function 올바른작업(값: unknown): 값 is 진행작업 {
             (typeof (키 as 입력키).elapsedMs === 'number' &&
               Number.isFinite((키 as 입력키).elapsedMs) && (키 as 입력키).elapsedMs! >= 0)));
     case 'completed':
-      return ['elapsedMs', 'totalInputs', 'correctInputs'].every((필드) =>
+      return (작업.personalBest === undefined || typeof 작업.personalBest === 'boolean') &&
+        ['elapsedMs', 'totalInputs', 'correctInputs'].every((필드) =>
         typeof 작업[필드] === 'number' && Number.isFinite(작업[필드]) && (작업[필드] as number) >= 0);
     case 'abandoned': return true;
     default: return false;
@@ -362,6 +418,33 @@ export function 진행작업읽기(저장소: 저장소 | undefined = 브라우�
       }
     } catch (_) { /* 새 키에 쓰지 못하면 기존 기록을 그대로 둔다. */ }
   }
+  const 시도들 = 시도목록([...결과.values()]);
+  const 최고기록판정 = 시도별최고기록(시도들);
+  for (const 시도 of 시도들) {
+    const 완료 = 시도.완료;
+    if (!완료 || 완료.personalBest !== undefined) { continue; }
+    const 보완 = { ...완료, personalBest: 최고기록판정.get(시도.시작.attemptId)! };
+    const 압축 = 작업압축(보완);
+    if (!압축) { continue; }
+    try {
+      저장소.setItem(STORAGE_PREFIX + 완료.id, JSON.stringify(압축));
+      결과.set(완료.id, 보완);
+    } catch (_) { /* 저장 실패 시 원본을 보존하고 다음에 다시 계산한다. */ }
+  }
+  const 지문별점수 = new Map<string, { passageId: string; contentVersion: string; score: number }>();
+  for (const 시도 of 시도들) {
+    if (!시도.완료) { continue; }
+    const { passageId, contentVersion } = 시도.시작;
+    const score = 시도.완료.totalInputs > 0
+      ? 시도.완료.correctInputs / 시도.완료.totalInputs * 100 : 0;
+    const 키 = 최고기록키(passageId, contentVersion);
+    if (score > (지문별점수.get(키)?.score ?? -1)) {
+      지문별점수.set(키, { passageId, contentVersion, score });
+    }
+  }
+  for (const { passageId, contentVersion, score } of 지문별점수.values()) {
+    지문최고기록갱신(passageId, contentVersion, score, 저장소);
+  }
   return [...결과.values()];
 }
 
@@ -407,10 +490,12 @@ export function 입력묶음(attemptId: string, seq: number, keys: 입력키[], 
     keys: keys.map((키) => ({ ...키 })), elapsedMs, at: new Date().toISOString() };
 }
 
-export function 시도완료(attemptId: string, elapsedMs: number, totalInputs: number, correctInputs: number): Extract<진행작업, { type: 'completed' }> {
+export function 시도완료(attemptId: string, elapsedMs: number, totalInputs: number,
+  correctInputs: number, personalBest?: boolean): Extract<진행작업, { type: 'completed' }> {
   ID확인(attemptId);
   return { schema: 2, id: 새ID(), attemptId, type: 'completed',
-    elapsedMs, totalInputs, correctInputs, at: new Date().toISOString() };
+    elapsedMs, totalInputs, correctInputs, ...(personalBest !== undefined && { personalBest }),
+    at: new Date().toISOString() };
 }
 
 export function 시도중단(attemptId: string): Extract<진행작업, { type: 'abandoned' }> {

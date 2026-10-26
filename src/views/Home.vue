@@ -235,7 +235,8 @@ import { 정식사이트인가 } from '@/practice-release';
 import { 완료후다음지문, 첫진입지문선택, 주제지문선택, 주제완료현황,
   지문모음선택, 지문모음완료현황, 마지막지문읽기, 마지막지문저장 } from '@/practice-selection';
 import { 본문버전, 브라우저저장소, 시도목록, 시도시작, 시도완료, 시도중단, 입력묶음,
-  지문입력상태, 지문재개시도, 지문최고정타율, 지문도장등급, 정타도장,
+  지문입력상태, 지문재개시도, 지문최고정타율, 지문최고기록읽기, 지문최고기록갱신,
+  지문도장등급, 정타도장,
   정타율, 정타율표시, 이번이최고정타율인가, type 칭찬도장종류,
   진행기록키인가, 진행작업읽기, 진행작업저장, 작업합치기, type 입력키, type 진행작업,
   type 필사시도, type 이어쓰기원본 } from '@/practice-progress';
@@ -677,11 +678,14 @@ export default defineComponent({
           this.완료초 = Math.max(1, Math.round(걸린밀리초 / 1000));
           this.총입력타수 = 본문.입력타수;
           this.정타수 = 본문.유효타수;
-          this.종전최고정타율 = 지문최고정타율(this.시도들, this.오늘지문.id,
-            본문버전(this.오늘지문.본문), 복원.시작.attemptId);
+          const 버전 = 본문버전(this.오늘지문.본문);
+          this.종전최고정타율 = 지문최고기록읽기(this.오늘지문.id, 버전);
           this.시도ID = 복원.시작.attemptId;
           this.완료화면열기();
-          this.저장대기(시도완료(복원.시작.attemptId, 걸린밀리초, this.총입력타수, this.정타수));
+          this.저장대기(시도완료(복원.시작.attemptId, 걸린밀리초, this.총입력타수,
+            this.정타수, this.이번최고기록));
+          if (!지문최고기록갱신(this.오늘지문.id, 버전,
+            this.정타수 / this.총입력타수 * 100)) { this.기록오류 = true; }
         }
       }
       const 캔버스 = document.getElementById('캔버스') as HTMLCanvasElement;
@@ -752,10 +756,13 @@ export default defineComponent({
           self.완료초 = Math.max(1, Math.round(걸린밀리초 / 1000));
           self.총입력타수 = 본문.입력타수;
           self.정타수 = 본문.유효타수;
-          self.종전최고정타율 = 지문최고정타율(self.시도들, self.오늘지문.id,
-            본문버전(self.오늘지문.본문), self.시도ID);
+          const 버전 = 본문버전(self.오늘지문.본문);
+          self.종전최고정타율 = 지문최고기록읽기(self.오늘지문.id, 버전);
           self.입력기록저장();
-          self.저장대기(시도완료(self.시도ID, 걸린밀리초, self.총입력타수, self.정타수));
+          self.저장대기(시도완료(self.시도ID, 걸린밀리초, self.총입력타수,
+            self.정타수, self.이번최고기록));
+          if (!지문최고기록갱신(self.오늘지문.id, 버전,
+            self.정타수 / self.총입력타수 * 100)) { self.기록오류 = true; }
           이벤트기록('practice_complete', { passage_id: self.오늘지문.id,
             topic: 지문원래테마(self.오늘지문.id) ?? '시작하기',
             duration_seconds: Math.round(걸린밀리초 / 1000),

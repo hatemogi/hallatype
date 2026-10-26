@@ -21,7 +21,10 @@
             <p class="기록메타"><span class="기록주제">{{주제표시이름(기록.테마)}}</span><time :datetime="기록.완료시각">{{기록.완료일시}}</time></p>
             <div class="기록제목줄">
               <h2><a :href="`#practice?passage=${기록.지문.id}`" :aria-label="`${주제표시이름(기록.테마)}의 ${기록.지문.제목} 다시 입력하기`">{{기록.지문.제목}} <span aria-hidden="true">↗</span></a></h2>
-              <PraiseStamp v-if="기록.도장" :grade="기록.도장" />
+              <div class="기록도장묶음">
+                <PraiseStamp v-if="기록.최고기록" grade="PB" />
+                <PraiseStamp v-if="기록.도장" :grade="기록.도장" />
+              </div>
             </div>
             <div class="기록그래프머리"><span>이 글의 입력 리듬</span><span>정타율 × 속도</span></div>
             <div class="리듬그래프" role="img" :aria-label="`${기록.지문.제목}의 글 전체 진행 위치에 따른 정타와 상대적인 입력 속도. 오타는 다른 색으로 표시됩니다.`">
@@ -92,6 +95,7 @@ a:focus-visible { outline: 2px solid var(--강조); outline-offset: 4px; }
 .기록주제 { color: var(--강조); font-weight: 700; }
 .기록메타 time { color: var(--보조글); font-variant-numeric: tabular-nums; }
 .기록제목줄 { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 32px; margin-bottom: 19px; }
+.기록도장묶음 { display: flex; flex: none; align-items: center; gap: 5px; }
 .기록카드 h2 { min-width: 0; margin: 0; font-size: 18px; font-weight: 600; }
 .기록카드 h2 a { color: var(--글); text-decoration: none; }
 .기록카드 h2 span { margin-left: 4px; color: var(--강조); font-size: 14px; }

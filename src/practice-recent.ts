@@ -1,5 +1,5 @@
 import { 테마별지문들, type 연습지문, type 지문테마 } from './practice-passages';
-import { 본문버전, 정타도장, 정타율, type 칭찬도장종류, type 필사시도 } from './practice-progress';
+import { 본문버전, 시도별최고기록, 정타도장, 정타율, type 칭찬도장종류, type 필사시도 } from './practice-progress';
 import { 완료리듬그래프, type 리듬막대 } from './practice-rhythm';
 
 export interface 최근완료기록 {
@@ -12,6 +12,7 @@ export interface 최근완료기록 {
   정타수: number;
   전체타수: number;
   도장: 칭찬도장종류 | null;
+  최고기록: boolean;
   걸린시간: string;
   리듬막대들: Array<리듬막대 | null>;
 }
@@ -34,13 +35,16 @@ export function 완료시각표시(시각: string): string {
 
 /** 현재 지문과 일치하는 최근 완료 시도만 골라 저장된 키 입력으로 리듬을 재생한다. */
 export function 최근완료기록들(시도들: readonly 필사시도[], 개수 = 10): 최근완료기록[] {
-  return 시도들
+  const 최고기록판정 = 시도별최고기록(시도들);
+  const 완료시도들 = 시도들
     .filter((시도) => {
       const 지문 = 지문찾기(시도.시작.passageId)?.지문;
       return !!시도.완료 && !!지문 && 시도.시작.contentVersion === 본문버전(지문.본문);
     })
-    .sort((a, b) => b.완료!.at.localeCompare(a.완료!.at) ||
-      b.시작.attemptId.localeCompare(a.시작.attemptId))
+    .sort((a, b) => a.완료!.at.localeCompare(b.완료!.at) ||
+      a.시작.attemptId.localeCompare(b.시작.attemptId));
+  return 완료시도들
+    .reverse()
     .slice(0, 개수)
     .map((시도) => {
       const { 테마, 지문 } = 지문찾기(시도.시작.passageId)!;
@@ -56,6 +60,7 @@ export function 최근완료기록들(시도들: readonly 필사시도[], 개수
         정타수: 완료.correctInputs,
         전체타수: 완료.totalInputs,
         도장: 정타도장(완료.correctInputs, 완료.totalInputs),
+        최고기록: 최고기록판정.get(시도.시작.attemptId) ?? false,
         걸린시간: `${Math.floor(초 / 60)}분 ${초 % 60}초`,
         리듬막대들: 완료리듬그래프(지문.본문, 시도.입력들, 완료.elapsedMs),
       };
