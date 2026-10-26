@@ -27,14 +27,22 @@ export class 화면입력흐름 {
     private 이전 = '';
     private 조합중 = false;
     private 물리키사용중 = false;
+    private readonly 누른키 = new Set<string>();
 
     public get 조합하고있음(): boolean { return this.조합중; }
     public get 물리키우선(): boolean { return this.물리키사용중; }
-    public 초기화(): void { this.이전 = ''; this.조합중 = false; this.물리키사용중 = false; }
+    public 초기화(): void {
+        this.이전 = ''; this.조합중 = false; this.물리키사용중 = false;
+        this.누른키.clear();
+    }
+    public 물리키우선설정(): void { this.물리키사용중 = true; }
     public 물리키(code: string, shift: boolean): 키[] {
         this.물리키사용중 = true;
+        if (this.누른키.has(code)) { return []; }
+        this.누른키.add(code);
         return [{ code, shift }];
     }
+    public 키뗌(code: string): void { this.누른키.delete(code); }
     public 조합시작(): void { this.조합중 = true; }
     public 조합끝(다음: string): 키[] {
         this.조합중 = false;

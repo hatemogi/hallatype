@@ -144,7 +144,8 @@
             <textarea ref="화면키보드" class="화면키보드입력" autofocus
               :aria-label="`${오늘지문.제목} 필사 입력`" autocomplete="off" autocapitalize="off" autocorrect="off"
               spellcheck="false" @input="화면키보드입력" @compositionstart="화면키보드조합시작"
-              @compositionend="화면키보드조합끝" @keydown="화면키보드키누름"></textarea>
+              @compositionend="화면키보드조합끝" @keydown="화면키보드키누름"
+              @keyup="화면키보드키뗌"></textarea>
           </div>
         </article>
         </div>
@@ -217,7 +218,7 @@ import { 끝글자 } from '@/글자';
 import { 지문틀 } from '@/본문';
 import { 따라그리기틀, type 키 } from '@/따라그리기';
 import { 화면입력흐름 } from '@/practice-textarea-input';
-import { 필사키인가 } from '@/practice-physical-key';
+import { 필사키인가, 물리키직접처리환경 } from '@/practice-physical-key';
 import 그림판틀 from '@/그림판';
 import { 동적종이효과 } from '@/animated-paper';
 import { 움직이는테마인가 } from '@/animated-shaders';
@@ -316,9 +317,12 @@ export default defineComponent({
         return;
       }
       // 맥의 물리 키는 DOM 조합 문자열보다 실제 code를 우선해 원래 입력기로 보낸다.
-      if (navigator.maxTouchPoints === 0 && 필사키인가(event)) {
+      if (물리키직접처리환경(navigator) && 필사키인가(event)) {
         this.화면키보드키전달(this.화면키보드입력흐름.물리키(event.code, event.shiftKey));
       }
+    },
+    화면키보드키뗌(event: KeyboardEvent) {
+      this.화면키보드입력흐름.키뗌(event.code);
     },
     화면키보드조합시작() {
       this.화면키보드입력흐름.조합시작();
@@ -632,6 +636,7 @@ export default defineComponent({
       const 화면입력창 = this.$refs.화면키보드 as HTMLTextAreaElement | undefined;
       if (화면입력창) { 화면입력창.value = ''; }
       this.화면키보드입력흐름.초기화();
+      if (물리키직접처리환경(navigator)) { this.화면키보드입력흐름.물리키우선설정(); }
       마지막지문저장(this.오늘지문.id);
       // 최근 기록의 직접 링크에서 다른 글로 옮기면 이전 글 주소가 복원을 덮어쓰지 않게 한다.
       if (this.requestedPassageId && this.requestedPassageId !== this.오늘지문.id &&
@@ -819,8 +824,9 @@ export default defineComponent({
         if (조작요소 || self.결과화면보이기) { return; }
         if (!필사키인가(e)) { return; }
         e.preventDefault();
-        필사키입력(e.code, e.shiftKey);
+        self.화면키보드키전달(self.화면키보드입력흐름.물리키(e.code, e.shiftKey));
       };
+      window.onkeyup = (e: KeyboardEvent) => self.화면키보드입력흐름.키뗌(e.code);
       화면입력창?.focus({ preventScroll: true });
     },
   },
@@ -861,6 +867,7 @@ export default defineComponent({
     if (this.날짜확인타이머 !== null) { clearInterval(this.날짜확인타이머); }
     this.입력기록저장();
     window.onkeydown = null;
+    window.onkeyup = null;
     this.필사키전달 = null;
     this.그림판?.종료();
     this.동적배경?.destroy();
