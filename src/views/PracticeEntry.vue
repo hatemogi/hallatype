@@ -6,11 +6,9 @@
     <div class="첫화면안쪽">
       <header class="첫화면상단">
         <div class="첫화면브랜드"><GeulsumMark :key="`문양-${테마}`" /><span class="도메인 공식주소">dailytyping.com</span></div>
-        <span class="상단장식" aria-hidden="true">✳</span>
       </header>
 
       <section class="소개" aria-labelledby="서비스이름">
-        <span class="소개장식" aria-hidden="true">✳</span>
         <h1 id="서비스이름"><GeulsumTitle :key="`타이틀-${테마}`" class="중앙타이틀그림" :src="연필타이틀" :width="1736" :height="906" :gap-reduction="55" /></h1>
         <p class="슬로건">한 글자씩, 마음을 고르다.</p>
         <div class="구분선" aria-hidden="true"></div>
@@ -352,7 +350,6 @@ onUnmounted(() => {
 .첫화면상단, .첫화면하단 { display: flex; justify-content: space-between; align-items: center; }
 .첫화면브랜드 { display: flex; align-items: center; gap: 11px; }
 .도메인 { color: var(--보조글); font-size: 14px; }
-.상단장식 { color: var(--강조); font-size: 20px; }
 .소개 {
   display: flex;
   flex: 1;
@@ -362,7 +359,6 @@ onUnmounted(() => {
   padding: 48px 0 76px;
   text-align: center;
 }
-.소개장식 { margin-bottom: 20px; color: var(--강조); font-size: 26px; }
 .소개 h1 {
   margin: 0;
   font-family: 'AppleMyungjo', 'Nanum Myeongjo', 'Batang', serif;
@@ -414,7 +410,6 @@ onUnmounted(() => {
 @media (max-width: 600px) {
   .첫화면안쪽 { padding: 22px 22px 20px; }
   .소개 { padding-bottom: 48px; }
-  .소개장식 { margin-bottom: 13px; }
   .슬로건 { margin-top: 17px; }
   .구분선 { margin: 28px 0; }
   .설명 { font-size: 15px; }
