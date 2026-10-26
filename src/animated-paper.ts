@@ -3,12 +3,14 @@ import { 추가효과조각, 커피김조각, 소품이미지조각, 촛불꽃�
 import galaxyUrl from './assets/milky-way.webp';
 import barleyUrl from './assets/barley-field.webp';
 import waterfallUrl from './assets/distant-waterfall.webp';
+import skyCloudUrl from './assets/cumulus-cloud.webp';
 import coffeeCupUrl from './assets/coffee-tumbler.webp';
 import candleUrl from './assets/ivory-candle.webp';
 
 const 풍경이미지: Partial<Record<움직이는테마, string>> = {
   청보리: barleyUrl,
   폭포: waterfallUrl,
+  구름: skyCloudUrl,
 };
 const 소품이미지: Partial<Record<움직이는테마, string>> = {
   커피: coffeeCupUrl,
@@ -25,7 +27,7 @@ export const 동적효과조절: Record<움직이는테마,
   '수면과 파문': { 기본세기: 0.58, 타건세기: 0.72, 감쇠속도: 1.55, 빛강도: 0.37, 글뒤세기: 0.85 },
   매트릭스: { 기본세기: 0.90, 타건세기: 0.55, 감쇠속도: 1.5, 빛강도: 0.74, 글뒤세기: 0.28 },
   빗방울: { 기본세기: 0.94, 타건세기: 0.76, 감쇠속도: 1.7, 빛강도: 0.74, 글뒤세기: 0.65 },
-  '흐르는 구름': { 기본세기: 1.10, 타건세기: 0.78, 감쇠속도: 1.25, 빛강도: 0.82, 글뒤세기: 0.78 },
+  구름: { 기본세기: 1.0, 타건세기: 0, 감쇠속도: 1.25, 빛강도: 0, 글뒤세기: 0.53 },
   불멍: { 기본세기: 0.95, 타건세기: 0.86, 감쇠속도: 1.65, 빛강도: 0.82, 글뒤세기: 0.72 },
   인센스: { 기본세기: 0.90, 타건세기: 0.55, 감쇠속도: 1.5, 빛강도: 0.72, 글뒤세기: 0.67 },
   오로라: { 기본세기: 1.34, 타건세기: 0.86, 감쇠속도: 1.0, 빛강도: 1.05, 글뒤세기: 0.80 },
@@ -156,6 +158,7 @@ export class 동적종이효과 {
   private frame = 0;
   private lastFrame = 0;
   private elapsed = 0;
+  private cloudVariation: [number, number, number, number] = [0, 0, 1, 0];
   private sourceBottom = 0.5;
   private focusText: { x: number; y: number } | null = null;
   private flameFocus: { x: number; y: number } | null = null;
@@ -177,6 +180,7 @@ export class 동적종이효과 {
     private available: (value: boolean) => void) {}
 
   start(): boolean {
+    this.shuffleCloud();
     this.canvas.addEventListener('webglcontextlost', this.contextLost);
     this.canvas.addEventListener('webglcontextrestored', this.contextRestored);
     document.addEventListener('visibilitychange', this.visibilityChanged);
@@ -236,7 +240,7 @@ export class 동적종이효과 {
     for (const name of ['u_size', 'u_time', 'u_horizon', 'u_textBottom',
       'u_motion', 'u_tuning', 'u_ripples[0]', 'u_focus', 'u_mistake',
       'u_galaxy', 'u_hasGalaxy', 'u_landscape', 'u_hasLandscape',
-      'u_landscapeSize', 'u_glyphs', 'u_flow', 'u_candle']) {
+      'u_landscapeSize', 'u_cloudVariation', 'u_glyphs', 'u_flow', 'u_candle']) {
       this.uniforms[name] = gl.getUniformLocation(program, name);
     }
     if (this.theme === '매트릭스') { this.uploadGlyphs(); }
@@ -359,7 +363,8 @@ export class 동적종이효과 {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
+    gl.texImage2D(gl.TEXTURE_2D, 0, this.theme === '구름' ? gl.RGBA : gl.RGB,
+      this.theme === '구름' ? gl.RGBA : gl.RGB, gl.UNSIGNED_BYTE, image);
     if (this.landscapeTexture) { gl.deleteTexture(this.landscapeTexture); }
     this.landscapeTexture = texture;
   }
@@ -393,6 +398,16 @@ export class 동적종이효과 {
 
   setContentBottom(fraction: number) {
     this.sourceBottom = Math.max(0, Math.min(1, fraction));
+  }
+
+  shuffleCloud() {
+    if (this.theme !== '구름') { return; }
+    this.cloudVariation = [
+      (Math.random() - 0.5) * 0.24,
+      (Math.random() - 0.5) * 0.14,
+      (Math.random() < 0.5 ? -1 : 1) * (0.60 + Math.random() * 0.22),
+      Math.random() * 20,
+    ];
   }
 
   setFocus(x: number, y: number) {
@@ -613,6 +628,9 @@ export class 동적종이효과 {
       gl.uniform1f(uniform('u_hasLandscape'), this.landscapeTexture ? 1 : 0);
       gl.uniform2f(uniform('u_landscapeSize'), this.landscapeImage?.naturalWidth ?? 1,
         this.landscapeImage?.naturalHeight ?? 1);
+      if (this.theme === '구름') {
+        gl.uniform4f(uniform('u_cloudVariation'), ...this.cloudVariation);
+      }
     } else if (this.theme === '매트릭스') {
       gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D, this.glyphTexture);

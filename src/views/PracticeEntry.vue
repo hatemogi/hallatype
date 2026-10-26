@@ -267,17 +267,21 @@ onUnmounted(() => {
   --역글: #11232d;
   --진행선: #5a7782;
 }
-.첫화면[data-theme='흐르는 구름'] {
-  --첫화면중심: #263b5d;
-  --첫화면중간: #1b2b49;
-  --첫화면끝: #111a2d;
-  --글: #f1f3f8;
-  --보조글: #cad6e6;
-  --옅은글: #b8c9df;
-  --강조: #c3d2ee;
-  --강조호버: #e0e9f9;
-  --역글: #1c2b47;
-  --진행선: #647895;
+.첫화면[data-theme='구름'] {
+  --첫화면중심: #176dbb;
+  --첫화면중간: #0a5eae;
+  --첫화면끝: #064586;
+  --글: #f5faff;
+  --보조글: #d6e9fa;
+  --옅은글: #c1ddf3;
+  --강조: #d8eeff;
+  --강조호버: #fff;
+  --역글: #123f73;
+  --진행선: #69a2d4;
+  background:
+    radial-gradient(ellipse at 14% 24%, rgba(143, 204, 255, .14), transparent 24%),
+    radial-gradient(ellipse at 86% 73%, rgba(143, 204, 255, .12), transparent 27%),
+    radial-gradient(circle at 50% 42%, var(--첫화면중심), var(--첫화면중간) 58%, var(--첫화면끝));
 }
 .첫화면[data-theme='불멍'] {
   --첫화면중심: #40251e;

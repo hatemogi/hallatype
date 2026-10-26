@@ -290,7 +290,7 @@ const 지문삽화들: Record<string, string> = {
   UlRmQaTpLnVe: swimmingFreestyle,
 };
 const 어두운삽화테마들 = new Set(['밤', '숲', '청보리', '폭포', '커피', '촛불', '매트릭스', 'PC통신', '서가',
-  '수면과 파문', '빗방울', '흐르는 구름', '불멍', '인센스', '오로라', '별똥별']);
+  '수면과 파문', '빗방울', '구름', '불멍', '인센스', '오로라', '별똥별']);
 export default defineComponent({
   components: { GeulsumMark, GeulsumTitle, PraiseStamp },
   props: {
@@ -672,6 +672,7 @@ export default defineComponent({
       }));
       this.그림판 = 그림판;
       this.동적배경연결();
+      this.동적배경?.shuffleCloud();
       그림판.그리기();
       this.동적배경?.setContentBottom(그림판.글줄하단비율);
       this.불길위치갱신();
@@ -973,9 +974,9 @@ button { font: inherit; }
   background: linear-gradient(145deg, #08151e 45%, #284552 70%, #789ba9 100%);
   color: #f3f7f4;
 }
-.테마견본[data-theme='흐르는 구름'] {
-  background: linear-gradient(160deg, #141f36 37%, #405574 74%, #8b9db5 100%);
-  color: #f8f7f2;
+.테마견본[data-theme='구름'] {
+  background: url('@/assets/cumulus-cloud.webp') center 60% / cover no-repeat, #0755a9;
+  color: #203e51;
 }
 .테마견본[data-theme='불멍'] {
   background: radial-gradient(circle at 54% 100%, #a85a2d, #38221b 48%, #1d1211 85%);

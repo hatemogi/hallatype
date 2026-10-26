@@ -1,5 +1,5 @@
 /** 수면 이외의 종이 애니메이션. 모든 효과는 글자를 다시 그리지 않고 배경만 그린다. */
-export const 움직이는테마들 = ['청보리', '폭포', '커피', '촛불', '수면과 파문', '매트릭스', '빗방울', '흐르는 구름', '불멍', '인센스', '오로라', '별똥별'] as const;
+export const 움직이는테마들 = ['청보리', '폭포', '커피', '촛불', '수면과 파문', '매트릭스', '빗방울', '구름', '불멍', '인센스', '오로라', '별똥별'] as const;
 export type 움직이는테마 = typeof 움직이는테마들[number];
 
 export function 움직이는테마인가(테마: string): 테마 is 움직이는테마 {
@@ -274,22 +274,48 @@ void main() {
 }`;
 
 const 구름 = `${공통}
+uniform sampler2D u_landscape;
+uniform float u_hasLandscape;
+uniform vec4 u_cloudVariation; // 가로 위치, 세로 위치, 좌우 방향과 크기, 프랙탈 씨앗
+float cloudFbm(vec2 p) {
+  float value = 0.0;
+  float weight = 0.5;
+  for (int i = 0; i < 3; i++) {
+    value += weight * noise(p);
+    p = mat2(1.62, -1.17, 1.17, 1.62) * p + vec2(3.7, 1.9);
+    weight *= 0.5;
+  }
+  return value;
+}
 void main() {
   vec2 p = vec2(v_uv.x, 1.0 - v_uv.y);
-  float t = u_time * u_motion;
-  vec3 color = mix(vec3(0.052, 0.067, 0.108), vec3(0.028, 0.049, 0.088), p.y);
-  vec2 flow = vec2(p.x * 2.5 - t * 0.027, p.y * 3.2);
-  float clouds = noise(flow) * 0.55 + noise(flow * 2.1 + 3.7) * 0.31 +
-    noise(flow * 4.0 + 8.2) * 0.14;
-  float shape = smoothstep(0.32, 0.62, clouds);
-  float haze = noise(flow * 0.65 + 1.2);
-  float behind = mix(u_tuning.w, 1.0, smoothstep(u_textBottom - 0.05,
-    u_textBottom + 0.10, p.y));
-  color += vec3(0.100, 0.115, 0.145) * shape * u_tuning.x * behind;
-  color += vec3(0.015, 0.021, 0.030) * haze;
-  color += vec3(0.020, 0.026, 0.037) *
-    exp(-pow(length((p - vec2(0.76, 0.14)) * vec2(1.4, 1.0)) * 2.0, 2.0));
-  color += vec3(0.090, 0.108, 0.135) * flowWake(p) * 2.0 * u_tuning.z * behind;
+  vec3 color = mix(vec3(0.015, 0.30, 0.63), vec3(0.10, 0.43, 0.76), p.y);
+  if (u_hasLandscape > 0.5) {
+    float t = u_time * u_motion;
+    float aspect = u_size.x / max(u_size.y, 1.0);
+    float cropX = min(1.0, aspect / 2.20);
+    vec2 uv = vec2(0.5 + (p.x - 0.5) * cropX * u_cloudVariation.z + u_cloudVariation.x,
+      (p.y - 0.12) / 1.28 + u_cloudVariation.y);
+    // 큰 덩어리의 윤곽을 중심으로 천천히 부풀리고 펼친다.
+    vec2 outward = normalize(uv - vec2(0.5, 0.72) + vec2(0.001));
+    vec2 seed = vec2(u_cloudVariation.w, u_cloudVariation.w * 0.73);
+    vec2 shape = vec2(cloudFbm(uv * 3.2 + seed - outward * t * 0.020),
+      cloudFbm(uv * 4.1 - seed.yx - outward * t * 0.015)) - 0.5;
+    uv += vec2(0.012 * sin(t * 0.14), 0.0);
+    uv += shape * vec2(0.095, 0.062);
+    uv -= outward * (0.006 * sin(t * 0.27));
+    if (uv.x >= 0.0 && uv.x <= 1.0 && uv.y >= 0.0 && uv.y <= 1.0) {
+      vec4 cloud = texture2D(u_landscape, uv);
+      float edge = smoothstep(0.18, 0.78, cloud.a);
+      float belowText = smoothstep(u_textBottom - 0.03,
+        u_textBottom + 0.11, p.y);
+      float alpha = edge * mix(0.18, 0.98, belowText) * u_tuning.x;
+      // 투명 가장자리의 색 번짐은 흰 빛으로 덮어 하늘색에 자연스럽게 섞는다.
+      vec3 cloudColor = mix(vec3(0.94, 0.97, 1.0), cloud.rgb,
+        smoothstep(0.15, 0.60, cloud.a));
+      color = mix(color, cloudColor, alpha);
+    }
+  }
   gl_FragColor = vec4(color, 1.0);
 }`;
 
@@ -536,7 +562,7 @@ export const 추가효과조각: Record<Exclude<움직이는테마, '수면과 �
   촛불,
   매트릭스,
   빗방울: 비,
-  '흐르는 구름': 구름,
+  구름,
   불멍: 불,
   인센스,
   오로라,
