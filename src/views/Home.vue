@@ -124,38 +124,6 @@
               <span aria-hidden="true">{{즐겨찾기인가(오늘지문.id) ? '★' : '☆'}}</span>
             </button>
           </div>
-          <div class="지문삽화자리" :class="{ 어두운삽화: 어두운삽화테마 }" aria-hidden="true">
-            <svg v-if="현재삽화" viewBox="0 0 235 118" preserveAspectRatio="xMidYMid meet">
-              <defs>
-                <filter id="지문삽화밝은테마" color-interpolation-filters="sRGB">
-                  <!-- 밝은 바탕은 지우고 연필 선의 진하기만 투명도로 남긴다. -->
-                  <feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -0.2126 -0.7152 -0.0722 1 0" result="연필선" />
-                  <feComponentTransfer in="연필선" result="선명한연필선">
-                    <feFuncA type="linear" slope="1.5" />
-                  </feComponentTransfer>
-                  <feFlood flood-color="currentColor" result="테마색" />
-                  <feComposite in="테마색" in2="선명한연필선" operator="in" />
-                </filter>
-                <filter id="지문삽화어두운테마" color-interpolation-filters="sRGB">
-                  <!-- 밝은 면을 살리고, 어두운 연필선도 희미하게 남겨 윤곽을 유지한다. -->
-                  <feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0.17008 0.57216 0.05776 0.2 0" result="밝은면" />
-                  <feComposite in="밝은면" in2="SourceAlpha" operator="in" result="인체형태" />
-                  <feComponentTransfer in="인체형태" result="밝은층">
-                    <feFuncA type="linear" slope="0.9" />
-                  </feComponentTransfer>
-                  <feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -0.2126 -0.7152 -0.0722 1 0" result="윤곽선" />
-                  <feComponentTransfer in="윤곽선" result="옅은윤곽선">
-                    <feFuncA type="linear" slope="0.25" />
-                  </feComponentTransfer>
-                  <feComposite in="옅은윤곽선" in2="밝은층" operator="over" result="두톤" />
-                  <feFlood flood-color="currentColor" result="테마색" />
-                  <feComposite in="테마색" in2="두톤" operator="in" />
-                </filter>
-              </defs>
-              <image :href="현재삽화" width="235" height="118"
-                :filter="어두운삽화테마 ? 'url(#지문삽화어두운테마)' : 'url(#지문삽화밝은테마)'" />
-            </svg>
-          </div>
           <div class="지문머리" :class="{ 도장찍힘: !!이번도장 }">
             <div class="지문머리내용">
               <p class="분류">{{오늘지문.주제}}</p>
@@ -247,7 +215,6 @@ import GeulsumMark from '@/components/GeulsumMark.vue';
 import GeulsumTitle from '@/components/GeulsumTitle.vue';
 import 연필타이틀 from '@/assets/geulsum-title-pencil-spaced.png';
 import PraiseStamp from '@/components/PraiseStamp.vue';
-import swimmingFreestyle from '@/assets/swimming-freestyle.webp';
 import { 끝글자 } from '@/글자';
 import { 지문틀 } from '@/본문';
 import { 따라그리기틀, 새화면키 } from '@/따라그리기';
@@ -280,11 +247,6 @@ const 테마선택지 = 공개필사테마들.map(이름 => ({ 이름 }));
 const 준비중테마선택지 = 정식사이트 ? [] : 준비중필사테마들.map(이름 => ({ 이름 }));
 const 글자크기선택지: 지문크기[] = ['작게', '보통', '크게'];
 const 가장자리단계이름 = ['선명하게', '조금 선명하게', '보통', '조금 부드럽게', '부드럽게'];
-const 지문삽화들: Record<string, string> = {
-  UlRmQaTpLnVe: swimmingFreestyle,
-};
-const 어두운삽화테마들 = new Set(['밤', '숲', '청보리', '폭포', '커피', '촛불', '매트릭스', 'PC통신', '서가',
-  '수면과 파문', '빗방울', '구름', '모닥불', '인센스', '오로라', '별똥별']);
 export default defineComponent({
   components: { GeulsumMark, GeulsumTitle, PraiseStamp },
   props: {
@@ -888,12 +850,6 @@ export default defineComponent({
     this.동적배경 = null;
   },
   computed: {
-    현재삽화(): string | undefined {
-      return 지문삽화들[this.오늘지문.id];
-    },
-    어두운삽화테마(): boolean {
-      return 어두운삽화테마들.has(this.설정.테마);
-    },
     이번도장(): 칭찬도장종류 | null {
       return this.결과화면보이기 ? 정타도장(this.정타수, this.총입력타수) : null;
     },
@@ -1318,21 +1274,6 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
 .도장묶음 .개인최고도장 { animation-delay: .18s; }
 .분류 { margin-bottom: 8px; }
 .지문머리 h2 { font-size: clamp(24px, 2.5vw, 30px); }
-.지문삽화자리 {
-  position: absolute;
-  top: 49px;
-  left: clamp(18px, 3vw, 38px);
-  width: 235px;
-  height: 118px;
-  color: var(--보조글);
-  pointer-events: none;
-}
-.지문삽화자리.어두운삽화 { color: var(--글); }
-.지문삽화자리 svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
 .출처 { margin-top: 7px; }
 .가는선 { margin-top: 18px; }
 .캔버스영역 { margin-top: 16px; }
@@ -1417,7 +1358,6 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
   .지문머리.도장찍힘 { gap: 12px; }
   .도장묶음 { gap: 5px; }
   .지문머리 h2 { font-size: 25px; }
-  .지문삽화자리 { top: 69px; left: 10px; width: 90px; height: 45px; }
   .가는선 { margin-top: 15px; }
   .캔버스영역 { margin-top: 14px; }
   .진행판 { padding: 13px 14px 10px; border-radius: 10px 10px 22px 22px; }
@@ -1441,7 +1381,6 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
 }
 
 @media (max-width: 380px) {
-  .지문삽화자리 { left: 7px; width: 74px; height: 37px; }
   .그래프설명 { display: none; }
   .진행아래 > span { display: none; }
   .마침통계 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
