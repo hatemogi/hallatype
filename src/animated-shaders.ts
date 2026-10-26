@@ -154,9 +154,9 @@ void main() {
   gl_FragColor = vec4(color, 1.0);
 }`;
 
-/** 배경과 같은 WebGL 컨텍스트에서 텀블러 이미지 위에 그리는 커피 김. */
+/** 배경과 같은 WebGL 컨텍스트에서 머그잔 이미지 위에 그리는 커피 김. */
 export const 커피김조각 = `${공통}
-uniform vec3 u_cup; // 종이 안에서의 텀블러 중심 x, 커피 수면 y, 이미지 높이 배율
+uniform vec3 u_cup; // 종이 안에서의 머그잔 중심 x, 커피 수면 y, 이미지 높이 배율
 void main() {
   vec2 p = vec2(v_uv.x, 1.0 - v_uv.y);
   float aspect = u_size.x / max(u_size.y, 1.0);

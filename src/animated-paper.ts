@@ -4,7 +4,7 @@ import galaxyUrl from './assets/milky-way.webp';
 import barleyUrl from './assets/barley-field.webp';
 import waterfallUrl from './assets/distant-waterfall.webp';
 import skyCloudUrl from './assets/cumulus-cloud.webp';
-import coffeeCupUrl from './assets/coffee-tumbler.webp';
+import coffeeCupUrl from './assets/coffee-mug.webp';
 import candleUrl from './assets/ivory-candle.webp';
 
 const 풍경이미지: Partial<Record<움직이는테마, string>> = {
@@ -483,14 +483,14 @@ export class 동적종이효과 {
     const image = this.propImage;
     if (!image?.naturalWidth) { return null; }
     const width = this.theme === '커피'
-      ? Math.max(88, Math.min(paper.width * 0.12, 112))
+      ? Math.max(112, Math.min(paper.width * 0.17, 150))
       : paper.width < 500 ? 72 : Math.max(112, Math.min(paper.width * 0.15, 146));
     const height = width * image.naturalHeight / image.naturalWidth;
     const x = (paper.width * 0.98 - width) / Math.max(paper.width, 1);
     const w = width / Math.max(paper.width, 1);
     const h = height / Math.max(paper.height, 1);
-    return { x, w, h, center: x + w / 2,
-      originY: this.theme === '커피' ? 1 - h * 0.84 : 1 - h * 0.90,
+    return { x, w, h, center: x + w * (this.theme === '커피' ? 0.42 : 0.5),
+      originY: this.theme === '커피' ? 1 - h * 0.67 : 1 - h * 0.90,
       scale: this.theme === '커피' ? h / 0.31 : h };
   }
 
