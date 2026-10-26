@@ -4,13 +4,15 @@ import { 정식사이트인가 } from './practice-release';
 export type 선택주제 = 지문테마 | '즐겨찾기';
 
 /** 화면에 노출할 주제만 관리한다. 다른 지문 테마와 지문은 그대로 보관한다. */
-export const 공개주제들: readonly 선택주제[] = [
-  '시작하기', '즐겨찾기', '산문', '자기계발', '스포츠',
-  '요리레시피', '감정 읽기', '동물', '식물', '우주',
-];
+export const 기본주제들 = ['시작하기', '즐겨찾기'] as const;
+export const 이번공개주제들 = [
+  '산문', '자기계발', '감정 읽기', '스포츠',
+  '우주', '동물', '식물', '요리레시피',
+] as const satisfies readonly 선택주제[];
+export const 공개주제들: readonly 선택주제[] = [...기본주제들, ...이번공개주제들];
 
 export const 전체주제들: readonly 선택주제[] = [
-  '시작하기', '즐겨찾기',
+  ...기본주제들,
   ...(Object.keys(테마별지문들) as 지문테마[]).filter((주제) => 주제 !== '시작하기'),
 ];
 
