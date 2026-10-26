@@ -8,7 +8,7 @@ export const 필사테마순서 = [
 ] as const;
 export type 필사테마 = typeof 필사테마순서[number];
 export const 공개필사테마들: readonly 필사테마[] = [
-  '한지', '밤', '숲', '구름', '모닥불', '인센스',
+  '한지', '새벽', '밤', '숲', '커피', '매트릭스', '구름', '모닥불', '인센스',
 ];
 export const 준비중필사테마들: readonly 필사테마[] = 필사테마순서.filter(
   (테마) => !공개필사테마들.includes(테마));

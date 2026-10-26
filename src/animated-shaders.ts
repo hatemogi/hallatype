@@ -165,37 +165,40 @@ void main() {
   float scale = max(u_cup.z, 0.01);
   float steamX = (p.x - u_cup.x) * aspect / scale;
   float rise = (u_cup.y - p.y) / scale;
-  float drift = smoothstep(0.0, 0.16, rise) *
-    (0.035 * sin(rise * 10.0 - t * 0.38) +
-      0.018 * sin(rise * 17.0 + t * 0.22));
-  float spread = 0.045 + rise * 0.31;
+  float drift = smoothstep(0.0, 0.08, rise) *
+    (0.018 * sin(rise * 10.0 - t * 0.38) +
+      0.010 * sin(rise * 17.0 + t * 0.22));
+  float spread = 0.055 + rise * 0.22;
   float veil = exp(-pow((steamX - drift) / spread, 2.0));
   float softEdge = exp(-pow((steamX - drift -
-    0.048 * sin(rise * 9.0 + t * 0.20)) / (spread * 0.78), 2.0));
+    0.023 * sin(rise * 9.0 + t * 0.20)) / (spread * 0.78), 2.0));
   float billow = 0.72 * veil + 0.28 * softEdge;
   float variation = 0.64 + 0.36 * noise(vec2(
     steamX * 8.0 + t * 0.10, rise * 15.0 - t * 0.16));
   float fade = smoothstep(0.0, 0.012, rise) *
-    (1.0 - smoothstep(0.19, 0.37, rise));
+    (1.0 - smoothstep(0.095, 0.185, rise));
   float strands = 0.0;
-  for (int i = 0; i < 2; i++) {
-    float side = float(i) * 2.0 - 1.0;
-    float fan = smoothstep(0.01, 0.17, rise);
-    float center = drift + side * 0.038 * fan +
-      (0.012 + rise * 0.033) * fan *
+  for (int i = 0; i < 3; i++) {
+    float side = float(i) - 1.0;
+    float fan = smoothstep(0.01, 0.085, rise);
+    float center = drift + side * (0.029 + 0.012 * fan) +
+      (0.008 + rise * 0.045) * fan *
       sin(rise * (19.0 + float(i) * 3.0) -
         t * (0.72 + float(i) * 0.11) + float(i) * 1.7);
-    float feather = 0.018 + rise * 0.042;
+    float feather = 0.020 + rise * 0.045;
     float thread = exp(-pow((steamX - center) / feather, 2.0));
     float uneven = 0.72 + 0.28 * noise(vec2(
       rise * 17.0 - t * 0.35, float(i) * 3.7));
     strands += thread * uneven;
   }
-  float nearCup = exp(-pow(steamX / (0.052 + rise * 0.10), 2.0)) *
+  float nearCup = exp(-pow(steamX / (0.056 + rise * 0.08), 2.0)) *
     (1.0 - smoothstep(0.025, 0.10, rise));
   float alpha = (0.22 * billow * variation +
-    0.44 * min(strands, 1.15)) * fade;
+    0.30 * min(strands, 1.50)) * fade;
   alpha += 0.14 * nearCup * smoothstep(0.0, 0.008, rise);
+  // 수면에서는 잔 안에 머물고, 올라가면서 입구의 폭 제한을 서서히 푼다.
+  float cupOpening = 1.0 - smoothstep(0.052, 0.070, abs(steamX));
+  alpha *= mix(cupOpening, 1.0, smoothstep(0.02, 0.10, rise));
   gl_FragColor = vec4(vec3(0.75, 0.68, 0.59),
     min(alpha * u_tuning.x, 0.72));
 }`;
@@ -429,11 +432,16 @@ vec2 codeRain(vec2 p, float t, vec2 density, float layer) {
   vec2 grid = vec2(p.x * density.x, (p.y - t * speed) * density.y);
   vec2 cell = floor(grid);
   vec2 local = fract(grid);
-  float glyphId = floor(hash21(cell + vec2(layer * 19.0, layer * 37.0)) * 64.0);
+  float binaryColumn = step(mix(0.95, 0.92, layer),
+    hash21(vec2(column + 31.0, layer * 41.0)));
+  float symbolId = floor(hash21(cell + vec2(layer * 19.0, layer * 37.0)) * 62.0);
+  float digitId = 62.0 + mod(cell.y + floor(phase * 2.0), 2.0);
+  float glyphId = mix(symbolId, digitId, binaryColumn);
   vec2 atlasUv = vec2((mod(glyphId, 8.0) + local.x) / 8.0,
     1.0 - (floor(glyphId / 8.0) + local.y) / 8.0);
   float glyph = texture2D(u_glyphs, atlasUv).a;
-  float gap = step(0.20, hash21(cell + vec2(13.0, layer * 31.0)));
+  float gap = mix(step(0.20, hash21(cell + vec2(13.0, layer * 31.0))),
+    1.0, binaryColumn);
   float headLight = exp(-pow(distance * 31.0, 2.0));
   return vec2(glyph * trail * gap, glyph * headLight * trail * gap);
 }

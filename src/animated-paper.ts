@@ -296,14 +296,45 @@ export class 동적종이효과 {
     const ctx = atlas.getContext('2d');
     const texture = gl.createTexture();
     if (!ctx || !texture) { throw new Error('매트릭스 글자 텍스처를 만들 수 없습니다.'); }
-    const glyphs = [...'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
-    ctx.font = 'bold 25px "Hiragino Kaku Gothic ProN", "Yu Gothic", monospace';
+    ctx.strokeStyle = '#fff';
     ctx.fillStyle = '#fff';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
+    ctx.lineWidth = 2.6;
+    ctx.lineCap = 'square';
+    const directions = [[1, 0], [0, 1], [1, 1], [1, -1]] as const;
     for (let i = 0; i < 64; i++) {
-      ctx.fillText(glyphs[i % glyphs.length], (i % 8) * 32 + 16,
-        Math.floor(i / 8) * 32 + 17);
+      ctx.save();
+      ctx.translate((i % 8) * 32, Math.floor(i / 8) * 32);
+      if (i >= 62) {
+        ctx.font = 'bold 24px monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(i - 62), 16, 17);
+        ctx.restore();
+        continue;
+      }
+      let seed = (i + 1) * 2654435761;
+      const random = () => {
+        seed ^= seed << 13;
+        seed ^= seed >>> 17;
+        seed ^= seed << 5;
+        return (seed >>> 0) / 4294967296;
+      };
+      // 짧은 획을 조합해 어느 문자 체계로도 읽히지 않는 기호를 만든다.
+      for (let stroke = 0; stroke < 5; stroke++) {
+        const x = 7 + Math.floor(random() * 5) * 4;
+        const y = 7 + Math.floor(random() * 5) * 4;
+        const [dx, dy] = directions[Math.floor(random() * directions.length)];
+        const length = 5 + Math.floor(random() * 3) * 2;
+        const sign = random() < 0.5 ? -1 : 1;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(Math.max(5, Math.min(27, x + dx * length * sign)),
+          Math.max(5, Math.min(27, y + dy * length * sign)));
+        ctx.stroke();
+      }
+      ctx.fillRect(7 + Math.floor(random() * 5) * 4,
+        7 + Math.floor(random() * 5) * 4, 2.5, 2.5);
+      ctx.restore();
     }
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, texture);
