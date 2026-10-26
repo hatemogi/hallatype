@@ -118,7 +118,6 @@
         <canvas id="효과캔버스" v-show="동적배경사용가능" aria-hidden="true"></canvas>
         <article class="종이" aria-labelledby="지문제목">
           <div class="종이상단">
-            <span>필사 노트 <span class="가운데점">·</span> {{오늘날짜}}</span>
             <button type="button" class="본문즐겨찾기" :class="{ 선택됨: 즐겨찾기인가(오늘지문.id) }"
               :aria-label="`${오늘지문.제목} 즐겨찾기 ${즐겨찾기인가(오늘지문.id) ? '해제' : '추가'}`"
               :aria-pressed="즐겨찾기인가(오늘지문.id)" aria-keyshortcuts="Alt+F"
@@ -160,12 +159,11 @@
           </div>
           <div class="지문머리" :class="{ 도장찍힘: !!이번도장 }">
             <div class="지문머리내용">
-              <p class="분류">선택한 글 · {{오늘지문.주제}}</p>
+              <p class="분류">{{오늘지문.주제}}</p>
               <h2 id="지문제목">{{오늘지문.제목}}</h2>
               <p class="출처" v-if="오늘지문.원문URL">
                 <a :href="오늘지문.원문URL" target="_blank" rel="noopener noreferrer">{{오늘지문.저자}} · 위키문헌 원문 ↗</a>
               </p>
-              <p class="출처" v-else>{{원래글테마}} · 창작 지문</p>
               <p v-if="즐겨찾기오류" class="즐겨찾기안내" role="alert">즐겨찾기를 저장하지 못했어요. 브라우저 저장 공간을 확인해 주세요.</p>
             </div>
             <div v-if="이번도장" class="도장묶음">
@@ -1173,8 +1171,7 @@ button { font: inherit; }
   background: var(--종이);
   box-shadow: 0 22px 60px rgba(81, 71, 54, .075), 0 2px 7px rgba(81, 71, 54, .035);
 }
-.종이상단 { display: flex; justify-content: space-between; align-items: center; color: var(--옅은글); font-size: 12px; letter-spacing: .08em; }
-.가운데점 { margin: 0 5px; }
+.종이상단 { display: flex; justify-content: flex-end; align-items: center; color: var(--옅은글); font-size: 12px; letter-spacing: .08em; }
 .지문머리 { padding-top: 43px; text-align: center; }
 .분류 { margin: 0 0 13px; }
 .지문머리 h2 {
