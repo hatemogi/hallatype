@@ -174,7 +174,11 @@
 
           <div class="캔버스영역">
             <canvas id="캔버스" width="1286" height="210"
-              :aria-label="`${오늘지문.제목} 필사 지문. 키보드로 따라 입력하세요.`"></canvas>
+              :aria-label="`${오늘지문.제목} 필사 지문. 키보드로 따라 입력하세요.`"
+              @pointerdown="화면키보드초점"></canvas>
+            <textarea ref="화면키보드" class="화면키보드입력" autofocus
+              :aria-label="`${오늘지문.제목} 필사 입력`" autocomplete="off" autocapitalize="off" autocorrect="off"
+              spellcheck="false" @input="화면키보드입력" @keydown="화면키보드키누름"></textarea>
           </div>
         </article>
         </div>
@@ -246,7 +250,7 @@ import PraiseStamp from '@/components/PraiseStamp.vue';
 import swimmingFreestyle from '@/assets/swimming-freestyle.webp';
 import { 끝글자 } from '@/글자';
 import { 지문틀 } from '@/본문';
-import { 따라그리기틀 } from '@/따라그리기';
+import { 따라그리기틀, 새화면키 } from '@/따라그리기';
 import 그림판틀 from '@/그림판';
 import { 동적종이효과 } from '@/animated-paper';
 import { 움직이는테마인가 } from '@/animated-shaders';
@@ -328,9 +332,39 @@ export default defineComponent({
       동적배경사용가능: false,
       폭관찰기: null as ResizeObserver | null,
       본문: null as 따라그리기틀 | null,
+      필사키전달: null as ((code: string, shift: boolean) => void) | null,
+      화면키보드이전입력: '',
     };
   },
   methods: {
+    화면키보드초점(event: PointerEvent) {
+      if (event.pointerType === 'mouse') { return; }
+      (this.$refs.화면키보드 as HTMLTextAreaElement | undefined)?.focus({ preventScroll: true });
+    },
+    화면키보드키누름(event: KeyboardEvent) {
+      if (this.결과화면보이기 && event.code === 'Enter') {
+        event.preventDefault();
+        this.다음글시작();
+      }
+    },
+    화면키보드입력(event: Event) {
+      const 입력창 = event.target as HTMLTextAreaElement;
+      const 다음 = 입력창.value;
+      const 이전 = this.화면키보드이전입력;
+      if (this.결과화면보이기) {
+        if (다음.endsWith('\n')) { this.다음글시작(); }
+        return;
+      } else if (['deleteContentBackward', 'deleteContentForward'].includes((event as InputEvent).inputType)) {
+        this.필사키전달?.('Backspace', false);
+      } else {
+        for (const 키 of 새화면키(이전, 다음)) { this.필사키전달?.(키.code, 키.shift); }
+      }
+      this.화면키보드이전입력 = 다음;
+      if (다음.length > 256 && !(event as InputEvent).isComposing) {
+        입력창.value = '';
+        this.화면키보드이전입력 = '';
+      }
+    },
     목록열기() {
       this.설정열림 = false;
       this.목록열림 = true;
@@ -611,6 +645,9 @@ export default defineComponent({
     },
 
     reset(새로시작 = false) {
+      const 화면입력창 = this.$refs.화면키보드 as HTMLTextAreaElement | undefined;
+      if (화면입력창) { 화면입력창.value = ''; }
+      this.화면키보드이전입력 = '';
       마지막지문저장(this.오늘지문.id);
       // 최근 기록의 직접 링크에서 다른 글로 옮기면 이전 글 주소가 복원을 덮어쓰지 않게 한다.
       if (this.requestedPassageId && this.requestedPassageId !== this.오늘지문.id &&
@@ -681,52 +718,8 @@ export default defineComponent({
         if (종이) { 종이.scrollTop = 0; }
       });
       const self = this;
-      window.onkeydown = (e: KeyboardEvent) => {
-        if (e.code === 'Escape') {
-          if (self.목록열림) { e.preventDefault(); self.목록닫기(); return; }
-          if (self.설정열림) { e.preventDefault(); self.환경설정닫기(); return; }
-          if ((document.activeElement as HTMLElement | null)?.closest('button, a')) {
-            (document.activeElement as HTMLElement).blur();
-          }
-          return;
-        }
-        if (e.code === 'Tab' && self.목록열림) {
-          const 버튼들 = Array.from(document.querySelectorAll<HTMLElement>('.선택패널 button'))
-            .filter((버튼) => 버튼.getClientRects().length > 0);
-          const 첫버튼 = 버튼들[0];
-          const 끝버튼 = 버튼들[버튼들.length - 1];
-          if (e.shiftKey && document.activeElement === 첫버튼) {
-            e.preventDefault();
-            끝버튼?.focus();
-          } else if (!e.shiftKey && document.activeElement === 끝버튼) {
-            e.preventDefault();
-            첫버튼?.focus();
-          }
-          return;
-        }
-        const 대상 = e.target as HTMLElement | null;
-        const 동작 = 필사단축키(e, self.결과화면보이기);
-        if (동작 && e.altKey) {
-          e.preventDefault();
-          self.단축키실행(동작);
-          return;
-        }
-        if (대상?.closest('input, select, textarea, [contenteditable="true"]')) { return; }
-        if (self.목록열림 || self.설정열림) { return; }
-        const 조작요소 = 대상?.closest('button, summary, a');
-        if (동작 && !조작요소) {
-          e.preventDefault();
-          self.단축키실행(동작);
-          return;
-        }
-        if (조작요소 || self.결과화면보이기) { return; }
-        if (e.code.startsWith('Shift') || e.code.startsWith('Control') ||
-            e.code.startsWith('Alt') || e.code.startsWith('Meta') ||
-            e.getModifierState('Control') || e.getModifierState('Alt') || e.getModifierState('Meta') ||
-            !/^(Key[A-Z]|Digit[0-9]|Space|Enter|Backspace|Backquote|Minus|Equal|BracketLeft|BracketRight|Backslash|Semicolon|Quote|Comma|Period|Slash)$/.test(e.code)) {
-          return;
-        }
-        e.preventDefault();
+      const 필사키입력 = (code: string, shift: boolean) => {
+        if (self.목록열림 || self.설정열림 || self.결과화면보이기 || 본문.끝) { return; }
         if (self.시작시각 === null) {
           self.시작시각 = performance.now() - (self.이어쓰기원본?.elapsedMs ?? 0);
         }
@@ -745,8 +738,8 @@ export default defineComponent({
         const 이전획 = 본문.진행획수;
         const 이전위치 = 본문.위치;
         const 이전글자 = 본문.지문글자(이전위치);
-        const 바뀐위치 = 본문.입력(e.code, e.shiftKey);
-        self.입력기록추가({ code: e.code, shift: e.shiftKey,
+        const 바뀐위치 = 본문.입력(code, shift);
+        self.입력기록추가({ code, shift,
           elapsedMs: Math.max(0, Math.round(performance.now() - self.시작시각!)) });
         self.입력상태 = 본문.방금오타 ? '오타' : 직전오타 ? '정정' : '진행';
         if (본문.방금오타) {
@@ -800,6 +793,56 @@ export default defineComponent({
           }
         }
       };
+      this.필사키전달 = 필사키입력;
+      window.onkeydown = (e: KeyboardEvent) => {
+        if (e.code === 'Escape') {
+          if (self.목록열림) { e.preventDefault(); self.목록닫기(); return; }
+          if (self.설정열림) { e.preventDefault(); self.환경설정닫기(); return; }
+          if ((document.activeElement as HTMLElement | null)?.closest('button, a')) {
+            (document.activeElement as HTMLElement).blur();
+          }
+          return;
+        }
+        if (e.code === 'Tab' && self.목록열림) {
+          const 버튼들 = Array.from(document.querySelectorAll<HTMLElement>('.선택패널 button'))
+            .filter((버튼) => 버튼.getClientRects().length > 0);
+          const 첫버튼 = 버튼들[0];
+          const 끝버튼 = 버튼들[버튼들.length - 1];
+          if (e.shiftKey && document.activeElement === 첫버튼) {
+            e.preventDefault();
+            끝버튼?.focus();
+          } else if (!e.shiftKey && document.activeElement === 끝버튼) {
+            e.preventDefault();
+            첫버튼?.focus();
+          }
+          return;
+        }
+        const 대상 = e.target as HTMLElement | null;
+        const 동작 = 필사단축키(e, self.결과화면보이기);
+        if (동작 && e.altKey) {
+          e.preventDefault();
+          self.단축키실행(동작);
+          return;
+        }
+        if (대상?.closest('input, select, textarea, [contenteditable="true"]')) { return; }
+        if (self.목록열림 || self.설정열림) { return; }
+        const 조작요소 = 대상?.closest('button, summary, a');
+        if (동작 && !조작요소) {
+          e.preventDefault();
+          self.단축키실행(동작);
+          return;
+        }
+        if (조작요소 || self.결과화면보이기) { return; }
+        if (e.code.startsWith('Shift') || e.code.startsWith('Control') ||
+            e.code.startsWith('Alt') || e.code.startsWith('Meta') ||
+            e.getModifierState('Control') || e.getModifierState('Alt') || e.getModifierState('Meta') ||
+            !/^(Key[A-Z]|Digit[0-9]|Space|Enter|Backspace|Backquote|Minus|Equal|BracketLeft|BracketRight|Backslash|Semicolon|Quote|Comma|Period|Slash)$/.test(e.code)) {
+          return;
+        }
+        e.preventDefault();
+        필사키입력(e.code, e.shiftKey);
+      };
+      화면입력창?.focus({ preventScroll: true });
     },
   },
   mounted() {
@@ -839,6 +882,7 @@ export default defineComponent({
     if (this.날짜확인타이머 !== null) { clearInterval(this.날짜확인타이머); }
     this.입력기록저장();
     window.onkeydown = null;
+    this.필사키전달 = null;
     this.그림판?.종료();
     this.동적배경?.destroy();
     this.동적배경 = null;
@@ -1111,8 +1155,9 @@ button { font: inherit; }
 .출처 a:focus-visible { color: var(--출처링크호버); text-decoration-color: currentColor; }
 .출처 a:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
 .가는선 { width: 42px; height: 1px; margin: 34px auto 0; background: var(--진행선); }
-.캔버스영역 { display: flex; justify-content: center; max-width: 930px; margin: 26px auto 0; overflow: hidden; }
+.캔버스영역 { position: relative; display: flex; justify-content: center; max-width: 930px; margin: 26px auto 0; overflow: hidden; }
 #캔버스 { display: block; width: 100%; height: auto; image-rendering: auto; }
+.화면키보드입력 { position: absolute; top: 0; left: 50%; width: 1px; height: 1px; padding: 0; border: 0; opacity: 0; resize: none; pointer-events: none; font-size: 16px; }
 #효과캔버스 {
   position: absolute;
   inset: 0;

@@ -1,10 +1,10 @@
 import { 위치틀, 지문틀 } from './본문';
-import { 글자꼴, 색칠할글자 } from './글자';
+import { 글자꼴, 글자틀, 색칠할글자 } from './글자';
 import * as 색상 from './색상';
 import { 필사팔레트, 필사팔레트들 } from './practice-settings';
 
 type 자소 = 0 | 1 | 2;
-type 키 = { code: string; shift: boolean };
+export type 키 = { code: string; shift: boolean };
 type 획 = { 글자번호: number; 자소: 자소; 키번호: number; 키: 키; 틀림: boolean };
 type 상태 = '미입력' | '정타' | '오타' | '정정';
 
@@ -29,7 +29,7 @@ const 쉬프트기호: Record<string, string> = {
     '{': '[', '}': ']', '|': '\\', ':': ';', '"': "'", '<': ',', '>': '.', '?': '/',
 };
 
-function 키로(문자: string): 키 {
+export function 키로(문자: string): 키 {
     const shift = 문자 >= 'A' && 문자 <= 'Z';
     const 기본 = 쉬프트기호[문자] || 문자;
     const code = /^[a-zA-Z]$/.test(기본) ? `Key${기본.toUpperCase()}`
@@ -48,6 +48,39 @@ function 자소키(글자: 글자꼴): Array<[자소, 키[]]> {
     ];
     if (글자.종성) { 결과.push([2, [...받침[글자.종성]].map(키로)]); }
     return 결과;
+}
+
+const 홑자모키: Record<string, string> = {
+    ㄱ: 'r', ㄲ: 'R', ㄴ: 's', ㄷ: 'e', ㄸ: 'E', ㄹ: 'f', ㅁ: 'a', ㅂ: 'q', ㅃ: 'Q',
+    ㅅ: 't', ㅆ: 'T', ㅇ: 'd', ㅈ: 'w', ㅉ: 'W', ㅊ: 'c', ㅋ: 'z', ㅌ: 'x', ㅍ: 'v', ㅎ: 'g',
+    ㄳ: 'rt', ㄵ: 'sw', ㄶ: 'sg', ㄺ: 'fr', ㄻ: 'fa', ㄼ: 'fq', ㄽ: 'ft', ㄾ: 'fx',
+    ㄿ: 'fv', ㅀ: 'fg', ㅄ: 'qt',
+    ㅏ: 'k', ㅐ: 'o', ㅑ: 'i', ㅒ: 'O', ㅓ: 'j', ㅔ: 'p', ㅕ: 'u', ㅖ: 'P',
+    ㅗ: 'h', ㅘ: 'hk', ㅙ: 'ho', ㅚ: 'hl', ㅛ: 'y', ㅜ: 'n', ㅝ: 'nj', ㅞ: 'np',
+    ㅟ: 'nl', ㅠ: 'b', ㅡ: 'm', ㅢ: 'ml', ㅣ: 'l',
+};
+
+/** 화면 키보드가 전달한 글자를 기존 물리 키 입력 형식으로 펼친다. */
+export function 화면문자키(문자: string): 키[] {
+    const 자모 = 홑자모키[문자];
+    if (자모) { return [...자모].map(키로); }
+    const 코드 = 문자.codePointAt(0);
+    if (코드 !== undefined && 코드 >= 0xac00 && 코드 <= 0xd7a3) {
+        return 자소키(글자틀.생성(코드)).flatMap(([, 키들]) => 키들);
+    }
+    if (/^[\x20-\x7e\n]$/.test(문자)) { return [키로(문자)]; }
+    return [];
+}
+
+/** 조합 중인 한글 음절이 바뀌어도 아직 보내지 않은 획만 전달한다. */
+export function 새화면키(이전: string, 다음: string): 키[] {
+    const 이전키 = [...이전].flatMap(화면문자키);
+    const 다음키 = [...다음].flatMap(화면문자키);
+    let 공통 = 0;
+    while (공통 < 이전키.length && 공통 < 다음키.length &&
+        이전키[공통].code === 다음키[공통].code &&
+        이전키[공통].shift === 다음키[공통].shift) { 공통++; }
+    return 다음키.slice(공통);
 }
 
 function 상태색(값: 상태, 팔레트: 필사팔레트): 색상.RGBA {
