@@ -82,15 +82,7 @@
         <aside v-show="!모바일보기 || 목록열림" id="지문선택창" class="선택패널"
           :role="모바일보기 ? 'dialog' : undefined" :aria-modal="모바일보기 ? 'true' : undefined"
           aria-label="필사 주제와 지문 고르기">
-          <div class="선택머리">
-            <div>
-              <span class="구역번호">필사할 주제</span>
-              <div class="선택제목줄">
-                <h2>주제 고르기</h2>
-              </div>
-            </div>
-            <button type="button" class="목록닫기" aria-label="주제 선택창 닫기" @click="목록닫기">×</button>
-          </div>
+          <button type="button" class="목록닫기" aria-label="주제 선택창 닫기" @click="목록닫기">×</button>
           <div class="주제목록">
             <section v-for="묶음 in 주제선택묶음들" :key="묶음.이름" class="주제묶음"
               :aria-label="묶음.이름 || '공개 주제'">
@@ -109,7 +101,6 @@
             </section>
           </div>
           <section class="지문서랍" :aria-label="`${주제표시이름(글테마)} 지문 목록`">
-            <h3>{{글테마 === '즐겨찾기' ? '모아 둔 글' : `${주제표시이름(글테마)} · 전체 글`}} <span>{{현재지문들.length}}편</span></h3>
             <div class="글목록" role="group" :aria-label="`${주제표시이름(글테마)} 지문 선택`" @keydown="선택버튼화살표">
               <button v-for="지문 in 현재지문들" :key="지문.id" type="button" class="지문선택버튼"
                 :class="{ 선택됨: 오늘지문.id === 지문.id, 도장있음: !!지문도장(지문) }" :aria-pressed="오늘지문.id === 지문.id"
@@ -1009,12 +1000,7 @@ button { font: inherit; }
   letter-spacing: .08em;
 }
 .작업공간 { padding-bottom: 84px; }
-.선택머리 { display: flex; justify-content: space-between; align-items: end; gap: 20px; text-align: left; }
-.구역번호 { color: var(--강조); font-size: 13px; font-weight: 700; letter-spacing: .08em; }
-.구역번호 span { padding: 0 5px; color: var(--옅은글); }
-.선택머리 h2 { margin: 9px 0 0; font-size: 18px; font-weight: 650; letter-spacing: -.045em; }
-.선택제목줄 { display: flex; align-items: center; gap: 8px; }
-.주제목록 { width: min(100%, 542px); margin-top: 18px; }
+.주제목록 { width: min(100%, 542px); }
 .주제묶음 + .주제묶음 { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--테두리); }
 .주제묶음 h3 { margin: 0 0 10px; color: var(--글); font-size: 13px; font-weight: 700; }
 .글테마선택 { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
@@ -1041,10 +1027,8 @@ button { font: inherit; }
 }
 .주제진행바탕 span { display: block; height: 100%; background: var(--강조); }
 .글테마선택 button.선택됨 { border-color: var(--강조); background: var(--선택바탕); color: var(--글); font-weight: 700; }
-.지문서랍 { margin-top: 21px; }
-.지문서랍 h3 { margin: 0; color: var(--강조); font-size: 13px; font-weight: 600; }
-.지문서랍 h3 span { margin-left: 8px; color: var(--옅은글); font-weight: 400; }
-.글목록 { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; margin-top: 13px; }
+.지문서랍 { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--테두리); }
+.글목록 { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; }
 .글목록 .지문선택버튼 {
   position: relative;
   display: flex;
@@ -1206,12 +1190,11 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
   border-radius: 3px;
   background: var(--선택안함);
 }
-.선택머리 { align-items: start; }
-.선택머리 h2 { margin-top: 6px; font-size: 17px; }
-.주제목록 { width: 100%; max-height: min(40dvh, 310px); overflow-y: auto; overscroll-behavior: contain; }
+/* 공개 주제 10개: 2열 × 5줄, 버튼 46px × 5 + 간격 6px × 4 */
+.주제목록 { flex: none; width: 100%; max-height: 254px; overflow-y: auto; overscroll-behavior: contain; }
 .글테마선택 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
-.글테마선택 button { padding: 8px 5px 11px; font-size: 13px; }
-.지문서랍 { display: flex; flex-direction: column; flex: 1; min-height: 0; margin-top: 20px; }
+.글테마선택 button { box-sizing: border-box; min-height: 46px; padding: 11px 8px 14px; font-size: 15px; font-weight: 600; line-height: 18px; }
+.지문서랍 { display: flex; flex-direction: column; flex: 1; min-height: 0; }
 .글목록 { display: flex; flex-direction: column; flex: 1; min-height: 0; gap: 6px; overflow-y: auto; overscroll-behavior: contain; padding-right: 3px; }
 .글목록 .지문선택버튼 { flex: none; min-height: 51px; padding: 9px 11px; }
 .필사패널 {
@@ -1358,8 +1341,8 @@ button:focus-visible { outline: 2px solid var(--강조); outline-offset: 3px; }
     background: var(--종이);
     box-shadow: 0 -14px 40px rgba(0, 0, 0, .18);
   }
-  .목록닫기 { display: block; border: 0; background: none; color: var(--보조글); font-size: 26px; line-height: 1; cursor: pointer; }
-  .글테마선택 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .목록닫기 { position: absolute; top: 12px; right: 12px; display: block; border: 0; background: none; color: var(--보조글); font-size: 26px; line-height: 1; cursor: pointer; }
+  .주제목록 { box-sizing: border-box; padding-right: 40px; }
   .글목록 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; }
   .글목록 .지문선택버튼 { min-height: 56px; }
   .필사패널 { flex: 1; padding-top: 3px; }
