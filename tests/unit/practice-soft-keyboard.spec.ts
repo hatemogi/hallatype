@@ -1,6 +1,7 @@
 import { 지문틀 } from '@/본문';
 import { 끝글자 } from '@/글자';
-import { 따라그리기틀, 새화면키, 화면문자키, 화면입력흐름 } from '@/따라그리기';
+import { 따라그리기틀, 화면문자키 } from '@/따라그리기';
+import { 새화면키, 화면입력흐름 } from '@/practice-textarea-input';
 
 function 연습(글: string) {
     const 지문 = new 지문틀();
@@ -37,6 +38,39 @@ describe('화면 키보드 입력', () => {
         for (const 키 of 새화면키('', 'Hi!')) { 본문.입력(키.code, 키.shift); }
         expect(본문.끝).toBe(true);
         expect(본문.유효타수).toBe(3);
+    });
+
+    it('입력창 중간에 넣은 글자만 전달하고 기존 뒷글자를 다시 세지 않는다', () => {
+        expect(새화면키('가나', '가다나')).toEqual([
+            { code: 'KeyE', shift: false }, { code: 'KeyK', shift: false },
+        ]);
+        expect(새화면키('가바나', '가다나')).toEqual([
+            { code: 'KeyE', shift: false }, { code: 'KeyK', shift: false },
+        ]);
+    });
+
+    it('붙여넣기와 자동 대체는 타수에 넣지 않고 다음 실제 입력만 전달한다', () => {
+        const 흐름 = new 화면입력흐름();
+        expect(흐름.입력('가나', 'insertFromPaste')).toEqual([]);
+        expect(흐름.입력('가나다', 'insertText')).toEqual([
+            { code: 'KeyE', shift: false }, { code: 'KeyK', shift: false },
+        ]);
+        expect(흐름.입력('가라마', 'insertReplacementText')).toEqual([]);
+        expect(흐름.입력('가라마!', 'insertText')).toEqual([{ code: 'Digit1', shift: true }]);
+    });
+
+    it('물리 키가 전달되면 같은 키의 textarea 조합 이벤트를 다시 보내지 않는다', () => {
+        const 본문 = 연습('가');
+        const 흐름 = new 화면입력흐름();
+        흐름.조합시작();
+        for (const 키 of 흐름.물리키('KeyR', false)) { 본문.입력(키.code, 키.shift); }
+        expect(흐름.입력('ㄱ', 'insertCompositionText')).toEqual([]);
+        for (const 키 of 흐름.물리키('KeyK', false)) { 본문.입력(키.code, 키.shift); }
+        expect(흐름.입력('가', 'insertCompositionText')).toEqual([]);
+        expect(흐름.조합끝('가')).toEqual([]);
+        expect(본문.끝).toBe(true);
+        expect(본문.입력타수).toBe(2);
+        expect(본문.유효타수).toBe(2);
     });
 
     it('iOS 한글 입력기의 내부 삭제 뒤 받침이 초성으로 옮겨져도 중복 집계하지 않는다', () => {

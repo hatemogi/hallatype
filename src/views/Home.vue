@@ -215,7 +215,8 @@ import 연필타이틀 from '@/assets/geulsum-title-pencil-spaced.png';
 import PraiseStamp from '@/components/PraiseStamp.vue';
 import { 끝글자 } from '@/글자';
 import { 지문틀 } from '@/본문';
-import { 따라그리기틀, 화면입력흐름, type 키 } from '@/따라그리기';
+import { 따라그리기틀, type 키 } from '@/따라그리기';
+import { 화면입력흐름 } from '@/practice-textarea-input';
 import 그림판틀 from '@/그림판';
 import { 동적종이효과 } from '@/animated-paper';
 import { 움직이는테마인가 } from '@/animated-shaders';
@@ -245,6 +246,12 @@ const 테마선택지 = 공개필사테마들.map(이름 => ({ 이름 }));
 const 준비중테마선택지 = 정식사이트 ? [] : 준비중필사테마들.map(이름 => ({ 이름 }));
 const 글자크기선택지: 지문크기[] = ['작게', '보통', '크게'];
 const 가장자리단계이름 = ['선명하게', '조금 선명하게', '보통', '조금 부드럽게', '부드럽게'];
+const 필사키코드 = /^(Key[A-Z]|Digit[0-9]|Space|Enter|Backspace|Backquote|Minus|Equal|BracketLeft|BracketRight|Backslash|Semicolon|Quote|Comma|Period|Slash)$/;
+function 필사키인가(event: KeyboardEvent): boolean {
+  return !event.ctrlKey && !event.altKey && !event.metaKey &&
+    !((event.isComposing || event.keyCode === 229) && event.code === 'Enter') &&
+    필사키코드.test(event.code);
+}
 export default defineComponent({
   components: { GeulsumMark, GeulsumTitle, PraiseStamp },
   props: {
@@ -299,12 +306,23 @@ export default defineComponent({
   methods: {
     화면키보드초점(event: PointerEvent) {
       if (event.pointerType === 'mouse') { return; }
-      (this.$refs.화면키보드 as HTMLTextAreaElement | undefined)?.focus({ preventScroll: true });
+      const 입력창 = this.$refs.화면키보드 as HTMLTextAreaElement | undefined;
+      if (this.화면키보드입력흐름.물리키우선 && 입력창) {
+        입력창.value = '';
+        this.화면키보드입력흐름.초기화();
+      }
+      입력창?.focus({ preventScroll: true });
     },
     화면키보드키누름(event: KeyboardEvent) {
-      if (this.결과화면보이기 && event.code === 'Enter') {
+      if (this.결과화면보이기 && event.code === 'Enter' &&
+          !event.isComposing && event.keyCode !== 229) {
         event.preventDefault();
         this.다음글시작();
+        return;
+      }
+      // 맥의 물리 키는 DOM 조합 문자열보다 실제 code를 우선해 원래 입력기로 보낸다.
+      if (navigator.maxTouchPoints === 0 && 필사키인가(event)) {
+        this.화면키보드키전달(this.화면키보드입력흐름.물리키(event.code, event.shiftKey));
       }
     },
     화면키보드조합시작() {
@@ -321,12 +339,11 @@ export default defineComponent({
       const 입력창 = event.target as HTMLTextAreaElement;
       const 다음 = 입력창.value;
       if (this.결과화면보이기) {
-        if (다음.endsWith('\n')) { this.다음글시작(); }
+        if (!this.화면키보드입력흐름.물리키우선 && 다음.endsWith('\n')) { this.다음글시작(); }
         return;
       }
       const 입력이벤트 = event as InputEvent;
-      this.화면키보드키전달(this.화면키보드입력흐름.입력(다음,
-        입력이벤트.inputType));
+      this.화면키보드키전달(this.화면키보드입력흐름.입력(다음, 입력이벤트.inputType));
       if (다음.length > 256 && !입력이벤트.isComposing &&
           !this.화면키보드입력흐름.조합하고있음) {
         입력창.value = '';
@@ -805,12 +822,7 @@ export default defineComponent({
           return;
         }
         if (조작요소 || self.결과화면보이기) { return; }
-        if (e.code.startsWith('Shift') || e.code.startsWith('Control') ||
-            e.code.startsWith('Alt') || e.code.startsWith('Meta') ||
-            e.getModifierState('Control') || e.getModifierState('Alt') || e.getModifierState('Meta') ||
-            !/^(Key[A-Z]|Digit[0-9]|Space|Enter|Backspace|Backquote|Minus|Equal|BracketLeft|BracketRight|Backslash|Semicolon|Quote|Comma|Period|Slash)$/.test(e.code)) {
-          return;
-        }
+        if (!필사키인가(e)) { return; }
         e.preventDefault();
         필사키입력(e.code, e.shiftKey);
       };

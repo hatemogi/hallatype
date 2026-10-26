@@ -74,37 +74,6 @@ export function 화면문자키(문자: string): 키[] {
     return [];
 }
 
-/** 조합 중인 한글 음절이 바뀌어도 아직 보내지 않은 획만 전달한다. */
-export function 새화면키(이전: string, 다음: string): 키[] {
-    const 이전키 = [...이전].flatMap(화면문자키);
-    const 다음키 = [...다음].flatMap(화면문자키);
-    let 공통 = 0;
-    while (공통 < 이전키.length && 공통 < 다음키.length &&
-        이전키[공통].code === 다음키[공통].code &&
-        이전키[공통].shift === 다음키[공통].shift) { 공통++; }
-    return 다음키.slice(공통);
-}
-
-/** 한글 조합 중 늘어난 자소는 즉시 보내고 입력기의 내부 삭제는 타수에서 제외한다. */
-export class 화면입력흐름 {
-    private 이전 = '';
-    private 조합중 = false;
-
-    public get 조합하고있음(): boolean { return this.조합중; }
-    public 초기화(): void { this.이전 = ''; this.조합중 = false; }
-    public 조합시작(): void { this.조합중 = true; }
-    public 조합끝(다음: string): 키[] {
-        this.조합중 = false;
-        return this.입력(다음);
-    }
-    public 입력(다음: string, inputType = ''): 키[] {
-        if (inputType.startsWith('delete')) { return []; }
-        const 키들 = 새화면키(this.이전, 다음);
-        this.이전 = 다음;
-        return 키들;
-    }
-}
-
 function 상태색(값: 상태, 팔레트: 필사팔레트): 색상.RGBA {
     switch (값) {
         case '정타': return 팔레트.먹색;
