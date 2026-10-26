@@ -217,6 +217,7 @@ import { 끝글자 } from '@/글자';
 import { 지문틀 } from '@/본문';
 import { 따라그리기틀, type 키 } from '@/따라그리기';
 import { 화면입력흐름 } from '@/practice-textarea-input';
+import { 필사키인가 } from '@/practice-physical-key';
 import 그림판틀 from '@/그림판';
 import { 동적종이효과 } from '@/animated-paper';
 import { 움직이는테마인가 } from '@/animated-shaders';
@@ -246,12 +247,6 @@ const 테마선택지 = 공개필사테마들.map(이름 => ({ 이름 }));
 const 준비중테마선택지 = 정식사이트 ? [] : 준비중필사테마들.map(이름 => ({ 이름 }));
 const 글자크기선택지: 지문크기[] = ['작게', '보통', '크게'];
 const 가장자리단계이름 = ['선명하게', '조금 선명하게', '보통', '조금 부드럽게', '부드럽게'];
-const 필사키코드 = /^(Key[A-Z]|Digit[0-9]|Space|Enter|Backspace|Backquote|Minus|Equal|BracketLeft|BracketRight|Backslash|Semicolon|Quote|Comma|Period|Slash)$/;
-function 필사키인가(event: KeyboardEvent): boolean {
-  return !event.ctrlKey && !event.altKey && !event.metaKey &&
-    !((event.isComposing || event.keyCode === 229) && event.code === 'Enter') &&
-    필사키코드.test(event.code);
-}
 export default defineComponent({
   components: { GeulsumMark, GeulsumTitle, PraiseStamp },
   props: {
