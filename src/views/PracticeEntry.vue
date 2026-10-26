@@ -12,7 +12,7 @@
         <h1 id="서비스이름"><GeulsumTitle :key="`타이틀-${테마}`" class="중앙타이틀그림" :src="연필타이틀" :width="1736" :height="906" :gap-reduction="55" /></h1>
         <p class="슬로건">한 글자씩, 마음을 고르다.</p>
         <div class="구분선" aria-hidden="true"></div>
-        <p class="설명">키보드를 두드릴 핑계.<br>좋은 문장을 따라 쓰는 시간.</p>
+        <p class="설명">글숨(데일리타이핑)은 좋은 문장을 키보드 입력으로 따라 쓰며 한글 타자연습과 필사를 즐기는 앱입니다. 한 글자씩 마음을 고르세요.</p>
         <a ref="시작버튼" href="#practice" class="시작버튼" aria-keyshortcuts="Enter">필사 시작하기 <span aria-hidden="true">→</span></a>
       </section>
 
@@ -379,7 +379,7 @@ onUnmounted(() => {
   letter-spacing: -.045em;
 }
 .구분선 { width: 42px; height: 1px; margin: 35px 0; background: var(--진행선); }
-.설명 { margin: 0; color: var(--보조글); font-size: 16px; line-height: 1.9; word-break: keep-all; }
+.설명 { max-width: 560px; margin: 0; color: var(--보조글); font-size: 16px; line-height: 1.9; word-break: keep-all; }
 .시작버튼 {
   display: inline-flex;
   align-items: center;
