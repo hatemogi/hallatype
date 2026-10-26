@@ -18,9 +18,9 @@
 
         <div v-if="기록들.length" class="기록격자">
           <article v-for="기록 in 기록들" :key="기록.시도ID" class="기록카드">
-            <p class="기록메타"><span class="기록주제">{{기록.테마}}</span><time :datetime="기록.완료시각">{{기록.완료일시}}</time></p>
+            <p class="기록메타"><span class="기록주제">{{주제표시이름(기록.테마)}}</span><time :datetime="기록.완료시각">{{기록.완료일시}}</time></p>
             <div class="기록제목줄">
-              <h2><a :href="`#practice?passage=${기록.지문.id}`" :aria-label="`${기록.테마}의 ${기록.지문.제목} 다시 입력하기`">{{기록.지문.제목}} <span aria-hidden="true">↗</span></a></h2>
+              <h2><a :href="`#practice?passage=${기록.지문.id}`" :aria-label="`${주제표시이름(기록.테마)}의 ${기록.지문.제목} 다시 입력하기`">{{기록.지문.제목}} <span aria-hidden="true">↗</span></a></h2>
               <PraiseStamp v-if="기록.도장" :grade="기록.도장" />
             </div>
             <div class="기록그래프머리"><span>이 글의 입력 리듬</span><span>정타율 × 속도</span></div>
@@ -53,13 +53,16 @@ import PraiseStamp from '@/components/PraiseStamp.vue';
 import { 필사설정읽기, type 필사테마 } from '@/practice-settings';
 import { 진행작업읽기, 시도목록 } from '@/practice-progress';
 import { 최근완료기록들, type 최근완료기록 } from '@/practice-recent';
+import { 공개주제인가, 주제표시이름 } from '@/practice-pinned-topics';
+import { 정식사이트인가 } from '@/practice-release';
 
 const 테마 = ref<필사테마>(필사설정읽기().테마);
 const 기록들 = ref<최근완료기록[]>([]);
 
 onMounted(() => {
   테마.value = 필사설정읽기().테마;
-  기록들.value = 최근완료기록들(시도목록(진행작업읽기()));
+  const 전체기록 = 최근완료기록들(시도목록(진행작업읽기()), 정식사이트인가() ? Infinity : 10);
+  기록들.value = (정식사이트인가() ? 전체기록.filter((기록) => 공개주제인가(기록.테마)) : 전체기록).slice(0, 10);
   document.title = '글숨 · 최근 완성한 글';
 });
 </script>

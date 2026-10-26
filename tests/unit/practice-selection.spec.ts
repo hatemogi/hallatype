@@ -1,6 +1,7 @@
 import { 테마별지문들, type 연습지문 } from '@/practice-passages';
 import { 다음미완료지문, 첫진입지문선택, 주제지문선택, 주제완료현황,
-  지문모음선택, 지문모음완료현황, 마지막지문읽기, 마지막지문저장, 마지막지문저장키 } from '@/practice-selection';
+  지문모음선택, 지문모음완료현황, 마지막지문읽기, 마지막지문저장, 마지막지문저장키,
+  사용가능선택지 } from '@/practice-selection';
 import { 본문버전, 시도목록, 시도시작, 시도완료, 입력묶음, 지문재개시도, type 진행작업 } from '@/practice-progress';
 
 function 선택저장소() {
@@ -34,6 +35,18 @@ it('첫 진입에는 주제를 넘어 가장 최근에 진행 중인 글을 연�
   const 최근글 = 테마별지문들.명상[3];
   const 기록 = 시도목록([...시도(이른글, 9), ...시도(최근글, 11)]);
   expect(첫진입지문선택(기록)).toEqual({ 테마: '명상', 지문: 최근글 });
+});
+
+it('정식 주소에서는 보관 중인 미공개 지문을 자동 선택하지 않는다', () => {
+  const 숨긴글 = 테마별지문들.명상[3];
+  const 공개글 = 테마별지문들.시작하기[0];
+  const 기록 = 시도목록(시도(숨긴글, 11));
+  expect(사용가능선택지('https://dailytyping.com').some((선택) => 선택.지문.id === 숨긴글.id)).toBe(false);
+  expect(첫진입지문선택(기록, 숨긴글.id, 'https://dailytyping.com'))
+    .toEqual({ 테마: '시작하기', 지문: 공개글 });
+  expect(다음미완료지문(숨긴글.id, 기록, 'https://dailytyping.com'))
+    .toEqual({ 테마: '시작하기', 지문: 공개글 });
+  expect(지문모음선택([숨긴글, 공개글], 기록, 'https://dailytyping.com')).toBe(공개글);
 });
 
 it('입력하지 않고 선택만 한 글도 저장하고 이전 입력 기록보다 먼저 복원한다', () => {

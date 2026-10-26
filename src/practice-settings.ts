@@ -1,4 +1,5 @@
 import * as 색상 from './색상';
+import { 정식사이트인가 } from './practice-release';
 
 export const 필사테마순서 = [
   '한지', '새벽', '밤', '숲', '청보리', '폭포', '라벤더', '커피', '촛불',
@@ -6,6 +7,16 @@ export const 필사테마순서 = [
   '빗방울', '흐르는 구름', '불멍', '인센스', '오로라', '별똥별',
 ] as const;
 export type 필사테마 = typeof 필사테마순서[number];
+export const 공개필사테마들: readonly 필사테마[] = [
+  '한지', '새벽', '밤', '숲', '청보리', '폭포', '라벤더', '커피', '촛불',
+  '매트릭스', 'PC통신', '서가', '수면과 파문',
+];
+export const 준비중필사테마들: readonly 필사테마[] = 필사테마순서.filter(
+  (테마) => !공개필사테마들.includes(테마));
+
+export function 사용가능필사테마들(origin?: string): readonly 필사테마[] {
+  return 정식사이트인가(origin) ? 공개필사테마들 : 필사테마순서;
+}
 export type 지문크기 = '작게' | '보통' | '크게';
 export type 안티앨리어싱단계 = 0 | 1 | 2 | 3 | 4;
 export type 글꼴확대방식 = '기존' | '윤곽' | '윤곽48' | '윤곽64';
@@ -176,7 +187,7 @@ export const 필사팔레트들: Record<필사테마, 필사팔레트> = {
 
 const 저장키 = 'hallatype-practice-settings-v1';
 
-export function 필사설정읽기(storage?: Pick<Storage, 'getItem'>): 필사설정 {
+export function 필사설정읽기(storage?: Pick<Storage, 'getItem'>, origin?: string): 필사설정 {
   try {
     const 저장값 = (storage ?? (typeof window === 'undefined' ? undefined : window.localStorage))?.getItem(저장키);
     if (!저장값) { return { ...기본필사설정 }; }
@@ -192,7 +203,7 @@ export function 필사설정읽기(storage?: Pick<Storage, 'getItem'>): 필사�
       저장테마 === '메밀밭' ? '숲' :
       필사테마순서.find(후보 => 후보 === 저장테마) ?? '한지';
     return {
-      테마,
+      테마: 사용가능필사테마들(origin).includes(테마) ? 테마 : 기본필사설정.테마,
       글자크기: 설정.글자크기 === '작게' || 설정.글자크기 === '크게' ? 설정.글자크기 : '보통',
       커서깜빡임: typeof 설정.커서깜빡임 === 'boolean' ? 설정.커서깜빡임 : true,
       안티앨리어싱단계: 설정.설정버전 === 2
