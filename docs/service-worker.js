@@ -1,16 +1,29 @@
-// 이전 PWA 등록을 해제하기 위해 기존 서비스 워커 URL에 잠시 유지한다.
-self.addEventListener('install', event => {
-  event.waitUntil(self.skipWaiting());
-});
+/**
+ * Welcome to your Workbox-powered service worker!
+ *
+ * You'll need to register this file in your web app and you should
+ * disable HTTP caching for this file too.
+ * See https://goo.gl/nhQhGp
+ *
+ * The rest of the code is auto-generated. Please don't update this file
+ * directly; instead, make changes to your Workbox build configuration
+ * and re-run your build process.
+ * See https://goo.gl/2aRDsh
+ */
 
-self.addEventListener('activate', event => {
-  event.waitUntil((async () => {
-    const scope = self.registration.scope;
-    const keys = await caches.keys();
-    await Promise.all(keys.filter(key => key.startsWith('workbox-') && key.endsWith(scope))
-      .map(key => caches.delete(key)));
-    await self.registration.unregister();
-    const clients = await self.clients.matchAll({ type: 'window' });
-    await Promise.all(clients.map(client => client.navigate(client.url)));
-  })());
-});
+importScripts("https://storage.googleapis.com/workbox-cdn/releases/3.6.3/workbox-sw.js");
+
+importScripts(
+  "/precache-manifest.90542176fa29660cda106856cd2ca68f.js"
+);
+
+workbox.core.setCacheNameDetails({prefix: "hallatype"});
+
+/**
+ * The workboxSW.precacheAndRoute() method efficiently caches and responds to
+ * requests for URLs in the manifest.
+ * See https://goo.gl/S9QRab
+ */
+self.__precacheManifest = [].concat(self.__precacheManifest || []);
+workbox.precaching.suppressWarnings();
+workbox.precaching.precacheAndRoute(self.__precacheManifest, {});

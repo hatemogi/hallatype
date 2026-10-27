@@ -63,13 +63,9 @@ make deploy
 make invalidate
 ```
 
-### GitHub Pages용 타자 연습 빌드
+### GitHub Pages의 이전 타자 연습
 
-```
-make build-pages
-```
-
-글숨 첫 화면과 필사 화면만 `docs/index.html`에 빌드합니다. 글꼴·마스크 편집기 화면은 이 빌드에 포함되지 않습니다. 자산은 상대 경로로 빌드해 사용자 지정 도메인의 루트와 GitHub Pages의 저장소 하위 경로에서 모두 열리게 합니다. 빌드할 때 기존 `docs/` 산출물을 교체하고 `type.hatemogi.com`의 `CNAME`도 함께 복사합니다. 일반 개발용 전체 앱은 `make build`로 `dist/`에 빌드합니다. GitHub Pages가 브랜치의 `/docs`를 게시하도록 설정되어 있다면, 빌드된 `docs/`를 커밋하고 푸시해야 배포됩니다. 사용자 지정 도메인을 쓰려면 DNS 제공업체에서 GitHub Pages를 가리키는 레코드도 설정해야 합니다.
+GitHub Pages의 `docs/`는 커밋 `114a9d31ebca4d2b1d1a16a997317c309dc1d`에 포함된 이전 타자 연습 빌드로 고정합니다. `type.hatemogi.com`의 `CNAME`도 당시 빌드 그대로 둡니다. 이 산출물은 다시 빌드하거나 수정하지 않습니다. 현재 앱의 빌드와 `dailytyping.com` S3 배포는 각각 `dist/`와 `make deploy`를 사용합니다. Pages용 설정 파일을 직접 실행하더라도 결과는 별도의 `dist-pages/`에 생성됩니다.
 
 ### 단위 테스트
 ```
